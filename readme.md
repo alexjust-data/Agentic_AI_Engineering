@@ -1,4 +1,4 @@
-# 🧠 My AI Agents Learning Project
+# 🧠 AI Agents Learning Project
 
 This is my personal implementation and learning journey through the **"Master AI Agentic Engineering"** course, building autonomous AI agents step by step.
 
