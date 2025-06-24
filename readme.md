@@ -8,7 +8,7 @@ Following the 6-week course structure from [AI Agents Course](https://github.com
 
 | Week | Module | Status | Description |
 |------|--------|--------|-------------|
-| 1️⃣ | **week1_foundations** | ✅ **COMPLETE** | Basic AI theory, multi-model support, evaluation |
+| 1️⃣ | **week1_foundations**  | ✅ **COMPLETE** | Basic AI theory, multi-model support, evaluation |
 | 2️⃣ | **week2_openai** | 🚧 **IN PROGRESS** | OpenAI Agents SDK, deep research systems |
 | 3️⃣ | **week3_crew** | ⏳ **PLANNED** | CrewAI framework, multi-agent collaboration |
 | 4️⃣ | **week4_langgraph** | ⏳ **PLANNED** | LangGraph workflows, complex agent orchestration |
