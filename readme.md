@@ -1,8 +1,8 @@
-# 🧠 AI Agents Learning Project
+# AI Agents Learning Project
 
 This is my personal implementation and learning journey through the **"Master AI Agentic Engineering"** course, building autonomous AI agents step by step.
 
-## 📚 Course Structure & Progress
+## Course Structure & Progress
 
 Following the 6-week course structure from [AI Agents Course](https://github.com/ed-donner/agents):
 
@@ -15,7 +15,7 @@ Following the 6-week course structure from [AI Agents Course](https://github.com
 | 5️⃣ | **week5_autogen** | ⏳ **PLANNED** | Microsoft AutoGen, distributed agent systems |
 | 6️⃣ | **week6_mcp** | ⏳ **PLANNED** | Model Context Protocol, advanced integrations |
 
-## 🚀 What I've Built So Far
+## What I've Built So Far
 
 ### **✅ Week 1: Foundations (COMPLETED)**
 - **Multi-model architecture** (OpenAI, Anthropic, Google, DeepSeek)
@@ -83,7 +83,7 @@ GOOGLE_API_KEY=your-google-key-here
 DEEPSEEK_API_KEY=your-deepseek-key-here
 ```
 
-## 🎯 Learning Objectives & Achievements
+## Learning Objectives & Achievements
 
 ### **What I've Learned:**
 - ✅ **Agentic AI Theory** - Workflow vs Agent patterns
@@ -104,13 +104,13 @@ DEEPSEEK_API_KEY=your-deepseek-key-here
 
 Since Week 1 is complete, here are the advanced features implemented:
 
-### **🤖 Multi-Model Support**
+### **Multi-Model Support**
 - OpenAI (GPT-4o, GPT-4o-mini, GPT-4-turbo)
 - Anthropic (Claude 3 Sonnet, Haiku)
 - Google (Gemini 2.0 Flash)
 - DeepSeek (DeepSeek Chat)
 
-### **📊 Evaluation System**
+### **Evaluation System**
 - Automatic quality scoring (1-10 scale)
 - Detailed feedback and suggestions
 - Retry loops for quality improvement
@@ -128,7 +128,7 @@ Since Week 1 is complete, here are the advanced features implemented:
 - Current time retrieval
 - Weather information (mock)
 
-## 🚀 Usage Examples
+## Usage Examples
 
 ### **Quick Test**
 ```bash
@@ -159,12 +159,12 @@ analysis = run_comparative_analysis("Compare Python vs JavaScript")
 print(f"Best model: {analysis['comparison'].best_model}")
 ```
 
-## 📈 Progress Tracking
+## Progress Tracking
 
 ### **Current Status:**
-- 🎯 **Week 1**: 100% Complete - Advanced implementation
-- 🎯 **Week 2**: Starting soon - OpenAI Agents SDK
-- 🎯 **Overall Progress**: 16.7% (1/6 weeks complete)
+- **Week 1**: 100% Complete - Advanced implementation
+- **Week 2**: Starting soon - OpenAI Agents SDK
+- **Overall Progress**: 16.7% (1/6 weeks complete)
 
 ### **Next Milestones:**
 1. **Week 2: OpenAI Agents SDK** - Advanced agent workflows
@@ -188,7 +188,7 @@ This project represents:
 
 ---
 
-**🎯 Ready to explore AI agents?** Start with Week 1:
+**Ready to explore AI agents?** Start with Week 1:
 ```bash
 python src/week1_foundations/app.py --mode web
 ```
