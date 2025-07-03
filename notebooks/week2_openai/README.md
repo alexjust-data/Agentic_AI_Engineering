@@ -7,7 +7,7 @@
 - [vibe coding](#vibe-coding)
 - [Automated sales outreach](#automated-sales-outreach)
 - [2_Lab2 : Our first Agentic Framework project](#2_lab2)
-  - [Link 2_Lab2](../../notebooks/week2_openai/community_contributions/2_lab2_with_resend_email.ipynb)
+  - [Link 2_Lab2](./2_lab2_with_resend_email.ipynb)
 
 
 
