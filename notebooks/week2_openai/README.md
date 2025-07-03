@@ -313,52 +313,55 @@ We're going to be building **three different pieces**, or layers, of **agentic a
 
 **Resend Email - Complete Technical Breakdown**
 
-This comprehensive breakdown explains every code and conceptual component of the [2\_lab2\_with\_resend\_email.ipynb](./2_lab2_with_resend_email.ipynb) implementation.
+This comprehensive breakdown explains every code and conceptual component of the  
+[2\_lab2\_with\_resend\_email.ipynb](./2_lab2_with_resend_email.ipynb) implementation.
 
----
+Aquí tienes el menú completamente **sin enlaces**, solo con los títulos como me pediste, respetando tu formato original:
+
 
 **1. Prerequisites & Environment Configuration**
 
-* [External API Integration Setup](./2_lab2_with_resend_email.ipynb#prerequisites)
-* [Environment Security & Validation](./2_lab2_with_resend_email.ipynb#resend-api-key)
+* External API Integration Setup
+* Environment Security & Validation
 
 **2. Agent Workflow Architecture**
 
-* [Multi-Personality Agent Design](./2_lab2_with_resend_email.ipynb#step-1-agent-workflow)
-* [Streaming & Asynchronous Processing](./2_lab2_with_resend_email.ipynb#part-2-use-of-tools)
-* [Agent Selection & Decision Making](./2_lab2_with_resend_email.ipynb#step-1-agent-workflow) 
+* Multi-Personality Agent Design
+* Streaming & Asynchronous Processing
+* Agent Selection & Decision Making
 
 **3. Tool Integration & Function Decoration**
 
-* [Function-to-Tool Conversion Pattern](./2_lab2_with_resend_email.ipynb#steps-2-and-3-tools-and-agent-interactions)
-* [Email Sending Implementation](./2_lab2_with_resend_email.ipynb#this-has-automatically-been-converted-into-a-tool-with-the-boilerplate-json-created)
-* [Agent-as-Tool Pattern](./2_lab2_with_resend_email.ipynb#and-you-can-also-convert-an-agent-into-a-tool)
+* Function-to-Tool Conversion Pattern
+* Email Sending Implementation
+* Agent-as-Tool Pattern
 
 **4. Multi-Agent Orchestration**
 
-* [Planning Agent Architecture](./2_lab2_with_resend_email.ipynb#and-now-its-time-for-our-sales-manager---our-planning-agent)
-* [Workflow Execution](./2_lab2_with_resend_email.ipynb#so-now-we-can-gather-all-the-tools-together)
+* Planning Agent Architecture
+* Workflow Execution
 
 **5. Handoffs vs Tools Architecture**
 
-* [Handoff Mechanism](./2_lab2_with_resend_email.ipynb#handoffs-represent-a-way-an-agent-can-delegate-to-an-agent-passing-control-to-it)
-* [Email Manager Agent](./2_lab2_with_resend_email.ipynb#and-now-its-time-for-our-sales-manager---our-planning-agent) 
-* [Complete Workflow Integration](./2_lab2_with_resend_email.ipynb#so-now-we-can-gather-all-the-tools-together)
+* Handoff Mechanism
+* Email Manager Agent
+* Complete Workflow Integration
 
 **6. Agentic Design Patterns Analysis**
 
-* [Core Patterns Implemented](./2_lab2_with_resend_email.ipynb#vibe-coding-elements)
-* [Commercial Applications](./2_lab2_with_resend_email.ipynb#-commercial-applications)
+* Core Patterns Implemented
+* Commercial Applications
 
 **7. Advanced Features & Enhancements**
 
-* [Mail Merge System](./2_lab2_with_resend_email.ipynb#-4-hard-challenge---email-reply-automation)
-* [CRM Integration](./2_lab2_with_resend_email.ipynb#-4-hard-challenge---email-reply-automation) 
+* Mail Merge System
+* CRM Integration
 
 **8. Advanced Challenge: Reply Automation**
 
-* [Webhook Integration System](./2_lab2_with_resend_email.ipynb#-4-hard-challenge---email-reply-automation)
-* [Self-Sustaining Conversations](./2_lab2_with_resend_email.ipynb#-4-hard-challenge---email-reply-automation)
+* Webhook Integration System
+* Self-Sustaining Conversations
+
 
 
 
