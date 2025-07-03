@@ -316,7 +316,6 @@ We're going to be building **three different pieces**, or layers, of **agentic a
 This comprehensive breakdown explains every code and conceptual component of the  
 [2\_lab2\_with\_resend\_email.ipynb](./2_lab2_with_resend_email.ipynb) implementation.
 
-Aquí tienes el menú completamente **sin enlaces**, solo con los títulos como me pediste, respetando tu formato original:
 
 
 **1. Prerequisites & Environment Configuration**
