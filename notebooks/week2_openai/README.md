@@ -367,10 +367,8 @@ This comprehensive breakdown explains every code and conceptual component of the
 
 **Recap - 3 interactions : Agent Tools, Handoffs, and Next Steps**
 
-1. **Tool Decorators**
-   We simplified the creation of tools using a decorator, eliminating the need for verbose JSON definitions as seen in Week 1.
-2. **Agents as Tools**
-   By using `asTool`, we wrapped agents and exposed them as callable tools—making agent chaining easier and more modular.
+1. **Tool Decorators** : We simplified the creation of tools using a decorator, eliminating the need for verbose JSON definitions as seen in Week 1.
+2. **Agents as Tools** : By using `asTool`, we wrapped agents and exposed them as callable tools—making agent chaining easier and more modular.
 3. **Understanding Handoffs vs Tools**
    * **Tools** → Think of it like a *function call*: control returns to the calling agent.
    * **Handoffs** → A *transfer of control*: the receiving agent continues the workflow from that point forward.
