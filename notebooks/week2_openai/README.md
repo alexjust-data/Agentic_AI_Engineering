@@ -8,6 +8,7 @@
 - [Automated sales outreach](#automated-sales-outreach)
 - [2_Lab2 : Our first Agentic Framework project](#2_lab2)
   - [Link 2_Lab2](./2_lab2_with_resend_email.ipynb)
+- [3_Lab_3 : Multi-Model Integration: Using Gemini, DeepSeek & Grok with OpenAI Agents]()
 
 
 
@@ -362,5 +363,32 @@ This comprehensive breakdown explains every code and conceptual component of the
 * Self-Sustaining Conversations
 
 
+## 3_Lab_3 : Multi-Model Integration: Using Gemini, DeepSeek & Grok with OpenAI Agents
+
+**Recap - 3 interactions : Agent Tools, Handoffs, and Next Steps**
+
+1. **Tool Decorators**
+   We simplified the creation of tools using a decorator, eliminating the need for verbose JSON definitions as seen in Week 1.
+
+2. **Agents as Tools**
+   By using `asTool`, we wrapped agents and exposed them as callable tools—making agent chaining easier and more modular.
+
+3. **Understanding Handoffs vs Tools**
+
+   * **Tools** → Think of it like a *function call*: control returns to the calling agent.
+   * **Handoffs** → A *transfer of control*: the receiving agent continues the workflow from that point forward.
+
+**What’s Coming Next**
+
+We’re now going to **extend** the previous work in **three new directions**:
+
+1. **Using Non-OpenAI Models**
+   Learn how to use the **OpenAI Agents SDK** with other models like **Gemini** or **DeepSeek**.
+
+2. **Structured Outputs**
+   Make agents return **structured data**, such as custom objects with named fields, instead of plain text.
+
+3. **Guardrails**
+   Add **input/output controls** to enforce safety, validity, or formatting constraints in the agent pipeline.
 
 
