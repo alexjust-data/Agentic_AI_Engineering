@@ -8,6 +8,7 @@
 - [2_Lab2 : Our first Agentic Framework project](#2_lab2) -> [Link](./2_lab2.ipynb)
 - [3_Lab_3 : Multi-Model Integration: Using Gemini, DeepSeek & Grok with OpenAI Agents](#3_lab_3--multi-model-integration-several-openai-agents-models) -> [Link](./3_lab3openAI.ipynb)
 - [3_Lab_3 : Multi-Model Integration: several OpenAI Agents models](#3_lab_3_enhanced--advanced-openai-model-optimization) -> [Link](./3_lab3_openAI_enhanced.ipynb)
+- [Are you creative? look this in data science](#are-you-creative-look-this-in-data-science)
 
 
 
