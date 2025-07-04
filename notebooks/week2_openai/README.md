@@ -1,6 +1,6 @@
 # README
 
-- [Sidebar: let’s talk about `asyncio`](#sidebar-lets-talk-about-asyncio)
+- [Sidebar: let's talk about `asyncio`](#sidebar-lets-talk-about-asyncio)
 - [Introducing OpenAI Agents SDK](#introducing-openai-agents-sdk)
 - [1_lab1 : Our first look at OpenAI Agents SDK](./1_lab1.ipynb)
   - [Link 1_Lab1](./1_lab1.ipynb)
@@ -8,49 +8,50 @@
 - [Automated sales outreach](#automated-sales-outreach)
 - [2_Lab2 : Our first Agentic Framework project](#2_lab2)
   - [Link 2_Lab2](./2_lab2_with_resend_email.ipynb)
-- [3_Lab_3 : Multi-Model Integration: Using Gemini, DeepSeek & Grok with OpenAI Agents]()
+- [3_Lab_3 : Multi-Model Integration: Using Gemini, DeepSeek & Grok with OpenAI Agents](#3_lab_3--multi-model-integration-several-openai-agents-models)
+- [3_Lab_3 : Multi-Model Integration: several OpenAI Agents models](#3_lab_3_enhanced--advanced-openai-model-optimization)
 
 
 
-## Sidebar: let’s talk about `asyncio`
+## Sidebar: let's talk about `asyncio`
 
-Everything that you’ve built up over the course of **/week2\_openai** is all about the [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/), formerly known as `SWARM`. But before we get into the SDK, it’s important to talk about asynchronous Python: `asyncio`.
+Everything that you've built up over the course of **/week2_openai** is all about the [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/), formerly known as `SWARM`. But before we get into the SDK, it's important to talk about asynchronous Python: `asyncio`.
 
 * All the Agent Frameworks use asynchronous Python.
 * You can get by ignoring it, but it will always bother you slightly.
 * Bite the bullet! Spend 30 minutes on the guide—you will thank me!
 
-Asynchronous programming is common across all agentic frameworks. You *can* surVibe by memorizing a couple of rules and applying them blindly, but that’s unsatisfactory. If you spend just half an hour understanding what’s really happening, you’ll thank yourself later. You’ll run into asynchronous Python again and again, and being comfortable with it will make a big difference. There are guides you can follow, and I’ll give you a high-level summary here.
+Asynchronous programming is common across all agentic frameworks. You *can* surVibe by memorizing a couple of rules and applying them blindly, but that's unsatisfactory. If you spend just half an hour understanding what's really happening, you'll thank yourself later. You'll run into asynchronous Python again and again, and being comfortable with it will make a big difference. There are guides you can follow, and I'll give you a high-level summary here.
 
 ### The short version
 
 - **All your methods and functions start `async`** The most important rule: anytime you write a function that will be used asynchronously, start it with `async def`.
 
-- **Anytime you call them, use `await`** When you call an async function, you must use the `await` keyword. This is the basic rule, and if you just follow this, you can get most code to work, even if you don’t understand all the internals.
+- **Anytime you call them, use `await`** When you call an async function, you must use the `await` keyword. This is the basic rule, and if you just follow this, you can get most code to work, even if you don't understand all the internals.
 
-- **AsyncIO provides a lightweight alternative to threading or multiprocessing** AsyncIO is a way of writing Python code that achieves concurrency, similar in effect to multithreading, but much lighter. In classic multithreading, you rely on the operating system to switch between threads, each running at the same time. That comes with a lot of complexity and “baggage.” AsyncIO, introduced in Python 3.5, achieves concurrency entirely at the code level—without real OS threads or multiprocessing.
+- **AsyncIO provides a lightweight alternative to threading or multiprocessing** AsyncIO is a way of writing Python code that achieves concurrency, similar in effect to multithreading, but much lighter. In classic multithreading, you rely on the operating system to switch between threads, each running at the same time. That comes with a lot of complexity and "baggage." AsyncIO, introduced in Python 3.5, achieves concurrency entirely at the code level—without real OS threads or multiprocessing.
 
 Because AsyncIO is so lightweight, you can run thousands or even tens of thousands of tasks at once, using very few resources. This is especially valuable when your code spends a lot of time waiting on input/output (I/O), like network calls.
 
 **Why is this important for agent frameworks and LLMs?**
 
-If you’re working with large language models (LLMs), especially via paid APIs like OpenAI, most of your time is spent waiting for network responses. With async code, other parts of your program can continue running while one part is blocked, waiting for a model to respond. In multi-agent systems, where many agents may be hitting different APIs at once, using async is essential for performance and scalability.
+If you're working with large language models (LLMs), especially via paid APIs like OpenAI, most of your time is spent waiting for network responses. With async code, other parts of your program can continue running while one part is blocked, waiting for a model to respond. In multi-agent systems, where many agents may be hitting different APIs at once, using async is essential for performance and scalability.
 
-All of the agent frameworks we’ll look at use AsyncIO for this reason.
+All of the agent frameworks we'll look at use AsyncIO for this reason.
 
 ### Under the hood: coroutines, `async def`, and `await`
 
 **Functions defined with `async def` are called coroutines**
-If you use `async def` to define a function, you’re actually creating a coroutine—a special kind of function that Python can pause and resume. Most people still call them functions, but technically, they’re coroutines.
+If you use `async def` to define a function, you're actually creating a coroutine—a special kind of function that Python can pause and resume. Most people still call them functions, but technically, they're coroutines.
 
-**Calling a coroutine doesn’t execute it immediately—it returns a coroutine object**
-When you call an async function, you don’t get the result right away. Instead, you get a coroutine object. No code runs yet!
+**Calling a coroutine doesn't execute it immediately—it returns a coroutine object**
+When you call an async function, you don't get the result right away. Instead, you get a coroutine object. No code runs yet!
 
 **To actually run a coroutine, you must `await` it, which schedules it for execution within an event loop**
-To get the result from a coroutine, you must use `await` in front of it. This tells Python to run the coroutine in the event loop and return the result when it’s finished.
+To get the result from a coroutine, you must use `await` in front of it. This tells Python to run the coroutine in the event loop and return the result when it's finished.
 
 **While a coroutine is waiting (e.g., for I/O), the event loop can run other coroutines**
-The event loop can only execute one coroutine at a time. But if a coroutine gets stuck waiting for I/O (like waiting for a response from OpenAI), the event loop pauses that coroutine and runs another one that’s ready to go. This allows thousands of tasks to run efficiently, as long as much of the work is I/O-bound.
+The event loop can only execute one coroutine at a time. But if a coroutine gets stuck waiting for I/O (like waiting for a response from OpenAI), the event loop pauses that coroutine and runs another one that's ready to go. This allows thousands of tasks to run efficiently, as long as much of the work is I/O-bound.
 
 ### Example: The short version
 
@@ -82,7 +83,7 @@ my_result = await my_coroutine
 ```
 
 
-You might think that just calling `do_some_processing()` would run the function, but it doesn’t. It only returns a coroutine object. To actually run it, you must await it.
+You might think that just calling `do_some_processing()` would run the function, but it doesn't. It only returns a coroutine object. To actually run it, you must await it.
 
 You can simplify even further by writing:
 
@@ -92,7 +93,7 @@ my_result = await do_some_processing()
 ```
 
 
-This is what you’ll do in most real code.
+This is what you'll do in most real code.
 
 ### Richer example: running multiple coroutines concurrently
 
@@ -108,7 +109,7 @@ results = await asyncio.gather(
 
 Here, `asyncio.gather()` is used to schedule multiple coroutines at once. The event loop will start all three, and whenever one is blocked waiting on I/O, another can run. The results come back as a list.
 
-This is Python’s way of implementing “fake” multithreading at the code level. It’s not real OS-level threading, but it’s often just what you need for highly concurrent, I/O-bound programs like LLM agent frameworks.
+This is Python's way of implementing "fake" multithreading at the code level. It's not real OS-level threading, but it's often just what you need for highly concurrent, I/O-bound programs like LLM agent frameworks.
 
 ---
 
@@ -119,9 +120,9 @@ This is Python’s way of implementing “fake” multithreading at the code lev
 * Just calling the function does not run it; it only creates a coroutine object.
 * Use constructs like `asyncio.gather` to run multiple coroutines at once.
 
-If you understand these rules and can recognize the code patterns in the examples, you’ll be productive with async Python in LLM/agent projects.
+If you understand these rules and can recognize the code patterns in the examples, you'll be productive with async Python in LLM/agent projects.
 
-> Spend a bit of time with the guide and try the examples—this is the most valuable investment you’ll make for working with modern agentic frameworks in Python!
+> Spend a bit of time with the guide and try the examples—this is the most valuable investment you'll make for working with modern agentic frameworks in Python!
 
 ---
 
@@ -129,13 +130,13 @@ If you understand these rules and can recognize the code patterns in the example
 
 ## Introducing OpenAI Agents SDK
 
-The OpenAI Agents SDK (formerly known as `SWARM`) is the framework you’ll use to build intelligent LLM agents in a highly flexible and efficient way. Before we dive into technical details, here’s why it stands out:
+The OpenAI Agents SDK (formerly known as `SWARM`) is the framework you'll use to build intelligent LLM agents in a highly flexible and efficient way. Before we dive into technical details, here's why it stands out:
 
 * **Lightweight and flexible**
-  The SDK is extremely lightweight and remarkably flexible. Unlike more “opinionated” frameworks that force you to work in a certain way, OpenAI Agents SDK gives you maximum freedom to structure your agents and workflows as you prefer.
+  The SDK is extremely lightweight and remarkably flexible. Unlike more "opinionated" frameworks that force you to work in a certain way, OpenAI Agents SDK gives you maximum freedom to structure your agents and workflows as you prefer.
 
 * **Stays out of the way**
-  This framework doesn’t get in your way or clutter your code. All the repetitive boilerplate and JSON-handling you’d otherwise have to do is completely abstracted for you.
+  This framework doesn't get in your way or clutter your code. All the repetitive boilerplate and JSON-handling you'd otherwise have to do is completely abstracted for you.
 
 * **Makes common activities easy**
   Everyday tasks—like using tools, coordinating agent interactions, or applying controls—become trivial. The SDK automates all those low-level mechanics that otherwise slow you down and distract from the core logic.
@@ -146,8 +147,8 @@ The OpenAI Agents SDK (formerly known as `SWARM`) is the framework you’ll use 
 OpenAI Agents SDK uses a deliberately minimal, clear vocabulary. There are just three main concepts you need to know:
 
 * **Agents** represent LLMs encapsulated with a specific role or function in your solution.
-* **Handoffs** are the interactions between agents. Whenever an agent “hands off” work or information to another, that’s a handoff.
-* **Guardrails** are the controls and restrictions you put in place to make sure the agent behaves as expected and doesn’t go off track. (This term is also common in general software engineering.)
+* **Handoffs** are the interactions between agents. Whenever an agent "hands off" work or information to another, that's a handoff.
+* **Guardrails** are the controls and restrictions you put in place to make sure the agent behaves as expected and doesn't go off track. (This term is also common in general software engineering.)
 
 ### Three Steps
 
@@ -157,15 +158,15 @@ Running an agent with OpenAI Agents SDK is as simple as following these three co
    Instantiate your agent, configuring its purpose and core settings.
 
 2. **Use `with trace()` to track the agents**
-   Use the `with trace()` context to log all agent interactions. This makes monitoring and debugging straightforward, and integrates seamlessly with OpenAI’s monitoring tools. While optional, it’s the recommended approach.
+   Use the `with trace()` context to log all agent interactions. This makes monitoring and debugging straightforward, and integrates seamlessly with OpenAI's monitoring tools. While optional, it's the recommended approach.
 
 3. **Call `runner.run()` to run the agents**
-   Use `runner.run()` to actually execute the agent. Note: this is an async function (a coroutine), so you’ll need to `await` it to trigger execution and collect the result.
+   Use `runner.run()` to actually execute the agent. Note: this is an async function (a coroutine), so you'll need to `await` it to trigger execution and collect the result.
 
-That’s really all there is to it—no complicated jargon, no convoluted rules. The core concepts are minimal and direct, and the SDK makes it easy to focus on agent logic, not plumbing.
+That's really all there is to it—no complicated jargon, no convoluted rules. The core concepts are minimal and direct, and the SDK makes it easy to focus on agent logic, not plumbing.
 
 
-OpenAI Agents SDK is my favorite framework because it strikes the perfect balance between flexibility, simplicity, and power. While other frameworks have their strengths and may be best for certain advanced cases, in most projects you’ll both start and finish with OpenAI Agents SDK. And, as you move on to more advanced projects (such as MCP in week six), you’ll return to this SDK to leverage its full capabilities.
+OpenAI Agents SDK is my favorite framework because it strikes the perfect balance between flexibility, simplicity, and power. While other frameworks have their strengths and may be best for certain advanced cases, in most projects you'll both start and finish with OpenAI Agents SDK. And, as you move on to more advanced projects (such as MCP in week six), you'll return to this SDK to leverage its full capabilities.
 
 Remember: all agent frameworks come with their own terminology and core ideas, but OpenAI Agents SDK stands out for its clarity, minimalism, and its ability to abstract away repetitive busywork—so you can focus on building smarter agents.
 
@@ -177,7 +178,7 @@ Remember: all agent frameworks come with their own terminology and core ideas, b
 * Trace and monitor interactions.
 * Run with `runner.run()` and use `await`.
 
-The SDK handles everything else for you. Now, let’s walk through these steps in practice.
+The SDK handles everything else for you. Now, let's walk through these steps in practice.
 
 
 
@@ -185,7 +186,7 @@ The SDK handles everything else for you. Now, let’s walk through these steps i
 
 **My tips for successful vibing**
 
-* Good vibes – prompt well – ask short answer and latest APIs for today’s date.
+* Good vibes – prompt well – ask short answer and latest APIs for today's date.
 * Vibe but verify – ask 2 LLMs the same question.
 * Step up the vibe – ask to break down your request into independently testable steps.
 * Vibe and validate – ask an LLM then get another LLM to check.
@@ -211,7 +212,7 @@ Otherwise, LLMs have a nasty tendency to use older APIs because that was in a lo
 
 **2. Vibe but Verify**
 
-Don’t just ask an LLM a question and go with it. Ask a couple of LLMs.
+Don't just ask an LLM a question and go with it. Ask a couple of LLMs.
 So, I often ask the same question to ChatGPT and to Claude, and I have them both up.
 I ask the question because I'll learn from both of the answers.
 Often, one of them is too long-winded or is missing the point of it, and one of them will be spot on.
@@ -220,9 +221,9 @@ And so, asking a couple or maybe even three so that you're verifying what answer
 **3. Step Up the Vibe**
 
 This is saying, and I think this is such a great one.
-Sometimes students send me problems saying, “I'm stuck with this,” and they send me 200 lines of code and say, “It’s not working.”
-It’s immediately obvious that this is Vibe coding — you can tell it was LLM-generated and it’s unwieldy, often full of bugs.
-And I come back and say: It’s no good generating 200 lines of code and then saying, “It’s broken.”
+Sometimes students send me problems saying, "I'm stuck with this," and they send me 200 lines of code and say, "It's not working."
+It's immediately obvious that this is Vibe coding — you can tell it was LLM-generated and it's unwieldy, often full of bugs.
+And I come back and say: It's no good generating 200 lines of code and then saying, "It's broken."
 Instead:
 
 * Always try to get LLMs to generate function-by-function.
@@ -231,19 +232,19 @@ Instead:
 
 > **Tip**: If you don't know how to break it down, ask an LLM:
 >
-> "I’m trying to solve the following problem \[...] — please list 4–5 small steps where each can be tested independently."
+> "I'm trying to solve the following problem [...] — please list 4–5 small steps where each can be tested independently."
 >
 >Then ask for code (and tests) for each step one by one.
 > Build your full solution 10 working lines at a time.
 
 **4. Vibe and Validate**
 
-Similar to “vibe but verify”, but here the goal is **refinement**.
+Similar to "vibe but verify", but here the goal is **refinement**.
 
 * Ask an LLM a question and get an answer.
 * Then ask another LLM (or even the same one):
 
-  > “Is this a good answer? Can it be improved? More concise? Clearer? Are there any bugs?”
+  > "Is this a good answer? Can it be improved? More concise? Clearer? Are there any bugs?"
 
 It often improves the result.
 This mirrors a common **agentic design pattern**: evaluator + optimizer.
@@ -251,10 +252,10 @@ You can do it manually with two LLMs, inspired by agentic ideas.
 
 **5. Vibe with Variety**
 
-Don’t just ask: “Can you generate code for this?”
+Don't just ask: "Can you generate code for this?"
 Instead, say:
 
-> “Give me 3 different solutions to the same problem.”
+> "Give me 3 different solutions to the same problem."
 
 Why?
 
@@ -265,18 +266,18 @@ Why?
 Also ask for explanations of the differences and rationale.
 That way:
 
-* You’ll understand better.
+* You'll understand better.
 * The LLM is forced to reason through its decisions.
-* You stay connected to what’s going on.
+* You stay connected to what's going on.
 
 **Final Note**
 
 This leads to one final, implicit rule:
 
-> Always ask the LLM to explain things clearly if you don’t understand.
+> Always ask the LLM to explain things clearly if you don't understand.
 
 **Vibe coding is super fun, productive, and powerful.**
-But if you don’t follow what’s happening, it becomes painful and frustrating when something breaks.
+But if you don't follow what's happening, it becomes painful and frustrating when something breaks.
 **Stay in touch with the logic. Understand every step.**
 
 
@@ -305,8 +306,8 @@ We're going to be building **three different pieces**, or layers, of **agentic a
      * **Handoffs** — the special construct introduced earlier.
 
 * Keep this **three-layer structure** in mind.
-* This is how we’ll be building up complexity in our lab.
-* A lot of coding ahead — let’s get started.
+* This is how we'll be building up complexity in our lab.
+* A lot of coding ahead — let's get started.
 
 
 
@@ -315,7 +316,7 @@ We're going to be building **three different pieces**, or layers, of **agentic a
 **Resend Email - Complete Technical Breakdown**
 
 This comprehensive breakdown explains every code and conceptual component of the  
-[2\_lab2\_with\_resend\_email.ipynb](./2_lab2_with_resend_email.ipynb) implementation.
+[2_lab2_with_resend_email.ipynb](./2_lab2_with_resend_email.ipynb) implementation.
 
 
 
@@ -363,8 +364,7 @@ This comprehensive breakdown explains every code and conceptual component of the
 * Self-Sustaining Conversations
 
 
-## 3_Lab_3 : Multi-Model Integration: ~~Using Gemini, DeepSeek & Grok with OpenAI Agents~~
-## 3_Lab_3 : Multi-Model Integration: several OpenAI Agents
+## 3_Lab_3 : Multi-Model Integration: several OpenAI Agents models
 
 
 **Recap - 3 interactions : Agent Tools, Handoffs, and Next Steps**
@@ -375,9 +375,9 @@ This comprehensive breakdown explains every code and conceptual component of the
    * **Tools** → Think of it like a *function call*: control returns to the calling agent.
    * **Handoffs** → A *transfer of control*: the receiving agent continues the workflow from that point forward.
 
-**What’s Coming Next**
+**What's Coming Next**
 
-We’re now going to **extend** the previous work in **three new directions**:
+We're now going to **extend** the previous work in **three new directions**:
 
 1. **Using Non-OpenAI Models**
    Learn how to use the **OpenAI Agents SDK** with other models like **Gemini** or **DeepSeek**.
@@ -461,3 +461,42 @@ class NameCheckOutput(BaseModel):
 - **Traceability facilitates debugging and optimization**
 
 This system demonstrates how to build **robust and secure AI applications** that intelligently combine multiple models to solve complex real-world problems. 
+
+
+## 3_Lab_3_Enhanced : Advanced OpenAI Model Optimization
+
+**Enhanced version with comprehensive testing and performance analysis**
+
+**Model Configuration Testing**
+- **5 different OpenAI configurations**: Creative (temp=0.9), Balanced (temp=0.7), Precise (temp=0.2), Fast (GPT-4o-mini), Quick (GPT-3.5-turbo)
+- **Parameter comparison**: Temperature and max_tokens impact on output quality
+- **Agent instruction optimization**: Configurations guide agent behavior for consistent results
+
+**Enhanced Guardrails System**
+- **Input validation**: Personal info, inappropriate content, competitor mentions, spam detection
+- **Output validation**: Professionalism, compliance, quality scoring
+- **Structured validation**: Pydantic models for consistent data validation
+- **Multi-layered protection**: Comprehensive security with detailed feedback
+
+**Structured Outputs & Performance Monitoring**
+- **EmailOutput model**: Subject, body, tone, key points, CTA, response rate estimation
+- **Performance tracking**: Response time, cost estimation, quality scoring
+- **Real-time benchmarking**: Comprehensive agent comparison across configurations
+- **Efficiency analysis**: Quality-per-dollar optimization
+
+**Key Insights & Results**
+| **Configuration** | **Best Use Case** | **Performance** |
+|------------------|-------------------|-----------------|
+| GPT-4o Creative  | Complex reasoning, high-stakes emails | High quality, higher cost |
+| GPT-4o Balanced  | Most business applications | Optimal balance |
+| GPT-4o Precise   | Consistent, predictable outputs | High consistency |
+| GPT-4o-mini Fast | Cost-effective general tasks | Best value |
+| GPT-3.5-turbo Quick | High-volume simple tasks | Fastest, cheapest |
+
+**Production Recommendations**
+- **Cost optimization**: Choose model based on specific requirements
+- **Quality vs. efficiency**: Balance performance with budget constraints
+- **Comprehensive monitoring**: Track metrics continuously for optimization
+- **Scalable architecture**: Easy to add new models and configurations
+
+**Enhanced Features**: Multi-configuration testing, advanced guardrails, performance analytics, structured outputs, and production-ready optimization insights. 
