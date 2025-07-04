@@ -5,9 +5,9 @@
 - [1_lab1 : Our first look at OpenAI Agents SDK](./1_lab1.ipynb) -> [Link 1_Lab1](./1_lab1.ipynb)
 - [vibe coding](#vibe-coding)
 - [Automated sales outreach](#automated-sales-outreach)
-- [2_Lab2 : Our first Agentic Framework project](#2_lab2) -> [Link 2_Lab2](./2_lab2_with_resend_email.ipynb)
-- [3_Lab_3 : Multi-Model Integration: Using Gemini, DeepSeek & Grok with OpenAI Agents](#3_lab_3--multi-model-integration-several-openai-agents-models)
-- [3_Lab_3 : Multi-Model Integration: several OpenAI Agents models](#3_lab_3_enhanced--advanced-openai-model-optimization)
+- [2_Lab2 : Our first Agentic Framework project](#2_lab2) -> [Link 2_Lab2](./2_lab2.ipynb)
+- [3_Lab_3 : Multi-Model Integration: Using Gemini, DeepSeek & Grok with OpenAI Agents](#3_lab_3--multi-model-integration-several-openai-agents-models) -> [Link 2_Lab2](./3_lab3openAI.ipynb)
+- [3_Lab_3 : Multi-Model Integration: several OpenAI Agents models](#3_lab_3_enhanced--advanced-openai-model-optimization) -> [Link 2_Lab2](./3_lab3_openAI_enhanced.ipynb)
 
 
 
