@@ -363,7 +363,9 @@ This comprehensive breakdown explains every code and conceptual component of the
 * Self-Sustaining Conversations
 
 
-## 3_Lab_3 : Multi-Model Integration: Using Gemini, DeepSeek & Grok with OpenAI Agents
+## 3_Lab_3 : Multi-Model Integration: ~~Using Gemini, DeepSeek & Grok with OpenAI Agents~~
+## 3_Lab_3 : Multi-Model Integration: several OpenAI Agents
+
 
 **Recap - 3 interactions : Agent Tools, Handoffs, and Next Steps**
 
@@ -397,7 +399,6 @@ We’re now going to **extend** the previous work in **three new directions**:
 | Sales Agent 3   | GPT-3.5-turbo | Sales Agent                | Generates email variant                                                     | Concise & direct            |
 | Email Manager   | GPT-4o-mini   | Format specialist          | Generates attractive subjects<br>Converts to HTML<br>Sends via Resend API   | Email formatting & delivery |
 | Guardrail Agent | GPT-4o-mini   | Security / Input Validator | Detects personal names<br>Blocks dangerous requests<br>Validates all inputs | Guardrails & Safety         |
-
 
 
 **Security Features** : Input Guardrails  
