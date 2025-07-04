@@ -388,25 +388,18 @@ We’re now going to **extend** the previous work in **three new directions**:
 
 **Main Agents:**
 
-1. **Sales Manager (GPT-4o)** - Main coordinator
-   - Evaluates multiple email versions
-   - Selects the best email using effectiveness criteria
-   - Makes strategic decisions
+Aquí tienes la tabla organizada de los roles y funciones de tus agentes:
 
-2. **3 Sales Agents (Different models)**
-   - **GPT-4o Agent**: Professional and serious style
-   - **GPT-4o-mini Agent**: Humorous and engaging style
-   - **GPT-3.5-turbo Agent**: Concise and direct style
+| **Agent Name**  | **Model**     | **Role**                   | **Key Functions**                                                           | **Style / Specialty**       |
+| --------------- | ------------- | -------------------------- | --------------------------------------------------------------------------- | --------------------------- |
+| Sales Manager   | GPT-4o        | Main coordinator           | Evaluates email versions<br>Selects best email<br>Makes strategic decisions | Effectiveness & Strategy    |
+| Sales Agent 1   | GPT-4o        | Sales Agent                | Generates email variant                                                     | Professional & serious      |
+| Sales Agent 2   | GPT-4o-mini   | Sales Agent                | Generates email variant                                                     | Humorous & engaging         |
+| Sales Agent 3   | GPT-3.5-turbo | Sales Agent                | Generates email variant                                                     | Concise & direct            |
+| Email Manager   | GPT-4o-mini   | Format specialist          | Generates attractive subjects<br>Converts to HTML<br>Sends via Resend API   | Email formatting & delivery |
+| Guardrail Agent | GPT-4o-mini   | Security / Input Validator | Detects personal names<br>Blocks dangerous requests<br>Validates all inputs | Guardrails & Safety         |
 
-3. **Email Manager (GPT-4o-mini)** - Format specialist
-   - Generates attractive subjects
-   - Converts text to HTML
-   - Sends emails via Resend API
 
-4. **Guardrail Agent (GPT-4o-mini)** - Security
-   - Detects personal names
-   - Blocks dangerous requests
-   - Validates inputs before processing
 
 **Security Features** : Input Guardrails  
 - **Personal name detection**: Prevents use of sensitive information
