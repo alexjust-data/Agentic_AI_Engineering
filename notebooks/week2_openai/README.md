@@ -498,3 +498,94 @@ This system demonstrates how to build **robust and secure AI applications** that
 - **Scalable architecture**: Easy to add new models and configurations
 
 **Enhanced Features**: Multi-configuration testing, advanced guardrails, performance analytics, structured outputs, and production-ready optimization insights. 
+
+
+## Are you creative? look this in data science
+
+
+**How can the “agents + tools” model benefit our daily work as data scientists and AI engineers?**
+
+Think about it: each agent is an “entity” that can:
+
+* Execute specific analysis or data functions
+* Collaborate (or compete) with other agents to propose solutions
+* Request, transform, or validate intermediate results
+* Chain together complex processes (not just automate simple tasks)
+* Call “tools” (Python functions, Bash scripts, scientific APIs, etc.)
+
+
+**Practical applications in data science / AI**
+
+1. **Automation of exploratory pipelines**
+
+Imagine a “Data Science Manager Agent” that:
+
+* Receives a business question or scientific hypothesis
+* Assigns tasks to “explorer” agents to load, analyze, and profile datasets, each with its own style (one does profiling, another visualizes outliers, another quickly builds models)
+* A “Formatter Agent” that automatically converts outputs into attractive notebooks, reports, or dashboards
+* A “Guardrail Agent” that checks for privacy risks or pipeline errors
+
+**Result:** Automatic, parallel exploration of data, validated and documented.
+
+
+
+2. **Model generation and validation**
+
+A “Model Selection Agent” could:
+
+* Test several models (sklearn, xgboost, lightgbm, neural nets…)
+* Call other “Model Agents” to run trials with different algorithms/hyperparameters
+* Receive results, compare metrics, decide the best, and report back
+* Ask a “Report Agent” to generate a scientific report
+
+
+
+3. **Reproducible and delegated science**
+
+* A “Notebook Manager Agent” organizes the whole process, executes sections, documents, requests graphs from other agents, and checks reproducibility.
+* Each agent can have limited access to tools, datasets, or even environments (sandboxed).
+
+
+
+4. **Integration with third-party systems (APIs, databases, scientific papers)**
+
+* An “External Data Agent” searches, downloads, and prepares data from APIs, papers, scraping, etc.
+* Another “Citation Agent” finds scientific citations and links them to the results.
+
+
+
+**Concrete advantages**
+
+* **Decentralized work:** Multiple agents work in parallel on different approaches/datasets/models.
+* **Traceability and validation:** Guardrails, logs, and automatic reports.
+* **Rapid iteration:** You can reconfigure each agent’s “personality” (more rigorous, more creative, faster…).
+* **Seamless integration:** Call your own functions, third-party tools, APIs, etc., all from the same conversational flow or notebook.
+* **Full or partial automation:** You can leave entire tasks to agents while focusing on what’s truly critical.
+
+
+
+**Concrete example for your team**
+
+Imagine a typical task: **you want to analyze a new clinical dataset** to discover risk patterns.
+
+1. **Question:** “What predictors influence outcome X?”
+2. **Data Profiler Agent:** Automatic data profiling.
+3. **Feature Engineer Agent:** Generates and tests features.
+4. **Model Runner Agents:** Each tests a different model.
+5. **Guardrail Agent:** Checks privacy, bias, leakage.
+6. **Report Agent:** Summarizes results and limits claims according to the evidence.
+
+**You only monitor the process and make strategic decisions.**
+
+
+
+**How to incorporate this into your daily workflow?**
+
+* **Define your basic agents:** What tasks are repeated? (profiling, feature engineering, modeling, reporting, risk review…)
+* **Convert your utility functions into “tools”** (with decorators like @function\_tool)
+* **Orchestrate agents for typical scenarios:** exploratory analysis, experiments, report generation, integration with external APIs
+* **Train/tune “personalities”** according to the required level of rigor, creativity, or format
+* **Integrate into your notebooks or pipelines:** a “Manager Agent” can launch processes, receive results, and document the flow automatically
+
+
+
