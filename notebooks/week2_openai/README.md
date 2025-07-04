@@ -384,4 +384,87 @@ We’re now going to **extend** the previous work in **three new directions**:
 3. **Guardrails**
    Add **input/output controls** to enforce safety, validity, or formatting constraints in the agent pipeline.
 
+---
 
+**Main Agents:**
+
+1. **Sales Manager (GPT-4o)** - Main coordinator
+   - Evaluates multiple email versions
+   - Selects the best email using effectiveness criteria
+   - Makes strategic decisions
+
+2. **3 Sales Agents (Different models)**
+   - **GPT-4o Agent**: Professional and serious style
+   - **GPT-4o-mini Agent**: Humorous and engaging style
+   - **GPT-3.5-turbo Agent**: Concise and direct style
+
+3. **Email Manager (GPT-4o-mini)** - Format specialist
+   - Generates attractive subjects
+   - Converts text to HTML
+   - Sends emails via Resend API
+
+4. **Guardrail Agent (GPT-4o-mini)** - Security
+   - Detects personal names
+   - Blocks dangerous requests
+   - Validates inputs before processing
+
+**Security Features** : Input Guardrails  
+- **Personal name detection**: Prevents use of sensitive information
+- **Automatic validation**: Blocks requests before processing
+- **Structured outputs**: Ensures consistent data format
+
+**Protection Example:**
+```python
+# ❌ BLOCKED: "Send email from Alice"
+# ✅ ALLOWED: "Send email from Head of Business Development" 
+```
+
+**💡 Key Concepts Demonstrated**
+
+1. **Model Comparison**
+- **GPT-4o**: Best for complex reasoning and decision-making
+- **GPT-4o-mini**: Cost-performance balance for intermediate tasks
+- **GPT-3.5-turbo**: Optimal for simple tasks and quick responses
+
+2. **Agent Specialization**  
+- Each agent has a specific and optimized role
+- Different models for different types of tasks
+- Efficient coordination between agents
+
+3. **Structured Outputs**  
+```python
+class NameCheckOutput(BaseModel):
+    is_name_in_message: bool
+    name: str
+```
+
+4. **Traceability**  
+- Complete traces in OpenAI Platform
+- Debugging and decision monitoring
+- Performance analysis by model
+
+**System Benefits:**
+
+1. **Complete Automation**: From generation to delivery
+2. **Multiple Styles**: Variety of tones and approaches
+3. **Integrated Security**: Automatic protection against risks
+4. **Cost Optimization**: Right model for each task
+5. **Scalability**: Easy to add new agents or models
+
+**Real-World Use Cases:**
+
+- **Sales Teams**: Automatic generation of personalized emails
+- **Marketing**: A/B testing of different styles
+- **Compliance**: Automatic content validation
+- **Productivity**: Reduction of time on repetitive tasks
+
+
+**Key Learnings**
+
+- **Different OpenAI models excel at different tasks**
+- **Guardrails are essential for production systems**
+- **Agent specialization improves output quality**
+- **Structured outputs ensure consistency**
+- **Traceability facilitates debugging and optimization**
+
+This system demonstrates how to build **robust and secure AI applications** that intelligently combine multiple models to solve complex real-world problems. 
