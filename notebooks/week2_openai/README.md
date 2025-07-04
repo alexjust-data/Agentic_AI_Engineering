@@ -388,7 +388,6 @@ We’re now going to **extend** the previous work in **three new directions**:
 
 **Main Agents:**
 
-Aquí tienes la tabla organizada de los roles y funciones de tus agentes:
 
 | **Agent Name**  | **Model**     | **Role**                   | **Key Functions**                                                           | **Style / Specialty**       |
 | --------------- | ------------- | -------------------------- | --------------------------------------------------------------------------- | --------------------------- |
