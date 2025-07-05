@@ -9,6 +9,7 @@
 - [3_Lab_3 : Multi-Model Integration: Using Gemini, DeepSeek & Grok with OpenAI Agents](#3_lab_3--multi-model-integration-several-openai-agents-models) -> [Link](./3_lab3openAI.ipynb)
 - [3_Lab_3 : Multi-Model Integration: several OpenAI Agents models](#3_lab_3_enhanced--advanced-openai-model-optimization) -> [Link](./3_lab3_openAI_enhanced.ipynb)
 - [Are you creative? look this in data science](#are-you-creative-look-this-in-data-science)
+- [4_Lab4 : Deep Research Agents - Advanced Web Search & Report Generation](#4_lab4)
 
 
 
@@ -504,27 +505,27 @@ This system demonstrates how to build **robust and secure AI applications** that
 ## Are you creative? look this in data science
 
 
-**How can the “agents + tools” model benefit our daily work as data scientists and AI engineers?**
+**How can the "agents + tools" model benefit our daily work as data scientists and AI engineers?**
 
-Think about it: each agent is an “entity” that can:
+Think about it: each agent is an "entity" that can:
 
 * Execute specific analysis or data functions
 * Collaborate (or compete) with other agents to propose solutions
 * Request, transform, or validate intermediate results
 * Chain together complex processes (not just automate simple tasks)
-* Call “tools” (Python functions, Bash scripts, scientific APIs, etc.)
+* Call "tools" (Python functions, Bash scripts, scientific APIs, etc.)
 
 
 **Practical applications in data science / AI**
 
 1. **Automation of exploratory pipelines**
 
-Imagine a “Data Science Manager Agent” that:
+Imagine a "Data Science Manager Agent" that:
 
 * Receives a business question or scientific hypothesis
-* Assigns tasks to “explorer” agents to load, analyze, and profile datasets, each with its own style (one does profiling, another visualizes outliers, another quickly builds models)
-* A “Formatter Agent” that automatically converts outputs into attractive notebooks, reports, or dashboards
-* A “Guardrail Agent” that checks for privacy risks or pipeline errors
+* Assigns tasks to "explorer" agents to load, analyze, and profile datasets, each with its own style (one does profiling, another visualizes outliers, another quickly builds models)
+* A "Formatter Agent" that automatically converts outputs into attractive notebooks, reports, or dashboards
+* A "Guardrail Agent" that checks for privacy risks or pipeline errors
 
 **Result:** Automatic, parallel exploration of data, validated and documented.
 
@@ -532,26 +533,26 @@ Imagine a “Data Science Manager Agent” that:
 
 2. **Model generation and validation**
 
-A “Model Selection Agent” could:
+A "Model Selection Agent" could:
 
 * Test several models (sklearn, xgboost, lightgbm, neural nets…)
-* Call other “Model Agents” to run trials with different algorithms/hyperparameters
+* Call other "Model Agents" to run trials with different algorithms/hyperparameters
 * Receive results, compare metrics, decide the best, and report back
-* Ask a “Report Agent” to generate a scientific report
+* Ask a "Report Agent" to generate a scientific report
 
 
 
 3. **Reproducible and delegated science**
 
-* A “Notebook Manager Agent” organizes the whole process, executes sections, documents, requests graphs from other agents, and checks reproducibility.
+* A "Notebook Manager Agent" organizes the whole process, executes sections, documents, requests graphs from other agents, and checks reproducibility.
 * Each agent can have limited access to tools, datasets, or even environments (sandboxed).
 
 
 
 4. **Integration with third-party systems (APIs, databases, scientific papers)**
 
-* An “External Data Agent” searches, downloads, and prepares data from APIs, papers, scraping, etc.
-* Another “Citation Agent” finds scientific citations and links them to the results.
+* An "External Data Agent" searches, downloads, and prepares data from APIs, papers, scraping, etc.
+* Another "Citation Agent" finds scientific citations and links them to the results.
 
 
 
@@ -559,9 +560,9 @@ A “Model Selection Agent” could:
 
 * **Decentralized work:** Multiple agents work in parallel on different approaches/datasets/models.
 * **Traceability and validation:** Guardrails, logs, and automatic reports.
-* **Rapid iteration:** You can reconfigure each agent’s “personality” (more rigorous, more creative, faster…).
+* **Rapid iteration:** You can reconfigure each agent's "personality" (more rigorous, more creative, faster…).
 * **Seamless integration:** Call your own functions, third-party tools, APIs, etc., all from the same conversational flow or notebook.
-* **Full or partial automation:** You can leave entire tasks to agents while focusing on what’s truly critical.
+* **Full or partial automation:** You can leave entire tasks to agents while focusing on what's truly critical.
 
 
 
@@ -569,7 +570,7 @@ A “Model Selection Agent” could:
 
 Imagine a typical task: **you want to analyze a new clinical dataset** to discover risk patterns.
 
-1. **Question:** “What predictors influence outcome X?”
+1. **Question:** "What predictors influence outcome X?"
 2. **Data Profiler Agent:** Automatic data profiling.
 3. **Feature Engineer Agent:** Generates and tests features.
 4. **Model Runner Agents:** Each tests a different model.
@@ -578,15 +579,76 @@ Imagine a typical task: **you want to analyze a new clinical dataset** to discov
 
 **You only monitor the process and make strategic decisions.**
 
-
-
 **How to incorporate this into your daily workflow?**
 
 * **Define your basic agents:** What tasks are repeated? (profiling, feature engineering, modeling, reporting, risk review…)
-* **Convert your utility functions into “tools”** (with decorators like @function\_tool)
+* **Convert your utility functions into "tools"** (with decorators like @function\_tool)
 * **Orchestrate agents for typical scenarios:** exploratory analysis, experiments, report generation, integration with external APIs
-* **Train/tune “personalities”** according to the required level of rigor, creativity, or format
-* **Integrate into your notebooks or pipelines:** a “Manager Agent” can launch processes, receive results, and document the flow automatically
+* **Train/tune "personalities"** according to the required level of rigor, creativity, or format
+* **Integrate into your notebooks or pipelines:** a "Manager Agent" can launch processes, receive results, and document the flow automatically
 
+
+
+## 4_Lab4 : Deep Research Agents - Advanced Web Search & Report Generation
+
+**Purpose & Audience**
+This notebook presents a reproducible, extensible agentic research pipeline, designed for data scientists, ML engineers, and research automation architects. It operationalizes multi-agent collaboration and parallelization, demonstrating best practices in modern LLM-driven scientific workflows.
+
+**Core Architecture**
+
+* **Agent-Orchestrated Pipeline:**
+  Implements a modular workflow where each agent (Planner, Search, Writer, Email) is atomic, testable, and independently improvable.
+
+  * **Planner Agent:** Converts a natural language query into an explicit, auditable search plan (structured as search tasks with rationales).
+  * **Search Agent:** Executes web searches in parallel (`asyncio.gather`) to minimize latency and simulate human “research teams.”
+  * **Writer Agent:** Synthesizes results, enforcing structure, traceability, and clarity (outputs both summary and full report in Markdown/HTML).
+  * **Email Agent:** Automates delivery of results using transactional email APIs (e.g. Resend), enabling human-in-the-loop or full automation.
+
+* **Asynchronous Concurrency:**
+  All search execution is truly concurrent using `asyncio`. This allows for massive scalability and real-world integration with external APIs, databases, or crawling microservices.
+
+* **Traceable, Auditable Workflows:**
+  Every decision and agent step is traced using the SDK’s native trace system, allowing for complete reproducibility and experiment tracking—critical for scientific reporting and production deployments.
+
+**Methodology & Patterns**
+
+* **Agentic Design Patterns:**
+
+  * **Tool Use**: Functions are exposed as agent tools, supporting plug-and-play extensibility.
+  * **Handoffs**: Complex workflows are decomposed as explicit handoffs between agents.
+  * **Structured Outputs**: Every step enforces Pydantic models or dataclass schemas for downstream reliability.
+  * **Parallel Task Scheduling**: Uses `asyncio.gather` as a design principle for “human-like” multitasking.
+  * **End-to-End Automation**: Fully automates information retrieval, summarization, and knowledge delivery—minimizing human bottlenecks.
+
+* **Production-Ready Practices:**
+
+  * **Environment isolation** and secrets management for API keys.
+  * **Error handling** and fallback strategies for robust operation.
+  * **Email formatting** with HTML/CSS for client compatibility.
+  * **Separation of concerns**: Research, synthesis, and delivery are decoupled for maintainability.
+
+**Real-World Applications**
+
+* **Automated literature reviews** (science, finance, technology)
+* **Continuous intelligence gathering** (market, compliance, regulatory)
+* **Executive reporting** with traceable sources
+* **Research QA bots** (audit trail included)
+* **Scientific workflow automation** (hypothesis > plan > search > synthesize > deliver)
+
+**How to Use**
+
+* Open [`4_lab4.ipynb`](./4_lab4.ipynb).
+* Configure API keys and email endpoints as environment variables.
+* Modify or extend agent definitions for your domain (science, finance, law, etc).
+* Run the notebook:
+
+  1. Input your research query.
+  2. The system plans, executes, and synthesizes results in parallel.
+  3. Outputs are delivered as rich HTML reports, via email and notebook display.
+
+**Why This Matters**
+
+This lab illustrates how **agentic, concurrent, fully-automated research pipelines** can drastically increase velocity, reproducibility, and traceability in scientific/technical work.
+By leveraging LLM agents for planning, retrieval, and synthesis—combined with robust engineering practices—teams can automate knowledge workflows that would otherwise require hours of manual effort and review.
 
 
