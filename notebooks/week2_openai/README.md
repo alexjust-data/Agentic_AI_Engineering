@@ -9,7 +9,7 @@
 - [3_Lab_3 : Multi-Model Integration: Using Gemini, DeepSeek & Grok with OpenAI Agents](#3_lab_3--multi-model-integration-several-openai-agents-models) -> [Link](./3_lab3openAI.ipynb)
 - [3_Lab_3 : Multi-Model Integration: several OpenAI Agents models](#3_lab_3_enhanced--advanced-openai-model-optimization) -> [Link](./3_lab3_openAI_enhanced.ipynb)
 - [Are you creative? look this in data science](#are-you-creative-look-this-in-data-science)
-- [4_Lab4 : Deep Research Agents - Advanced Web Search & Report Generation](#4_lab4)
+- [4_Lab4 : Deep Research Agents - Advanced Web Search & Report Generation](#4_lab4--deep-research-agents---advanced-web-search--report-generation) -> [Link](./4_lab4.ipynb)
 
 
 
@@ -634,17 +634,6 @@ This notebook presents a reproducible, extensible agentic research pipeline, des
 * **Executive reporting** with traceable sources
 * **Research QA bots** (audit trail included)
 * **Scientific workflow automation** (hypothesis > plan > search > synthesize > deliver)
-
-**How to Use**
-
-* Open [`4_lab4.ipynb`](./4_lab4.ipynb).
-* Configure API keys and email endpoints as environment variables.
-* Modify or extend agent definitions for your domain (science, finance, law, etc).
-* Run the notebook:
-
-  1. Input your research query.
-  2. The system plans, executes, and synthesizes results in parallel.
-  3. Outputs are delivered as rich HTML reports, via email and notebook display.
 
 **Why This Matters**
 
