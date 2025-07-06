@@ -174,6 +174,32 @@ These decorators:
 
 
 
+## LightLLM and CrewAI Project Setup
+
+CrewAI uses **LightLLM**, a minimal and ultra-flexible framework, to connect with any LLM. Unlike heavier frameworks like LangChain, LightLLM allows you to:
+
+* Connect instantly to hosted or local LLMs
+* Use almost any provider or model
+* Configure access easily in code or `.env` files
+
+**Example usage**
+
+```python
+llm = LLM(model="openai/gpt-4o-mini")
+llm = LLM(model="anthropic/claude-3-5-sonnet-latest")
+llm = LLM(model="gemini/gemini-2-0-flash")
+llm = LLM(model="groq/llama-3-70b-versatile")
+llm = LLM(model="ollama/llama3.2", base_url="http://localhost:11434")
+llm = LLM(
+    model="openrouter/deepseek/deepseek-r1",
+    base_url="https://openrouter.ai/api/v1",
+    api_key=OPENROUTER_API_KEY
+)
+```
+
+* The model format: `"provider/model"`
+* Supports OpenAI, Anthropic, Gemini, Groq, Ollama, OpenRouter, etc.
+* Can also run local models (e.g., via Ollama)
 
 
 
