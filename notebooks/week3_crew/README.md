@@ -1,8 +1,10 @@
 
 - [Crew AI](#crew-ai)
 - [Core Concepts of Crew AI](#core-concepts-of-crew-ai)
+- [LightLLM and CrewAI Project Setup](#lightllm-and-crewai-project-setup)
 - [LightLLM and Model Flexibility in CrewAI](#lightllm-and-model-flexibility-in-crewai)
 - [Structure and Workflow of a CrewAI Project](#core-concepts-of-crew-ai∫)
+
 
 
 ## Crew AI
