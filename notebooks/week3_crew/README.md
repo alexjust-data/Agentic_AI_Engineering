@@ -246,17 +246,78 @@ However, in the course, the focus is on crews, not flows.
 
 Running the `crewai create crew` command generates a full directory structure. At the top level is the project directory, such as `my_crew`. Inside that is a subdirectory called `src`. Within `src`, there is another directory with the name of your project, such as `my_crew` again.
 
-Directory Structure
+
 ```bash
-my_crew/
+(agents_env) ➜  my_agents git:(main) ✗ cd notebooks/week3_crew 
+(agents_env) ➜  week3_crew git:(main) ✗ crewai create crew debate
+Creating folder debate...
+Select a provider to set up:
+1. openai
+2. anthropic
+3. gemini
+4. nvidia_nim
+5. groq
+6. huggingface
+7. ollama
+8. watson
+9. bedrock
+10. azure
+11. cerebras
+12. sambanova
+13. other
+q. Quit
+Enter the number of your choice or 'q' to quit: 1
+Select a model to use for Openai:
+1. gpt-4
+2. gpt-4.1
+3. gpt-4.1-mini-2025-04-14
+4. gpt-4.1-nano-2025-04-14
+5. gpt-4o
+6. gpt-4o-mini
+7. o1-mini
+8. o1-preview
+q. Quit
+Enter the number of your choice or 'q' to quit: 3
+Enter your OPENAI API key (press Enter to skip): 
+API keys and model saved to .env file
+Selected model: gpt-4.1-mini-2025-04-14
+  - Created debate/.gitignore
+  - Created debate/pyproject.toml
+  - Created debate/README.md
+  - Created debate/knowledge/user_preference.txt
+  - Created debate/src/debate/__init__.py
+  - Created debate/src/debate/main.py
+  - Created debate/src/debate/crew.py
+  - Created debate/src/debate/tools/custom_tool.py
+  - Created debate/src/debate/tools/__init__.py
+  - Created debate/src/debate/config/agents.yaml
+  - Created debate/src/debate/config/tasks.yaml
+Crew debate created successfully!
+```
+
+
+```bash
+(agents_env) ➜  week3_crew git:(main) ✗ cd debate
+(agents_env) ➜  debate git:(main) ✗ tree
+.
+├── README.md
+├── knowledge
+│   └── user_preference.txt
 ├── pyproject.toml              # UV project configuration
-└── src/
-    └── my_crew/
-        ├── config/
-        │   ├── agents.yaml     # Agent definitions
-        │   └── tasks.yaml      # Task definitions
-        ├── crew.py             # Main logic with decorators
-        └── main.py             # Entry point for running the crew
+├── src
+│   └── debate
+│       ├── __init__.py
+│       ├── config
+│       │   ├── agents.yaml     # Agent definitions
+│       │   └── tasks.yaml      # Task definitions
+│       ├── crew.py             # Main logic with decorators
+│       ├── main.py             # Entry point for running the crew
+│       └── tools
+│           ├── __init__.py
+│           └── custom_tool.py
+└── tests
+
+7 directories, 10 files
 ```
 
 
@@ -265,7 +326,7 @@ Inside that nested directory, you will find a folder called `config`. This folde
 * `agents.yaml`, where you define agent configurations.
 * `tasks.yaml`, where you define task configurations.
 
-Also in the same directory are two important Python modules:
+Also in the same directory are two important Python modules:∫
 
 * `crew.py`, which is where you define your crew using decorators.
 * `main.py`, which is the script that starts the execution of your crew.
