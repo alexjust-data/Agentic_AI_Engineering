@@ -246,6 +246,20 @@ However, in the course, the focus is on crews, not flows.
 
 Running the `crewai create crew` command generates a full directory structure. At the top level is the project directory, such as `my_crew`. Inside that is a subdirectory called `src`. Within `src`, there is another directory with the name of your project, such as `my_crew` again.
 
+Directory Structure
+```bash
+my_crew/
+├── pyproject.toml              # UV project configuration
+└── src/
+    └── my_crew/
+        ├── config/
+        │   ├── agents.yaml     # Agent definitions
+        │   └── tasks.yaml      # Task definitions
+        ├── crew.py             # Main logic with decorators
+        └── main.py             # Entry point for running the crew
+```
+
+
 Inside that nested directory, you will find a folder called `config`. This folder contains two YAML files by default:
 
 * `agents.yaml`, where you define agent configurations.
