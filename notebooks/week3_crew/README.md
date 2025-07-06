@@ -168,3 +168,77 @@ These decorators:
 * Register agents and tasks automatically
 * Allow referencing `self.agents`, `self.tasks` in the final crew assembly
 * Specify mode (`sequential` or `hierarchical`) within the `@crew` function
+
+
+
+
+
+
+## LightLLM and Model Flexibility in CrewAI
+
+One of the key advantages of CrewAI is its lightweight and flexible way of interacting with LLMs. Under the hood, it uses a framework called LightLLM. LightLLM is a very minimalistic and straightforward tool to interface with actual LLM providers. The speaker likes LightLLM a lot because of its simplicity and lack of overhead, especially compared to frameworks like LangChain, which add a lot of structure.
+
+LightLLM allows you to connect to any LLM easily. In CrewAI, you just create an LLM by passing a model name. The naming structure follows this pattern: provider name followed by a slash, then the model name. This makes it easy to switch between different providers and models.
+
+Examples include GPT-4 from OpenAI, Claude from Anthropic, 3.5 and 3.7 versions, Gemini, Flash, Grok (with a “Q” or a “K”), and local models using Ollama. For local models, you can configure them by providing a base URL. You can also use OpenRouter, which acts as an abstraction layer over multiple LLMs. Configuring OpenRouter involves setting a base URL and an API key.
+
+The idea behind all of this is to provide a simple and flexible system for connecting to any model you need. The speaker believes this gives CrewAI a clear advantage over OpenAI Agents SDK, which is more tightly coupled to a specific provider.
+
+
+## Structure and Workflow of a CrewAI Project
+
+The next major topic is how CrewAI handles projects. In earlier weeks of the course, everything was done inside Python notebooks (like in Cursor), or occasionally through basic Python modules. CrewAI, however, does not work that way. It requires working with actual Python code and comes with its own project and directory structure.
+
+The CrewAI framework has already been installed using this command:
+
+```bash
+uv tool install crewai
+```
+
+That means when you clone the repo, the framework is already available.
+
+To create a new Crew project, you use this command:
+
+```bash
+crewai create crew my_crew
+```
+
+You can name the project whatever you want. For example, “my\_crew” or “my\_project.”
+
+Alternatively, if you want to work with flows instead of crews (i.e., fixed workflows rather than agent-based ones), you can use:
+
+```bash
+crewai create flow my_project
+```
+
+However, in the course, the focus is on crews, not flows.
+
+Running the `crewai create crew` command generates a full directory structure. At the top level is the project directory, such as `my_crew`. Inside that is a subdirectory called `src`. Within `src`, there is another directory with the name of your project, such as `my_crew` again.
+
+Inside that nested directory, you will find a folder called `config`. This folder contains two YAML files by default:
+
+* `agents.yaml`, where you define agent configurations.
+* `tasks.yaml`, where you define task configurations.
+
+Also in the same directory are two important Python modules:
+
+* `crew.py`, which is where you define your crew using decorators.
+* `main.py`, which is the script that starts the execution of your crew.
+
+To run the project, use:
+
+```bash
+crewai run
+```
+
+Internally, this runs:
+
+```bash
+uv run main.py
+```
+
+This setup creates a complete UV (micro) project. So when you run `crewai create crew`, it automatically generates UV project configuration files. These UV projects will be nested within the larger UV project that contains the entire course. This structure will become more intuitive once you see it in practice.
+
+**Final Note Before Practice**
+
+The course is now ready to start using CrewAI hands-on. Everything is set up with UV, CrewAI is installed, and the directory structure has been generated. The next step is to go ahead and actually try it out by building your own crew.
