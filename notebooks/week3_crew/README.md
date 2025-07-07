@@ -1017,7 +1017,7 @@ And then a **task** — this is the concept which doesn't have an analogue in Op
 And then a **crew**, which is a **team of agents and tasks** together, assigned to those agents, and they can run **sequentially or hierarchically**, in which case you'd have to assign a manager LLM to figure out which task is assigned to which agent.
 
 <p align="center">
-  <img src="../img/16.png" width="300"/>
+  <img src="../img/16.png" width="500"/>
 </p>
 
 
@@ -1043,7 +1043,7 @@ And you'll remember that there are **five steps** that we went through when we s
    ```
 
 <p align="center">
-  <img src="../img/17.png" width="300"/>
+  <img src="../img/17.png" width="500"/>
 </p>
 
 Now we’re going to go a little bit deeper in two ways in our next project:
@@ -1053,5 +1053,5 @@ Now we’re going to go a little bit deeper in two ways in our next project:
 
 
 <p align="center">
-  <img src="../img/18.png" width="300"/>
+  <img src="../img/18.png" width="500"/>
 </p>
