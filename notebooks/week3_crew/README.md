@@ -4,8 +4,8 @@
 - [LightLLM and CrewAI Project Setup](#lightllm-and-crewai-project-setup)
 - [LightLLM and Model Flexibility in CrewAI](#lightllm-and-model-flexibility-in-crewai)
 - [Structure and Workflow of a CrewAI Project](#structure-and-workflow-of-a-crewai-project)
-  - [Define our YAML](#now-we-going-to-define-our-yaml)
-- []()
+  - [Define our files](#now-we-going-to-define-our-files)
+- [Run the project](#run-the-project)
 
 
 ## Crew AI
@@ -359,7 +359,7 @@ Also in the same directory are two important Python modules:
 mkdir other # ← optional dummy folder to make VS Code show tree view properly
 ```
 
-#### Now we going to define our YAML
+#### Now we going to define our files
 
 **`agents.yaml`** :
 
@@ -544,7 +544,7 @@ print(result.raw)
 ```
 --- 
 
-To run the project, use:
+#### Run the project
 
 ```bash
 crewai run
@@ -899,3 +899,34 @@ notebooks/week3_crew/debate/output
 
 The course is now ready to start using CrewAI hands-on. Everything is set up with UV, CrewAI is installed, and the directory structure has been generated. The next step is to go ahead and actually try it out by building your own crew.
 
+In this first project using **CrewAI**, we successfully completed a full execution cycle of a crew of agents designed to simulate an automated debate using LLMs.
+
+* **YAML configuration**: We defined the agents (`debater` and `judge`) and tasks (`propose`, `oppose`, `decide`) in the `agents.yaml` and `tasks.yaml` files.
+
+* **crew\.py module**: We created the main crew class using the `@agent` and `@task` decorators. The class loads agent and task configurations from the YAML files and defines the execution order.
+
+* **main.py module**: We specified the input values (in this case, the motion) as a dictionary and launched the crew using `Debate().crew().kickoff(inputs=...)`.
+
+* **Execution flow**: The `debater` agent generated arguments both in favor of and against the motion. The `judge` agent, using Anthropic Claude, evaluated the arguments and made a decision.
+
+* **Result**: The full debate ran successfully. The final decision from the judge was printed in the console and saved to output files as defined in the task configuration.
+
+This project demonstrates how to build and run a basic CrewAI application. You can now create new projects or expand this one by adding tools, agents, or more complex logic.
+
+**To create a new project:**
+
+```bash
+crewai create crew your_project_name
+```
+
+**To run your crew (from the root of your project):**
+
+```bash
+python src/your_project_name/main.py
+```
+
+or, using the CLI:
+
+```bash
+crewai run
+```
