@@ -1016,7 +1016,9 @@ And then a **task** — this is the concept which doesn't have an analogue in Op
 
 And then a **crew**, which is a **team of agents and tasks** together, assigned to those agents, and they can run **sequentially or hierarchically**, in which case you'd have to assign a manager LLM to figure out which task is assigned to which agent.
 
-![](../img/16.png)
+<p align="center">
+  <img src="../img/16.png" width="300"/>
+</p>
 
 
 So that's the overall structure of Crew, which now should be pretty familiar to you.
@@ -1040,16 +1042,16 @@ And you'll remember that there are **five steps** that we went through when we s
    crewai run
    ```
 
-![](../img/17.png)
-
+<p align="center">
+  <img src="../img/17.png" width="300"/>
+</p>
 
 Now we’re going to go a little bit deeper in two ways in our next project:
 
 1. **Tools** – equipping agents with capabilities (something you're probably familiar with from other frameworks).
 2. **Context** – passing information from one task to the next, CrewAI-style.
 
-![](../img/18.png)
 
----
-
-¿Quieres que prepare una estructura base para ese segundo proyecto con herramientas (`tools`) y paso de información (`context`) listos para usar?
+<p align="center">
+  <img src="../img/18.png" width="300"/>
+</p>
