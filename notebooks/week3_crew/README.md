@@ -886,6 +886,15 @@ agents_env➜  debate git:(main) ✗
 
 This setup creates a complete UV (micro) project. So when you run `crewai create crew`, it automatically generates UV project configuration files. These UV projects will be nested within the larger UV project that contains the entire course. This structure will become more intuitive once you see it in practice.
 
+
+```bash
+(agents_env) ➜  my_agents git:(main) tree notebooks/week3_crew/debate/output
+notebooks/week3_crew/debate/output
+├── decide.md
+├── oppose.md
+└── propose.md
+```
+
 **Final Note Before Practice**
 
 The course is now ready to start using CrewAI hands-on. Everything is set up with UV, CrewAI is installed, and the directory structure has been generated. The next step is to go ahead and actually try it out by building your own crew.
