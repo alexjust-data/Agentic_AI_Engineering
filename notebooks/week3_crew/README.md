@@ -1046,12 +1046,39 @@ And you'll remember that there are **five steps** that we went through when we s
   <img src="../img/17.png" width="500"/>
 </p>
 
+## Introducing the Second Project: Financial Researcher
+
 Now we’re going to go a little bit deeper in two ways in our next project:
 
 1. **Tools** – equipping agents with capabilities (something you're probably familiar with from other frameworks).
 2. **Context** – passing information from one task to the next, CrewAI-style.
 
-
 <p align="center">
   <img src="../img/18.png" width="500"/>
 </p>
+
+But first, let’s sign up for a powerful new tool that will allow our agents to access the web.
+
+We’ll use **[Serper.dev](https://serper.dev)** — a lightning-fast and free API for Google search.
+
+* Visit: [https://serper.dev](https://serper.dev)
+* Sign up for an account (you’ll receive 2,500 free credits)
+* Copy your API Key and paste it into your `.env` file as:
+
+```env
+SERPER_API_KEY=your_key_here
+```
+
+> ⚠️ Don’t confuse **Serper.dev** with **SerpAPI** – they are different services!
+
+
+Now let’s create our new project called `financial_researcher`:
+
+```bash
+crewai create crew financial_researcher
+```
+
+* Choose: `OpenAI`
+* Model: `gpt-4o-mini`
+* Skip key setup for now (we’ll use `.env`)
+* The structure will be scaffolded automatically for you.
