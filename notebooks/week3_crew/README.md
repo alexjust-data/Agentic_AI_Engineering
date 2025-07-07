@@ -1075,10 +1075,51 @@ SERPER_API_KEY=your_key_here
 Now let’s create our new project called `financial_researcher`:
 
 ```bash
-crewai create crew financial_researcher
+(agents_env) ➜  week3_crew git:(main) crewai create crew financial_researcher
+
+Creating folder financial_researcher...
+Select a provider to set up:
+1. openai
+2. anthropic
+3. gemini
+4. nvidia_nim
+5. groq
+6. huggingface
+7. ollama
+8. watson
+9. bedrock
+10. azure
+11. cerebras
+12. sambanova
+13. other
+q. Quit
+Enter the number of your choice or 'q' to quit: 1
+Select a model to use for Openai:
+1. gpt-4
+2. gpt-4.1
+3. gpt-4.1-mini-2025-04-14
+4. gpt-4.1-nano-2025-04-14
+5. gpt-4o
+6. gpt-4o-mini
+7. o1-mini
+8. o1-preview
+q. Quit
+Enter the number of your choice or 'q' to quit: 3
+Enter your OPENAI API key (press Enter to skip): 
+API keys and model saved to .env file
+Selected model: gpt-4.1-mini-2025-04-14
+  - Created financial_researcher/.gitignore
+  - Created financial_researcher/pyproject.toml
+  - Created financial_researcher/README.md
+  - Created financial_researcher/knowledge/user_preference.txt
+  - Created financial_researcher/src/financial_researcher/__init__.py
+  - Created financial_researcher/src/financial_researcher/main.py
+  - Created financial_researcher/src/financial_researcher/crew.py
+  - Created financial_researcher/src/financial_researcher/tools/custom_tool.py
+  - Created financial_researcher/src/financial_researcher/tools/__init__.py
+  - Created financial_researcher/src/financial_researcher/config/agents.yaml
+  - Created financial_researcher/src/financial_researcher/config/tasks.yaml
+Crew financial_researcher created successfully!
 ```
 
-* Choose: `OpenAI`
-* Model: `gpt-4o-mini`
-* Skip key setup for now (we’ll use `.env`)
-* The structure will be scaffolded automatically for you.
+
