@@ -320,16 +320,142 @@ Crew debate created successfully!
 7 directories, 10 files
 ```
 
+**Inside debate/:**
 
-Inside that nested directory, you will find a folder called `config`. This folder contains two YAML files by default:
+Contains a subfolder: `knowledge/`
+* File: user_preference.yaml
+* Contains user-specific background info.
+* Used to pass context to the model (not used in this example).
+```bash
+(agents_env) ➜  week3_crew git:(main) cat debate/knowledge/user_preference.txt
+User name is John Doe.
+User is an AI Engineer.
+User is interested in AI Agents.
+User is based in San Francisco, California.
+```
 
+**source/ Folder**:
+
+Path: `debate/source/debate/`
+
+This nested structure exists because the project name is also **debate**.  
+
+Subfolder: `config/` This folder contains two YAML files by default:
 * `agents.yaml`, where you define agent configurations.
 * `tasks.yaml`, where you define task configurations.
+* Both with defeault examples.
 
-Also in the same directory are two important Python modules:∫
+Subfolder: `tools/`
+* Empty or with placeholder code
+* For adding custom tools later (not used in this example)
 
+Python files:  
+Also in the same directory are two important Python modules:
 * `crew.py`, which is where you define your crew using decorators.
 * `main.py`, which is the script that starts the execution of your crew.
+
+```sh
+mkdir other # ← optional dummy folder to make VS Code show tree view properly
+```
+
+**Now we going to define our YAML**
+
+our configuration for our `agents.yaml` :
+
+And this contains some default, some sort of scaffolding, some example agents that are called the Researcher and the Reporting Analyst are the two examples it's given and we're going to change these to being what we're looking to build, and of course **we're looking to build a little debate team**, and in fact we only need **two agents** for what we're looking to do. We want an agent that will be the debater. One agent is going to play both roles of being for and against the motion 
+
+```yaml
+debater:
+  role: >
+    A compelling debater
+  goal: >
+    Present a clear argument either in favor of or against the motion. The motion is: {motion}
+```
+So now we have a back story... you're an experienced debater with a knack for giving concise but convincing arguments. You can also specify what model to use... GPT-40 Mini... or OpenAI/GPT-40 Mini...
+
+```yaml
+  backstory: >
+    You're an experienced debator with a knack for giving concise but convincing arguments.
+    The motion is: {motion}
+  llm: openai/gpt-4o-mini
+```
+> Note : the `{motion}` fields acts as a dynamic template that will in `main.py`
+
+But now let’s define our judge... the role we will say is decide the winner of the debate.. 
+
+```yaml
+judge:
+  role: >
+    Decide the winner of the debate based on the arguments presented
+  goal: >
+    Given arguments for and against this motion: {motion}, decide which side is more convincing,
+    based purely on the arguments presented.
+```
+
+You’re a fair judge with a reputation for weighing up arguments without factoring in your own views... You can just have GPT-40 Mini, or... anthropic/claude-3-7-sonnet-latest...
+
+```yaml
+  backstory: >
+    You are a fair judge with a reputation for weighing up arguments without factoring in
+    your own views, and making a decision based purely on the merits of the argument.
+    The motion is: {motion}
+  llm: anthropic/claude-3-7-sonnet-latest
+```
+
+Next up is `tasks.yaml`:
+
+The first task is to propose the motion — that is, give a strong argument in favor of it.
+This task is assigned to the debater agent. 
+
+```yaml
+propose:
+  description: >
+    You are proposing the motion: {motion}.
+    Come up with a clear argument in favor of the motion.
+    Be very convincing.
+  expected_output: >
+    Your clear argument in favor of the motion, in a concise manner.
+  agent: debater
+  output_file: output/propose.md
+```
+
+The second task is to oppose the motion — that is, produce a strong argument against it.
+Again, the same debater agent is used, but now in oposición.
+
+```yaml
+oppose:
+  description: >
+    You are in opposition to the motion: {motion}.
+    Come up with a clear argument against the motion.
+    Be very convincing.
+  expected_output: >
+    Your clear argument against the motion, in a concise manner.
+  agent: debater
+  output_file: output/oppose.md
+```
+Finally, the judge reviews the arguments and makes a decision about which side is more convincing.
+
+```yaml
+decide:
+  description: >
+    Review the arguments presented by the debaters and decide which side is more convincing.
+  expected_output: >
+    Your decision on which side is more convincing, and why.
+  agent: judge
+  output_file: output/decide.md
+```
+
+final result:
+
+```yaml
+propose  →  debater  →  output/propose.md
+oppose   →  debater  →  output/oppose.md
+decide   →  judge    →  output/decide.md
+```
+
+
+
+
 
 To run the project, use:
 
