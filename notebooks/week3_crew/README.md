@@ -1,12 +1,15 @@
 
 - [Crew AI](#crew-ai)
-- [Core Concepts of Crew AI](#core-concepts-of-crew-ai)
-- [LightLLM and CrewAI Project Setup](#lightllm-and-crewai-project-setup)
-- [LightLLM and Model Flexibility in CrewAI](#lightllm-and-model-flexibility-in-crewai)
-- [Structure and Workflow of a CrewAI Project](#structure-and-workflow-of-a-crewai-project)
-  - [Define our files](#now-we-going-to-define-our-files)
-- [Run the project](#run-the-project)
-- [Recap: Your First Project with CrewAI](#recap-your-first-project-with-crewai)
+  - [Core Concepts of Crew AI](#core-concepts-of-crew-ai)
+  - [LightLLM and CrewAI Project Setup](#lightllm-and-crewai-project-setup)
+  - [LightLLM and Model Flexibility in CrewAI](#lightllm-and-model-flexibility-in-crewai)
+  - [Structure and Workflow of a CrewAI Project](#structure-and-workflow-of-a-crewai-project)
+    - [Define our files](#now-we-going-to-define-our-files)
+  - [Run the project](#run-the-project)
+  - [Recap: Your First Project with CrewAI](#recap-your-first-project-with-crewai)
+- [Building Crew AI Projects: Tools, Context & Google Search Integration]()
+- [Building Multi-Agent Financial Research System with Crew.ai]()
+
 
 
 ## Crew AI
@@ -1005,3 +1008,50 @@ Would you like a ready-made CrewAI project template that includes:
 
 Let me know the format you want: `.zip`, `.py`, `.yaml`, or `.ipynb`.
 
+## Building Crew AI Projects: Tools, Context & Google Search Integration
+
+To quickly recap what we did last time, we learned about an **agent**, the agent being the smallest autonomous unit. It has an LLM associated with it (although it doesn't actually need to — you can have an agent without an LLM, but they typically do). It has a **role**, a **goal**, a **backstory**, and it also has **memory** and **tools**, not that we've looked at either of them just yet.
+
+And then a **task** — this is the concept which doesn't have an analogue in OpenAI Agent SDK. A task is an **assignment to be carried out** with a **description**, **expected output**, perhaps an **output file**, and it's **assigned to an agent**.
+
+And then a **crew**, which is a **team of agents and tasks** together, assigned to those agents, and they can run **sequentially or hierarchically**, in which case you'd have to assign a manager LLM to figure out which task is assigned to which agent.
+
+![](img/16.png)
+
+---
+
+So that's the overall structure of Crew, which now should be pretty familiar to you.
+And you'll remember that there are **five steps** that we went through when we set up our first crew project:
+
+1. We created a project:
+
+   ```bash
+   crewai create crew my_project
+   ```
+
+2. We went into `source/my_project/config` and edited the YAML files for **agents** and **tasks**.
+
+3. We edited `crew.py` to define the **agents**, **tasks**, and the **crew**, referencing the YAML config.
+
+4. We updated `main.py` to define inputs — in our case, the **motion** for the debate.
+
+5. We ran the crew with:
+
+   ```bash
+   crewai run
+   ```
+
+![](img/17.png)
+
+---
+
+Now we’re going to go a little bit deeper in two ways in our next project:
+
+1. **Tools** – equipping agents with capabilities (something you're probably familiar with from other frameworks).
+2. **Context** – passing information from one task to the next, CrewAI-style.
+
+![](img/18.png)
+
+---
+
+¿Quieres que prepare una estructura base para ese segundo proyecto con herramientas (`tools`) y paso de información (`context`) listos para usar?
