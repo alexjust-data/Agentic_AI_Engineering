@@ -6,6 +6,7 @@
 - [Structure and Workflow of a CrewAI Project](#structure-and-workflow-of-a-crewai-project)
   - [Define our files](#now-we-going-to-define-our-files)
 - [Run the project](#run-the-project)
+- [Recap: Your First Project with CrewAI](#recap-your-first-project-with-crewai)
 
 
 ## Crew AI
@@ -913,20 +914,94 @@ In this first project using **CrewAI**, we successfully completed a full executi
 
 This project demonstrates how to build and run a basic CrewAI application. You can now create new projects or expand this one by adding tools, agents, or more complex logic.
 
-**To create a new project:**
 
-```bash
-crewai create crew your_project_name
+
+#### Recap: Your First Project with CrewAI
+
+
+1. **Created the project:**
+
+   ```bash
+   crewai create crew debate
+   ```
+
+2. **Generated folder structure:**
+
+   ```
+   debate/
+   ├── source/
+   │   └── debate/
+   │       ├── config/
+   │       │   ├── agents.yaml
+   │       │   └── tasks.yaml
+   │       ├── crew.py
+   │       └── main.py
+   ```
+
+3. **Defined the agents (`agents.yaml`):**
+   Each agent includes: name, role, goal, backstory, and LLM.
+   You used one `debater` agent and one `judge`.
+
+4. **Defined the tasks (`tasks.yaml`):**
+   Three tasks: `propose`, `oppose`, and `decide`, each assigned to an agent, with description and expected output.
+
+5. **Implemented the logic in `crew.py`:**
+   You used the decorators `@agent`, `@task`, and `@crew`.
+   The crew ran in sequential order using `Process.sequential`.
+
+6. **Ran the project:**
+
+   ```bash
+   crewai run
+   ```
+
+   The debate completed successfully, including a decision by the judge.
+
+### What can you do next?
+
+**Optional extension to practice:**
+
+Split the `debater` into two agents, like this in `agents.yaml`:
+
+```yaml
+proposer:
+  llm: openai/gpt-4o-mini
+
+opposer:
+  llm: deepseek-ai/deepseek-chat
 ```
 
-**To run your crew (from the root of your project):**
+Then update `tasks.yaml`:
 
-```bash
-python src/your_project_name/main.py
+```yaml
+propose:
+  agent: proposer
+oppose:
+  agent: opposer
 ```
 
-or, using the CLI:
+This allows you to:
 
-```bash
-crewai run
-```
+* Compare different LLMs (e.g., OpenAI vs DeepSeek, vs Claude)
+* Alternate roles and measure consistency and persuasion
+* Use a neutral judge and build your own leaderboard of model performance
+
+**What does this teach you?**
+
+* How to fully structure and run a CrewAI project from scratch
+* How to plug in and test multiple models
+* How to automate debates and measure persuasiveness
+
+**Suggested next step**
+
+You can build a notebook (e.g., `debate_leaderboard.ipynb`) that tests different combinations of models in debate roles and logs which model wins more often according to a judge.
+
+Would you like a ready-made CrewAI project template that includes:
+
+* two agents (`proposer` and `opposer`)
+* a judge
+* predefined model options
+* auto-logging of decisions
+
+Let me know the format you want: `.zip`, `.py`, `.yaml`, or `.ipynb`.
+
