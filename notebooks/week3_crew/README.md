@@ -454,9 +454,95 @@ oppose   →  debater  →  output/oppose.md
 decide   →  judge    →  output/decide.md
 ```
 
+**`crew.py`**:
 
+So this is the default module crew.py and you can see it's got some stuff in here based on the standard scaffolding.
+It has created a class and it's got this crew base decorator around it and this class is named the same as the name of our project: Debate. 
 
+It brings in the agents config and the tasks config from the config folder. You can see how it refers directly to our configuration...
 
+```py
+@CrewBase
+class Debate():
+    """Debate crew"""
+
+    agents_config = 'config/agents.yaml'
+    tasks_config = 'config/tasks.yaml'
+
+```
+We don’t have an agent called researcher, we have debater. The @agent decorator tells CrewAI this method defines an agent.
+
+```py
+    @agent
+    def debater(self) -> Agent:
+        return Agent(
+            config=self.agents_config['debater'],
+            verbose=True
+        )
+    @agent
+    def judge(self) -> Agent:
+        return Agent(
+            config=self.agents_config['judge'],
+            verbose=True
+        )
+```
+And now we’re going to define our tasks.
+First propose, then oppose, and finally decide.
+
+```py
+    @task
+    def propose(self) -> Task:
+        return Task(
+            config=self.tasks_config['propose'],
+        )
+
+    @task
+    def oppose(self) -> Task:
+        return Task(
+            config=self.tasks_config['oppose'],
+        )
+
+    @task
+    def decide(self) -> Task:
+        return Task(
+            config=self.tasks_config['decide'],
+        )
+```
+
+So those are our two agents and three tasks...
+And now we define the Crew object that puts it all together.
+
+```py
+    @crew
+    def crew(self) -> Crew:
+        """Creates the Debate crew"""
+
+        return Crew(
+            agents=self.agents,  # autogenerado por los métodos @agent
+            tasks=self.tasks,    # autogenerado por los métodos @task
+            process=Process.sequential,
+            verbose=True,
+        )
+```
+
+**`main.py`**
+
+This main file is intended to run your crew locally, so refrain from adding unnecessary logic.
+
+So inputs, when we’re running the crew, this is where we choose those template values that we put in our YAML file.
+
+```py
+inputs = {
+    'motion': 'There needs to be strict laws to regulate LLMs',
+}
+```
+We should now be ready to run our first crew just based on that.
+
+```py
+result = Debate().crew().kickoff(inputs=inputs)
+print(result.raw)
+```
+--- 
 
 To run the project, use:
 
@@ -470,8 +556,337 @@ Internally, this runs:
 uv run main.py
 ```
 
+```bash
+agents_env➜  AI_agents git:(main) ✗ cd my_agents/notebooks/week3_crew/debate && crewai run                 cd my_agents/notebooks/week3_crew/debate && crewai run
+Running the Crew
+warning: `VIRTUAL_ENV=/Users/alex/Desktop/00_projects/AI_agents/my_agents/agents_env` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+╭───────────────────────────────────────── Crew Execution Started ─────────────────────────────────────────╮
+│                                                                                                          │
+│  Crew Execution Started                                                                                  │
+│  Name: crew                                                                                              │
+│  ID: ee72804e-3821-4941-baea-118091fed1f6                                                                │
+│  Tool Args:                                                                                              │
+│                                                                                                          │
+│                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: ccadd796-a54e-4084-a6b2-cfa64c2af9a7
+    Status: Executing Task...
+╭──────────────────────────────────────────── 🤖 Agent Started ────────────────────────────────────────────╮
+│                                                                                                          │
+│  Agent: A compelling debater                                                                             │
+│                                                                                                          │
+│  Task: You are proposing the motion: There needs to be strict laws to regulate LLMs. Come up with a      │
+│  clear argument in favor of the motion. Be very convincing.                                              │
+│                                                                                                          │
+│                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: ccadd796-a54e-4084-a6b2-cfa64c2af9a7
+    Status: Executing Task...
+╭───────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────╮
+│                                                                                                          │
+│  Agent: A compelling debater                                                                             │
+│                                                                                                          │
+│  Final Answer:                                                                                           │
+│  There needs to be strict laws to regulate LLMs because, without proper oversight, these technologies    │
+│  pose significant risks to society. Firstly, LLMs can generate misleading or false information, which    │
+│  can undermine trust in factual communication and exacerbate misinformation. The absence of regulations  │
+│  allows the spread of harmful narratives, potentially influencing public opinion and creating societal   │
+│  divisions.                                                                                              │
+│                                                                                                          │
+│  Secondly, LLMs can inadvertently learn and perpetuate biases present in their training data, leading    │
+│  to unethical outcomes that can affect marginalized communities. By establishing strict laws, we create  │
+│  accountability and enforce standards that ensure the responsible development and deployment of these    │
+│  models.                                                                                                 │
+│                                                                                                          │
+│  Furthermore, LLMs pose privacy concerns, as they can potentially generate personal or sensitive         │
+│  information without consent. Regulations can help define the boundaries of acceptable use, thus         │
+│  protecting individuals’ rights and privacy.                                                             │
+│                                                                                                          │
+│  Finally, the rapid advancement of LLMs outpaces our understanding of their full implications. Clear,    │
+│  enforceable laws are necessary to adapt to evolving technology while ensuring safety and ethical use.   │
+│  In conclusion, strict laws to regulate LLMs are essential to safeguard truth, protect the vulnerable,   │
+│  uphold privacy, and maintain societal trust in these emerging technologies.                             │
+│                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: ccadd796-a54e-4084-a6b2-cfa64c2af9a7
+    Assigned to: A compelling debater
+    
+    Status: ✅ Completed
+╭──────────────────────────────────────────── Task Completion ─────────────────────────────────────────────╮
+│                                                                                                          │
+│  Task Completed                                                                                          │
+│  Name: ccadd796-a54e-4084-a6b2-cfa64c2af9a7                                                              │
+│  Agent: A compelling debater                                                                             │
+│                                                                                                          │
+│  Tool Args:                                                                                              │
+│                                                                                                          │
+│                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: ccadd796-a54e-4084-a6b2-cfa64c2af9a7
+│   Assigned to: A compelling debater
+│   
+│   Status: ✅ Completed
+└── 📋 Task: 92a40bb0-8cf1-4449-8273-8c13d5a37db6
+    Status: Executing Task...
+╭──────────────────────────────────────────── 🤖 Agent Started ────────────────────────────────────────────╮
+│                                                                                                          │
+│  Agent: A compelling debater                                                                             │
+│                                                                                                          │
+│  Task: You are in opposition to the motion: There needs to be strict laws to regulate LLMs. Come up      │
+│  with a clear argument against the motion. Be very convincing.                                           │
+│                                                                                                          │
+│                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: ccadd796-a54e-4084-a6b2-cfa64c2af9a7
+│   Assigned to: A compelling debater
+│   
+│   Status: ✅ Completed
+└── 📋 Task: 92a40bb0-8cf1-4449-8273-8c13d5a37db6
+    Status: Executing Task...
+╭───────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────╮
+│                                                                                                          │
+│  Agent: A compelling debater                                                                             │
+│                                                                                                          │
+│  Final Answer:                                                                                           │
+│  While the concerns surrounding large language models (LLMs) are valid, imposing strict laws to          │
+│  regulate them can stifle innovation, impede progress, and limit their potential benefits for society.   │
+│  Here are several compelling arguments against the motion:                                               │
+│                                                                                                          │
+│  Firstly, overregulation can hinder technological advancement. The rapid development of LLMs has led to  │
+│  groundbreaking applications across various fields, including healthcare, education, and content         │
+│  creation. Imposing strict laws may create barriers to innovation, preventing beneficial advancements    │
+│  that could significantly improve lives and societal functions.                                          │
+│                                                                                                          │
+│  Secondly, the implementation of strict laws may disproportionately affect smaller companies and         │
+│  startups that lack the resources to comply with extensive regulatory frameworks. This could further     │
+│  entrench the dominance of larger corporations, limiting diversity and competition in the field. A more  │
+│  nuanced approach that encourages responsible development while still permitting creativity and growth   │
+│  is necessary.                                                                                           │
+│                                                                                                          │
+│  Additionally, while concerns about misinformation and bias are important, it is essential to recognize  │
+│  that humans are ultimately responsible for the use of these technologies. Rather than creating rigid    │
+│  laws, we should focus on developing guidelines that promote ethical use and enhance digital literacy    │
+│  among users. Empowering individuals with knowledge and skills will lead to more responsible engagement  │
+│  with LLMs than strict regulations ever could.                                                           │
+│                                                                                                          │
+│  Moreover, the technology itself is evolving rapidly. Regulations that may seem appropriate today can    │
+│  quickly become outdated as the landscape changes. A flexible regulatory framework that adapts to        │
+│  technological advancements is far more pragmatic than strict laws that may struggle to keep pace.       │
+│                                                                                                          │
+│  Lastly, collaboration between developers, ethicists, and the community can lead to better outcomes      │
+│  than stringent legislation. By fostering open dialogue and shared best practices, we can mitigate       │
+│  risks while still allowing for the exploration of new ideas and methodologies.                          │
+│                                                                                                          │
+│  In conclusion, while addressing the challenges posed by LLMs is necessary, strict laws are not the      │
+│  solution. We should prioritize fostering innovation, encouraging responsible use, and adapting our      │
+│  approach to regulation in line with the evolving nature of technology. An overbearing legal framework   │
+│  risks stifling the significant benefits that LLMs have to offer, ultimately hindering progress and      │
+│  societal advancement.                                                                                   │
+│                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: ccadd796-a54e-4084-a6b2-cfa64c2af9a7
+│   Assigned to: A compelling debater
+│   
+│   Status: ✅ Completed
+└── 📋 Task: 92a40bb0-8cf1-4449-8273-8c13d5a37db6
+    Assigned to: A compelling debater
+    
+    Status: ✅ Completed
+╭──────────────────────────────────────────── Task Completion ─────────────────────────────────────────────╮
+│                                                                                                          │
+│  Task Completed                                                                                          │
+│  Name: 92a40bb0-8cf1-4449-8273-8c13d5a37db6                                                              │
+│  Agent: A compelling debater                                                                             │
+│                                                                                                          │
+│  Tool Args:                                                                                              │
+│                                                                                                          │
+│                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: ccadd796-a54e-4084-a6b2-cfa64c2af9a7
+│   Assigned to: A compelling debater
+│   
+│   Status: ✅ Completed
+├── 📋 Task: 92a40bb0-8cf1-4449-8273-8c13d5a37db6
+│   Assigned to: A compelling debater
+│   
+│   Status: ✅ Completed
+└── 📋 Task: 4a1f5600-9315-4482-9346-1e35fe02a8d3
+    Status: Executing Task...
+╭──────────────────────────────────────────── 🤖 Agent Started ────────────────────────────────────────────╮
+│                                                                                                          │
+│  Agent: Decide the winner of the debate based on the arguments presented                                 │
+│                                                                                                          │
+│  Task: Review the arguments presented by the debaters and decide which side is more convincing.          │
+│                                                                                                          │
+│                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: ccadd796-a54e-4084-a6b2-cfa64c2af9a7
+│   Assigned to: A compelling debater
+│   
+│   Status: ✅ Completed
+├── 📋 Task: 92a40bb0-8cf1-4449-8273-8c13d5a37db6
+│   Assigned to: A compelling debater
+│   
+│   Status: ✅ Completed
+└── 📋 Task: 4a1f5600-9315-4482-9346-1e35fe02a8d3
+    Status: Executing Task...
+╭───────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────╮
+│                                                                                                          │
+│  Agent: Decide the winner of the debate based on the arguments presented                                 │
+│                                                                                                          │
+│  Final Answer:                                                                                           │
+│  After thoroughly evaluating the arguments presented for and against the motion that strict laws need    │
+│  to be established to regulate large language models (LLMs), the case for imposing such laws is          │
+│  ultimately more convincing.                                                                             │
+│                                                                                                          │
+│  The arguments in favor highlight several critical points that underscore the necessity of regulation.   │
+│  First and foremost, the proliferation of misleading and false information generated by LLMs carries     │
+│  significant risks—not only to individual users but broadly to societal trust and cohesion. Without      │
+│  regulation, these technologies could exacerbate misinformation and create division among communities,   │
+│  potentially influencing public opinion in detrimental ways.                                             │
+│                                                                                                          │
+│  Moreover, the issue of bias in LLMs cannot be understated. The recognition that these models can        │
+│  perpetuate existing biases present in training data raises ethical concerns that impact marginalized    │
+│  populations. Establishing strict laws would foster accountability in the development and deployment of  │
+│  LLM technology, ensuring a more ethical approach that protects vulnerable groups.                       │
+│                                                                                                          │
+│  In addition, privacy concerns are paramount. LLMs can inadvertently disclose personal data, raising     │
+│  ethical issues about consent and individual rights. Regulations are critical to delineating acceptable  │
+│  use, thus safeguarding personal information.                                                            │
+│                                                                                                          │
+│  The argument regarding the pace of advancement in LLM technology is also compelling. As innovations     │
+│  develop faster than our understanding of their implications, strict and clear laws will create          │
+│  frameworks for responsible usage while adapting to ongoing changes.                                     │
+│                                                                                                          │
+│  On the opposing side, while the desire to foster innovation and maintain competitive diversity in the   │
+│  field is valid, it does not outweigh the pressing need for regulatory oversight to mitigate potential   │
+│  harms. The argument that regulations may unfairly disadvantage smaller companies is addressed by the    │
+│  idea that regulations can be tailored in a way that allows for innovation while protecting users and    │
+│  broader societal interests.                                                                             │
+│                                                                                                          │
+│  Furthermore, the reliance on ethical guidelines and digital literacy, rather than stringent             │
+│  regulations, does not provide a robust framework to ensure accountability, especially given the         │
+│  potential for misuse and harm that has already been witnessed.                                          │
+│                                                                                                          │
+│  Overall, while there are valid perspectives on the importance of innovation and flexible regulatory     │
+│  approaches, the weight of the arguments supporting strict laws to regulate LLMs—focused on              │
+│  safeguarding trust, mitigating misinformation, addressing bias, protecting privacy, and navigating      │
+│  technological advancements—makes it clear that there is a profound need for such regulations.           │
+│  Therefore, the conclusion is that strict laws to regulate LLMs are essential for responsible            │
+│  technological advancement and societal protection.                                                      │
+│                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: ccadd796-a54e-4084-a6b2-cfa64c2af9a7
+│   Assigned to: A compelling debater
+│   
+│   Status: ✅ Completed
+├── 📋 Task: 92a40bb0-8cf1-4449-8273-8c13d5a37db6
+│   Assigned to: A compelling debater
+│   
+│   Status: ✅ Completed
+└── 📋 Task: 4a1f5600-9315-4482-9346-1e35fe02a8d3
+    Assigned to: Decide the winner of the debate based on the arguments presented
+    
+    Status: ✅ Completed
+╭──────────────────────────────────────────── Task Completion ─────────────────────────────────────────────╮
+│                                                                                                          │
+│  Task Completed                                                                                          │
+│  Name: 4a1f5600-9315-4482-9346-1e35fe02a8d3                                                              │
+│  Agent: Decide the winner of the debate based on the arguments presented                                 │
+│                                                                                                          │
+│  Tool Args:                                                                                              │
+│                                                                                                          │
+│                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────── Crew Completion ─────────────────────────────────────────────╮
+│                                                                                                          │
+│  Crew Execution Completed                                                                                │
+│  Name: crew                                                                                              │
+│  ID: ee72804e-3821-4941-baea-118091fed1f6                                                                │
+│  Tool Args:                                                                                              │
+│  Final Output: After thoroughly evaluating the arguments presented for and against the motion that       │
+│  strict laws need to be established to regulate large language models (LLMs), the case for imposing      │
+│  such laws is ultimately more convincing.                                                                │
+│                                                                                                          │
+│  The arguments in favor highlight several critical points that underscore the necessity of regulation.   │
+│  First and foremost, the proliferation of misleading and false information generated by LLMs carries     │
+│  significant risks—not only to individual users but broadly to societal trust and cohesion. Without      │
+│  regulation, these technologies could exacerbate misinformation and create division among communities,   │
+│  potentially influencing public opinion in detrimental ways.                                             │
+│                                                                                                          │
+│  Moreover, the issue of bias in LLMs cannot be understated. The recognition that these models can        │
+│  perpetuate existing biases present in training data raises ethical concerns that impact marginalized    │
+│  populations. Establishing strict laws would foster accountability in the development and deployment of  │
+│  LLM technology, ensuring a more ethical approach that protects vulnerable groups.                       │
+│                                                                                                          │
+│  In addition, privacy concerns are paramount. LLMs can inadvertently disclose personal data, raising     │
+│  ethical issues about consent and individual rights. Regulations are critical to delineating acceptable  │
+│  use, thus safeguarding personal information.                                                            │
+│                                                                                                          │
+│  The argument regarding the pace of advancement in LLM technology is also compelling. As innovations     │
+│  develop faster than our understanding of their implications, strict and clear laws will create          │
+│  frameworks for responsible usage while adapting to ongoing changes.                                     │
+│                                                                                                          │
+│  On the opposing side, while the desire to foster innovation and maintain competitive diversity in the   │
+│  field is valid, it does not outweigh the pressing need for regulatory oversight to mitigate potential   │
+│  harms. The argument that regulations may unfairly disadvantage smaller companies is addressed by the    │
+│  idea that regulations can be tailored in a way that allows for innovation while protecting users and    │
+│  broader societal interests.                                                                             │
+│                                                                                                          │
+│  Furthermore, the reliance on ethical guidelines and digital literacy, rather than stringent             │
+│  regulations, does not provide a robust framework to ensure accountability, especially given the         │
+│  potential for misuse and harm that has already been witnessed.                                          │
+│                                                                                                          │
+│  Overall, while there are valid perspectives on the importance of innovation and flexible regulatory     │
+│  approaches, the weight of the arguments supporting strict laws to regulate LLMs—focused on              │
+│  safeguarding trust, mitigating misinformation, addressing bias, protecting privacy, and navigating      │
+│  technological advancements—makes it clear that there is a profound need for such regulations.           │
+│  Therefore, the conclusion is that strict laws to regulate LLMs are essential for responsible            │
+│  technological advancement and societal protection.                                                      │
+│                                                                                                          │
+│                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+After thoroughly evaluating the arguments presented for and against the motion that strict laws need to be established to regulate large language models (LLMs), the case for imposing such laws is ultimately more convincing. 
+
+The arguments in favor highlight several critical points that underscore the necessity of regulation. First and foremost, the proliferation of misleading and false information generated by LLMs carries significant risks—not only to individual users but broadly to societal trust and cohesion. Without regulation, these technologies could exacerbate misinformation and create division among communities, potentially influencing public opinion in detrimental ways.
+
+Moreover, the issue of bias in LLMs cannot be understated. The recognition that these models can perpetuate existing biases present in training data raises ethical concerns that impact marginalized populations. Establishing strict laws would foster accountability in the development and deployment of LLM technology, ensuring a more ethical approach that protects vulnerable groups.
+
+In addition, privacy concerns are paramount. LLMs can inadvertently disclose personal data, raising ethical issues about consent and individual rights. Regulations are critical to delineating acceptable use, thus safeguarding personal information.
+
+The argument regarding the pace of advancement in LLM technology is also compelling. As innovations develop faster than our understanding of their implications, strict and clear laws will create frameworks for responsible usage while adapting to ongoing changes.
+
+On the opposing side, while the desire to foster innovation and maintain competitive diversity in the field is valid, it does not outweigh the pressing need for regulatory oversight to mitigate potential harms. The argument that regulations may unfairly disadvantage smaller companies is addressed by the idea that regulations can be tailored in a way that allows for innovation while protecting users and broader societal interests.
+
+Furthermore, the reliance on ethical guidelines and digital literacy, rather than stringent regulations, does not provide a robust framework to ensure accountability, especially given the potential for misuse and harm that has already been witnessed.
+
+Overall, while there are valid perspectives on the importance of innovation and flexible regulatory approaches, the weight of the arguments supporting strict laws to regulate LLMs—focused on safeguarding trust, mitigating misinformation, addressing bias, protecting privacy, and navigating technological advancements—makes it clear that there is a profound need for such regulations. Therefore, the conclusion is that strict laws to regulate LLMs are essential for responsible technological advancement and societal protection.
+agents_env➜  debate git:(main) ✗
+```
+
 This setup creates a complete UV (micro) project. So when you run `crewai create crew`, it automatically generates UV project configuration files. These UV projects will be nested within the larger UV project that contains the entire course. This structure will become more intuitive once you see it in practice.
 
 **Final Note Before Practice**
 
 The course is now ready to start using CrewAI hands-on. Everything is set up with UV, CrewAI is installed, and the directory structure has been generated. The next step is to go ahead and actually try it out by building your own crew.
+
