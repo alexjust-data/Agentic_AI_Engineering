@@ -3,7 +3,8 @@
 - [Core Concepts of Crew AI](#core-concepts-of-crew-ai)
 - [LightLLM and CrewAI Project Setup](#lightllm-and-crewai-project-setup)
 - [LightLLM and Model Flexibility in CrewAI](#lightllm-and-model-flexibility-in-crewai)
-- [Structure and Workflow of a CrewAI Project](#core-concepts-of-crew-ai∫)
+- [Structure and Workflow of a CrewAI Project](#structure-and-workflow-of-a-crewai-project)
+- []()
 
 
 
@@ -358,9 +359,9 @@ Also in the same directory are two important Python modules:
 mkdir other # ← optional dummy folder to make VS Code show tree view properly
 ```
 
-**Now we going to define our YAML**
+#### Now we going to define our YAML
 
-our configuration for our `agents.yaml` :
+**`agents.yaml`** :
 
 And this contains some default, some sort of scaffolding, some example agents that are called the Researcher and the Reporting Analyst are the two examples it's given and we're going to change these to being what we're looking to build, and of course **we're looking to build a little debate team**, and in fact we only need **two agents** for what we're looking to do. We want an agent that will be the debater. One agent is going to play both roles of being for and against the motion 
 
@@ -402,7 +403,7 @@ You’re a fair judge with a reputation for weighing up arguments without factor
   llm: anthropic/claude-3-7-sonnet-latest
 ```
 
-Next up is `tasks.yaml`:
+**`tasks.yaml`**:
 
 The first task is to propose the motion — that is, give a strong argument in favor of it.
 This task is assigned to the debater agent. 
