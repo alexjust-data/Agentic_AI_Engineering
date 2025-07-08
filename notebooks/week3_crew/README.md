@@ -1867,9 +1867,11 @@ CRU creates the project for you.
 
 Now, open the Stock Picker folder, navigate to `src/config`, and start by defining your agents.
 
-**Agents (src/config/agents.yaml)**
+**Agents (`src/config/agents.yaml`)**
 
 The Stock Picker project uses four agents, each with a specific financial or management role:
+
+**Trending Company Finder:** Finds 2-3 trending companies in the news for a given sector. Ensures new companies are picked each time, based on latest news.
 
 ```yml
 trending_company_finder:
@@ -1883,9 +1885,8 @@ trending_company_finder:
     You spot multiple companies that are trending in the news.
   llm: openai/gpt-4o-mini
 ```
-
-**Trending Company Finder:**
-Finds 2-3 trending companies in the news for a given sector. Ensures new companies are picked each time, based on latest news.
+**Financial Researcher:**
+Given the trending companies, provides detailed, expert analysis of each one in a structured report.
 
 ```yml
 financial_researcher:
@@ -1898,8 +1899,8 @@ financial_researcher:
   llm: openai/gpt-4o-mini
 ```
 
-**Financial Researcher:**
-Given the trending companies, provides detailed, expert analysis of each one in a structured report.
+**Stock Picker:**
+Given all research, picks the single best company for investment. Notifies the user and provides a detailed report. Avoids duplicate picks.
 
 ```yml
 stock_picker:
@@ -1913,9 +1914,9 @@ stock_picker:
     You have a talent for synthesizing research and picking the best company for investment.
   llm: openai/gpt-4o-mini
 ```
+**Manager:**
+A simple agent responsible for overseeing and delegating tasks, aiming to get the best investment pick.
 
-**Stock Picker:**
-Given all research, picks the single best company for investment. Notifies the user and provides a detailed report. Avoids duplicate picks.
 
 ```yml
 manager:
@@ -1928,13 +1929,14 @@ manager:
   llm: openai/gpt-4o
 ```
 
-**Manager:**
-A simple agent responsible for overseeing and delegating tasks, aiming to get the best investment pick.
 
-
-**Tasks (src/config/tasks.yaml)**
+**Tasks (`src/config/tasks.yaml`)**
 
 Each task is written to be clear and direct, using consistent language (like "trending companies") throughout agents and tasks for stability and coherence.
+
+**Find Trending Companies Task:**
+The trending company finder agent searches the latest news in the given sector, outputs a list of new trending companies (never repeats), and saves results to `output/trending_companies.json`.
+The output is structured as JSON for clarity and later use.
 
 ```yml
 find_trending_companies:
@@ -1946,9 +1948,9 @@ find_trending_companies:
   output_file: output/trending_companies.json
 ```
 
-**Find Trending Companies Task:**
-The trending company finder agent searches the latest news in the given sector, outputs a list of new trending companies (never repeats), and saves results to `output/trending_companies.json`.
-The output is structured as JSON for clarity and later use.
+**Research Trending Companies Task:**
+The financial researcher agent takes the trending company list and generates a report with a detailed analysis for each, saved to `output/research_report.json`.
+This task uses the output from the previous task as its context.
 
 ```yml
 research_trending_companies:
@@ -1962,9 +1964,8 @@ research_trending_companies:
   output_file: output/research_report.json
 ```
 
-**Research Trending Companies Task:**
-The financial researcher agent takes the trending company list and generates a report with a detailed analysis for each, saved to `output/research_report.json`.
-This task uses the output from the previous task as its context.
+**Pick Best Company Task:**
+The stock picker analyzes all research and picks the best company. It sends a push notification to the user with a brief rationale, and then gives a full report including why that company was chosen and why others were not. Results are saved to `output/decision.md`.
 
 ```yml
 pick_best_company:
@@ -1979,9 +1980,6 @@ pick_best_company:
     - research_trending_companies
   output_file: output/decision.md
 ```
-
-**Pick Best Company Task:**
-The stock picker analyzes all research and picks the best company. It sends a push notification to the user with a brief rationale, and then gives a full report including why that company was chosen and why others were not. Results are saved to `output/decision.md`.
 
 **Tips and Notes from Experience**
 
@@ -2004,6 +2002,8 @@ We now want each task to output structured information using JSON schemas. This 
 
 For example, for trending companies:
 
+The **TrendingCompany** class defines the attributes we want for each trending company. **TrendingCompanyList** is simply a list of these companies. This approach helps downstream agents and tasks consume the output easily.
+
 ```py
 class TrendingCompany(BaseModel):
 """A company that is in the news and attracting attention"""
@@ -2015,8 +2015,6 @@ class TrendingCompanyList(BaseModel):
 """List of multiple trending companies that are in the news"""
 companies: List\[TrendingCompany] = Field(description="List of companies trending in the news")
 ```
-
-The **TrendingCompany** class defines the attributes we want for each trending company. **TrendingCompanyList** is simply a list of these companies. This approach helps downstream agents and tasks consume the output easily.
 
 Similarly, for research results:
 
