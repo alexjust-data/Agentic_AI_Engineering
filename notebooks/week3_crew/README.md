@@ -1996,4 +1996,895 @@ After agents and tasks are defined, proceed to implement the process in `crew.py
 You can experiment with different models for each agent, or add custom tools as needed to expand capabilities (for example, integrating notifications or news scraping tools).
 Remember, this workflow is for educational and research purposes only, not for live trading or investment advice.
 
+**`crew.py`**
 
+**Structured Outputs with Pydantic Schemas**
+
+We now want each task to output structured information using JSON schemas. This is achieved by creating Python classes that subclass `BaseModel` from Pydantic. Each schema makes clear what the output must contain, guiding the agent’s answers and ensuring outputs are predictable and robust.
+
+For example, for trending companies:
+
+```py
+class TrendingCompany(BaseModel):
+"""A company that is in the news and attracting attention"""
+name: str = Field(description="Company name")
+ticker: str = Field(description="Stock ticker symbol")
+reason: str = Field(description="Reason this company is trending in the news")
+
+class TrendingCompanyList(BaseModel):
+"""List of multiple trending companies that are in the news"""
+companies: List\[TrendingCompany] = Field(description="List of companies trending in the news")
+```
+
+The **TrendingCompany** class defines the attributes we want for each trending company. **TrendingCompanyList** is simply a list of these companies. This approach helps downstream agents and tasks consume the output easily.
+
+Similarly, for research results:
+
+```py
+class TrendingCompanyResearch(BaseModel):
+"""Detailed research on a company"""
+name: str = Field(description="Company name")
+market\_position: str = Field(description="Current market position and competitive analysis")
+future\_outlook: str = Field(description="Future outlook and growth prospects")
+investment\_potential: str = Field(description="Investment potential and suitability for investment")
+
+class TrendingCompanyResearchList(BaseModel):
+"""A list of detailed research on all the companies"""
+research\_list: List\[TrendingCompanyResearch] = Field(description="Comprehensive research on all trending companies")
+```
+
+Each output is tightly specified, so the agents are “on rails” for their outputs.
+
+
+**Defining the StockPicker Crew**
+
+Now, define the StockPicker crew in `crew.py`. This class pulls in your YAML configs, creates agents, assigns tasks, and sets up the process to be hierarchical, meaning the manager agent can delegate tasks to others.
+
+```py
+from crewai import Agent, Crew, Process, Task
+from crewai.project import CrewBase, agent, crew, task
+from crewai_tools import SerperDevTool
+from pydantic import BaseModel, Field
+from typing import List
+from .tools.push_tool import PushNotificationTool
+from crewai.memory import LongTermMemory, ShortTermMemory, EntityMemory
+from crewai.memory.storage.rag_storage import RAGStorage
+from crewai.memory.storage.ltm_sqlite_storage import LTMSQLiteStorage
+```
+
+**Agent Definitions**
+
+* **Trending Company Finder**: Uses SERPA tool to find trending companies.
+* **Financial Researcher**: Uses SERPA tool to research those companies.
+* **Stock Picker**: Uses a push notification tool, gets research, and selects the best company.
+* **Manager**: A special agent allowed to delegate tasks, using a more capable model (GPT-4o for better performance, but you may use Mini for cost).
+
+**Task Definitions**
+
+* **find\_trending\_companies**: Returns data matching `TrendingCompanyList`.
+* **research\_trending\_companies**: Returns data matching `TrendingCompanyResearchList`.
+* **pick\_best\_company**: Selects the top company and explains why.
+
+**Example Implementation:**
+```py
+@CrewBase
+class StockPicker():
+"""StockPicker crew"""
+
+agents_config = 'config/agents.yaml'
+tasks_config = 'config/tasks.yaml'
+
+@agent
+def trending_company_finder(self) -> Agent:
+    return Agent(config=self.agents_config['trending_company_finder'],
+                 tools=[SerperDevTool()], memory=True)
+
+@agent
+def financial_researcher(self) -> Agent:
+    return Agent(config=self.agents_config['financial_researcher'], 
+                 tools=[SerperDevTool()])
+
+@agent
+def stock_picker(self) -> Agent:
+    return Agent(config=self.agents_config['stock_picker'], 
+                 tools=[PushNotificationTool()], memory=True)
+
+@task
+def find_trending_companies(self) -> Task:
+    return Task(
+        config=self.tasks_config['find_trending_companies'],
+        output_pydantic=TrendingCompanyList,
+    )
+
+@task
+def research_trending_companies(self) -> Task:
+    return Task(
+        config=self.tasks_config['research_trending_companies'],
+        output_pydantic=TrendingCompanyResearchList,
+    )
+
+@task
+def pick_best_company(self) -> Task:
+    return Task(
+        config=self.tasks_config['pick_best_company'],
+    )
+```
+
+**Hierarchical Process and Delegation**
+
+Instead of running tasks sequentially, set up a hierarchical process where the **manager agent** decides which agent performs which task and in what order. This enables flexible, dynamic workflows where some tasks can even be skipped or run multiple times if needed.
+
+```py
+@crew
+def crew(self) -> Crew:
+"""Creates the StockPicker crew"""
+
+manager = Agent(
+    config=self.agents_config['manager'],
+    allow_delegation=True
+)
+    
+return Crew(
+    agents=self.agents,
+    tasks=self.tasks, 
+    process=Process.hierarchical,
+    verbose=True,
+    manager_agent=manager,
+    memory=True,
+    long_term_memory = LongTermMemory(
+        storage=LTMSQLiteStorage(
+            db_path="./memory/long_term_memory_storage.db"
+        )
+    ),
+    short_term_memory = ShortTermMemory(
+        storage = RAGStorage(
+                embedder_config={
+                    "provider": "openai",
+                    "config": {
+                        "model": 'text-embedding-3-small'
+                    }
+                },
+                type="short_term",
+                path="./memory/"
+            )
+        ),
+    entity_memory = EntityMemory(
+        storage=RAGStorage(
+            embedder_config={
+                "provider": "openai",
+                "config": {
+                    "model": 'text-embedding-3-small'
+                }
+            },
+            type="short_term",
+            path="./memory/"
+        )
+    ),
+)
+```
+
+* **Manager agent** is created separately with `allow_delegation=True`, which means it can assign work to other agents.
+* The **process** is set to hierarchical, not sequential.
+* Verbose mode is on for debugging and tracking.
+* Three types of memory (long-term, short-term, entity) are configured for better context retention and learning.
+
+**Best Practices and Observations**
+
+* The fourth agent (manager) is not part of the regular task team, but is used as the project overseer.
+* You may define the manager directly as an LLM, but it works better if you define an agent with an explicit role and goal.
+* Using larger models (like GPT-4o) for the manager yields better coherence, but increases cost.
+* Consistent naming and output schemas boost system stability and make downstream integration easier.
+
+```sh
+(agents) ➜  my_agents git:(main) ✗ cd notebooks/week3_crew/stock_picker && crewai run
+Running the Crew
+warning: `VIRTUAL_ENV=/Users/alex/Desktop/00_projects/AI_agents/my_agents/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+/Users/alex/Desktop/00_projects/AI_agents/my_agents/notebooks/week3_crew/stock_picker/.venv/lib/python3.12/site-packages/pydantic/fields.py:1093: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'required'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+  warn(
+╭─────────────────────────────────────────────────────────────────────────────────── Crew Execution Started ───────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Crew Execution Started                                                                                                                                                                      │
+│  Name: crew                                                                                                                                                                                  │
+│  ID: 6e1fb452-6b53-4820-8b4e-728f74a3c9f9                                                                                                                                                    │
+│  Tool Args:                                                                                                                                                                                  │
+│                                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+    Status: Executing Task...
+╭────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Task: Find the top trending companies in the news in Technology by searching the latest news. Find new companies that you've not found before.                                              │
+│                                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+    Status: Executing Task...
+    └── 🔧 Used Delegate work to coworker (1)
+╭────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ───────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Thought: Thought: To find the top trending companies in the Technology sector, I will delegate this task to the Financial News Analyst who specializes in identifying trending companies    │
+│  through financial news analyses.                                                                                                                                                            │
+│                                                                                                                                                                                              │
+│  Using Tool: Delegate work to coworker                                                                                                                                                       │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────────────────────────── Tool Input ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  "{\"coworker\": \"Financial News Analyst\", \"task\": \"Find the top trending companies in the news in Technology sector\", \"context\": \"I need a list of technology companies that are   │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────────────── Tool Output ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Error executing tool. coworker mentioned not found, it must be one of the following options:                                                                                                │
+│  - financial news analyst that finds trending companies in technology                                                                                                                        │
+│                                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+    Status: Executing Task...
+    ├── 🔧 Used Delegate work to coworker (1)
+    └── 🔧 Using Delegate work to coworker (2)
+╭────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Financial News Analyst that finds trending companies in Technology                                                                                                                   │
+│                                                                                                                                                                                              │
+│  Task: Find the top trending companies in the news in Technology sector                                                                                                                      │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+    Status: Executing Task...
+    ├── 🔧 Used Delegate work to coworker (1)
+    ├── 🔧 Using Delegate work to coworker (2)
+    └── 🔧 Used Search the internet with Serper (1)
+╭────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ───────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Financial News Analyst that finds trending companies in Technology                                                                                                                   │
+│                                                                                                                                                                                              │
+│  Thought: I need to find out which technology companies are currently trending in the news to fulfill the request for my coworker.                                                           │
+│                                                                                                                                                                                              │
+│  Using Tool: Search the internet with Serper                                                                                                                                                 │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────────────────────────── Tool Input ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  "{\"search_query\": \"trending technology companies news October 2023\"}"                                                                                                                   │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────────────── Tool Output ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  {'searchParameters': {'q': 'trending technology companies news October 2023', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title': 'Top 10 in Tech - October 2023 -      │
+│  Digitopia', 'link': 'https://digitopia.co/blog/top-10-in-tech-october-2023/', 'snippet': 'Top 10 in Tech – October 2023', 'position': 1}, {'title': '2023 in review: October to December -  │
+│  TechInformed', 'link': 'https://techinformed.com/2023-in-review-october-to-december/', 'snippet': "October. Cyber attacks continued to be a significant challenge in 2023, with several     │
+│  large enterprises revealing they'd been hit with a breach.", 'position': 2}, {'title': 'October 2023 – Tech News & Insights - by Lawrence Teixeira', 'link':                                │
+│  'https://lawrence.eti.br/2023/10/', 'snippet': 'On September 25th, 2023, OpenAI expanded the capabilities of its advanced model, GPT-4, by introducing the ability to interpret images and  │
+│  ...', 'position': 3}, {'title': 'The Top 10 Business Technology Stories Of 2023 - Forbes', 'link':                                                                                          │
+│  'https://www.forbes.com/sites/quickerbettertech/2023/12/31/the-top-10-business-technology-stories-of-2023/', 'snippet': 'From AI to robotics, drones to data breaches and IKEA to Apple,    │
+│  these are the stories that most impacted businesses in the last year.', 'position': 4}, {'title': '6 Biggest Tech Stories of 2023 - Investopedia', 'link':                                  │
+│  'https://www.investopedia.com/biggest-tech-stories-of-2023-8405468', 'snippet': "From massive layoffs and the collapse of Silicon Valley Bank to Microsoft's purchase of Activision and     │
+│  attempts to ban TikTok, these are the ...", 'position': 5}, {'title': 'Tech Conferences Guide: Top Tech Events in October 2023', 'link':                                                    │
+│  'https://www.spiceworks.com/tech/tech-general/articles/top-tech-events-in-october-2023/', 'snippet': 'Spiceworks News & Insights brings you the top technology and cybersecurity events, a  │
+│  single point of curated conference catalog for October.', 'position': 6}, {'title': 'Startups Of The Month - October 2023 - Vestbee', 'link': 'https://w...                                 │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+    Status: Executing Task...
+    ├── 🔧 Used Delegate work to coworker (1)
+    ├── 🔧 Using Delegate work to coworker (2)
+    └── 🔧 Used Search the internet with Serper (1)
+╭─────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Financial News Analyst that finds trending companies in Technology                                                                                                                   │
+│                                                                                                                                                                                              │
+│  Final Answer:                                                                                                                                                                               │
+│  1. **OpenAI**                                                                                                                                                                               │
+│     - **Ticker Symbol:** Private company                                                                                                                                                     │
+│     - **Reason for Trend Status:** Recently expanded the capabilities of GPT-4 by introducing image interpretation features.                                                                 │
+│                                                                                                                                                                                              │
+│  2. **Meta Platforms, Inc.**                                                                                                                                                                 │
+│     - **Ticker Symbol:** META                                                                                                                                                                │
+│     - **Reason for Trend Status:** Actively recruiting Apple's head of AI to enhance its technological capabilities.                                                                         │
+│                                                                                                                                                                                              │
+│  3. **Microsoft Corporation**                                                                                                                                                                │
+│     - **Ticker Symbol:** MSFT                                                                                                                                                                │
+│     - **Reason for Trend Status:** Continues to update its AI collaborations and acquisitions, reinforcing its leadership in the technology market.                                          │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ───────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Thought: Thought: I will reattempt to delegate the task to the correct coworker, ensuring that I use the exact role provided.                                                               │
+│                                                                                                                                                                                              │
+│  Using Tool: Delegate work to coworker                                                                                                                                                       │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────────────────────────── Tool Input ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  "{\"coworker\": \"Financial News Analyst that finds trending companies in Technology\", \"task\": \"Find the top trending companies in the news in Technology sector\", \"context\": \"I n  │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────────────── Tool Output ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  1. **OpenAI**                                                                                                                                                                               │
+│     - **Ticker Symbol:** Private company                                                                                                                                                     │
+│     - **Reason for Trend Status:** Recently expanded the capabilities of GPT-4 by introducing image interpretation features.                                                                 │
+│                                                                                                                                                                                              │
+│  2. **Meta Platforms, Inc.**                                                                                                                                                                 │
+│     - **Ticker Symbol:** META                                                                                                                                                                │
+│     - **Reason for Trend Status:** Actively recruiting Apple's head of AI to enhance its technological capabilities.                                                                         │
+│                                                                                                                                                                                              │
+│  3. **Microsoft Corporation**                                                                                                                                                                │
+│     - **Ticker Symbol:** MSFT                                                                                                                                                                │
+│     - **Reason for Trend Status:** Continues to update its AI collaborations and acquisitions, reinforcing its leadership in the technology market.                                          │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+    Status: Executing Task...
+    ├── 🔧 Used Delegate work to coworker (1)
+    ├── 🔧 Using Delegate work to coworker (2)
+    └── 🔧 Used Search the internet with Serper (1)
+╭─────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Final Answer:                                                                                                                                                                               │
+│  {                                                                                                                                                                                           │
+│    "companies": [                                                                                                                                                                            │
+│      {                                                                                                                                                                                       │
+│        "name": "OpenAI",                                                                                                                                                                     │
+│        "ticker": "Private company",                                                                                                                                                          │
+│        "reason": "Recently expanded the capabilities of GPT-4 by introducing image interpretation features."                                                                                 │
+│      },                                                                                                                                                                                      │
+│      {                                                                                                                                                                                       │
+│        "name": "Meta Platforms, Inc.",                                                                                                                                                       │
+│        "ticker": "META",                                                                                                                                                                     │
+│        "reason": "Actively recruiting Apple's head of AI to enhance its technological capabilities."                                                                                         │
+│      },                                                                                                                                                                                      │
+│      {                                                                                                                                                                                       │
+│        "name": "Microsoft Corporation",                                                                                                                                                      │
+│        "ticker": "MSFT",                                                                                                                                                                     │
+│        "reason": "Continues to update its AI collaborations and acquisitions, reinforcing its leadership in the technology market."                                                          │
+│      }                                                                                                                                                                                       │
+│    ]                                                                                                                                                                                         │
+│  }                                                                                                                                                                                           │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+    Assigned to: Manager
+    
+    Status: ✅ Completed
+    ├── 🔧 Used Delegate work to coworker (1)
+    ├── 🔧 Using Delegate work to coworker (2)
+    └── 🔧 Used Search the internet with Serper (1)
+╭────────────────────────────────────────────────────────────────────────────────────── Task Completion ───────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Task Completed                                                                                                                                                                              │
+│  Name: d09d83c2-353e-4c3e-a4f5-357960fb5c83                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Tool Args:                                                                                                                                                                                  │
+│                                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Delegate work to coworker (1)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 93ada82a-9770-43d9-b153-8a1a2ce1ab36
+    Status: Executing Task...
+╭────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Task: Given a list of trending companies, provide detailed analysis of each company in a report by searching online                                                                         │
+│                                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Delegate work to coworker (1)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 93ada82a-9770-43d9-b153-8a1a2ce1ab36
+    Status: Executing Task...
+    └── 🔧 Used Search the internet with Serper (2)
+╭────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ───────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Thought: Thought: I will first gather detailed information about each of the companies listed in the context provided. I will start with OpenAI, which is a private company, then move on   │
+│  to Meta Platforms, Inc., and Microsoft Corporation.                                                                                                                                         │
+│                                                                                                                                                                                              │
+│  Using Tool: Search the internet with Serper                                                                                                                                                 │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────────────────────────── Tool Input ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  "{\"search_query\": \"OpenAI company analysis 2023\"}"                                                                                                                                      │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────────────── Tool Output ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  {'searchParameters': {'q': 'OpenAI company analysis 2023', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title': 'Company Analysis of OpenAI with Special Emphasis on     │
+│  its Future ...', 'link': 'https://www.researchgate.net/publication/391277496_Company_Analysis_of_OpenAI_with_Special_Emphasis_on_its_Future_Strategies', 'snippet': "The detailed analysis  │
+│  highlights critical aspects of OpenAI's financial performance, revenue strategies, funding sources, and economic ...", 'position': 1}, {'title': 'OpenAI Is A Systemic Risk To The Tech     │
+│  Industry', 'link': 'https://www.wheresyoured.at/openai-is-a-systemic-risk-to-the-tech-industry-2/', 'snippet': 'OpenAI has only raised $10 billion of the $40 billion, with the rest        │
+│  arriving by "the end of the year." The remaining $30 billion — $20 billion ...', 'position': 2}, {'title': 'OpenAI revenue, growth rate & funding | Sacra', 'link':                         │
+│  'https://sacra.com/c/openai/', 'snippet': 'OpenAI is on track to achieve its 2025 revenue target of $12.7B and maintains its longer-term projection of reaching $125B in revenue by 2029    │
+│  and $174B by 2030.', 'position': 3}, {'title': 'OpenAI Is Growing Fast and Burning Through Piles of Money', 'link':                                                                         │
+│  'https://www.nytimes.com/2024/09/27/technology/openai-chatgpt-investors-funding.html', 'snippet': "OpenAI's monthly revenue hit $300 million in August, up 1,700 percent since the          │
+│  beginning of 2023, and the company expects about $3.7 billion ...", 'position': 4}, {'title': 'OpenAI: 2023 CNBC Disruptor 50', 'link':                                                     │
+│  'https://www.cnbc.com/2023/05/09/openai-disruptor-50.html', 'snippet': 'Today, OpenAI is reportedly valued at $29 billion, though the company has not shared total funding or valuation     │
+│  data.', 'position': 5}, {'title': "Why OpenAI's $157B valuation misreads AI's future", 'link': 'https://foundationcapital.com/why-openais-157b-valuation-misreads-ais-future/', 'snippet':  │
+│  "OpenAI's growth has been nothing short of meteoric. Monthly revenue reached $300M in August 2023, a 1,700% in...                                                                           │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Delegate work to coworker (1)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 93ada82a-9770-43d9-b153-8a1a2ce1ab36
+    Status: Executing Task...
+    ├── 🔧 Used Search the internet with Serper (2)
+    └── 🔧 Used Search the internet with Serper (3)
+╭────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ───────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Thought: json                                                                                                                                                                               │
+│  {                                                                                                                                                                                           │
+│    "name": "OpenAI",                                                                                                                                                                         │
+│    "market_position": "OpenAI is rapidly becoming a major player in the AI industry, with significant increases in both valuation and revenue. As of 2023, it was valued at $29 billion and  │
+│  is on track to hit substantial revenue targets over the next few years, including a $3.4 billion annualized revenue. The company's growth is marked by significant investments and          │
+│  advancements in AI technology, cementing its position in the market.",                                                                                                                      │
+│    "future_outlook": "The future outlook for OpenAI is positive, with projections indicating a substantial increase in revenue over the next decade, reaching $125 billion by 2029. The      │
+│  company is expected to continue its rapid growth trajectory and increase its market share as AI becomes more integral to various sectors.",                                                 │
+│    "investment_potential": "OpenAI holds strong investment potential due to its high growth rate and strategic positioning in the AI industry. Though currently private, it presents a       │
+│  lucrative opportunity for investors should it decide to go public or offer shares in a different capacity. Its innovation in technology, particularly in AI, makes it an attractive option  │
+│  in the technology sector."                                                                                                                                                                  │
+│  }                                                                                                                                                                                           │
+│  Thought: I have gathered detailed information regarding OpenAI. I will now proceed to find information on Meta Platforms, Inc.                                                              │
+│                                                                                                                                                                                              │
+│  Using Tool: Search the internet with Serper                                                                                                                                                 │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────────────────────────── Tool Input ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  "{\"search_query\": \"Meta Platforms Inc company analysis 2023\"}"                                                                                                                          │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────────────── Tool Output ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  {'searchParameters': {'q': 'Meta Platforms Inc company analysis 2023', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title': 'Meta Platforms Inc: Overview - Company      │
+│  Profile - GlobalData', 'link': 'https://www.globaldata.com/company-profile/facebook-inc/', 'snippet': 'Meta Platforms Inc (Meta) is a provider of social networking, advertising, and       │
+│  business insight solutions. The company offers products and services through ...', 'position': 1}, {'title': 'Meta Reports Fourth Quarter and Full Year 2023 Results; Initiates ...',       │
+│  'link': 'https://investor.atmeta.com/investor-news/press-release-details/2024/Meta-Reports-Fourth-Quarter-and-Full-Year-2023-Results-Initiates-Quarterly-Dividend/default.aspx',            │
+│  'snippet': 'Meta Reports Fourth Quarter and Full Year 2023 Results; Initiates Quarterly Dividend ; Income from operations. $. 16,384 ; Operating margin. 41 %.', 'position': 2}, {'title':  │
+│  'Meta Platforms, Inc. (META) | Company valuation, comparison, AI ...', 'link': 'https://gothematic.com/stock/META/XNAS/evaluation?rid=01JBM3RR24N4C9EAE82D0T8JR7', 'snippet': 'META has     │
+│  demonstrated strong revenue growth, with total revenue reaching $40.6 billion in Q3 2024, a 19% year-over-year increase. Net income was $15.7 billion, ...', 'position': 3}, {'title':      │
+│  'Meta Platforms Inc.: A Comprehensive Financial Performance Review', 'link': 'https://www.mexem.com/blog/meta-platforms-inc-a-comprehensive-financial-performance-review', 'snippet':       │
+│  'Meta Platforms Inc. has showcased remarkable financial growth in 2023, with a 23.21% increase in revenue and a 163.55% surge in net income.', 'position': 4}, {'title': 'Meta Platforms,   │
+│  Inc. (META) Stock Price, Quote, News & Analysis', 'link': 'https://seekingalpha.com/symbol/META', 'snippet': 'Meta Platforms, Inc. engages in the development of products that enable       │
+│  people to connect and share with friends and family through mobile devices.', 'position': 5}, {'title': 'Meta Platforms (META) Stock Price & Overview - Stock Analysis', ...                │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Delegate work to coworker (1)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 93ada82a-9770-43d9-b153-8a1a2ce1ab36
+    Status: Executing Task...
+    ├── 🔧 Used Search the internet with Serper (2)
+    ├── 🔧 Used Search the internet with Serper (3)
+    └── 🔧 Used Search the internet with Serper (4)
+╭────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ───────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Thought: json                                                                                                                                                                               │
+│  {                                                                                                                                                                                           │
+│    "name": "Meta Platforms, Inc.",                                                                                                                                                           │
+│    "market_position": "Meta Platforms, Inc. has firmly established itself as a leading player in the digital and social media sectors. In 2023, it reported remarkable financial growth      │
+│  with a valuation jumping to $909.6 billion by the year end. Their revenue has shown a significant increase, reflecting the company's strong market presence.",                              │
+│    "future_outlook": "The future outlook for Meta is optimistic as the company continues to focus on expanding its technological capabilities and exploring the metaverse. Despite facing    │
+│  regulatory challenges, its commitment to innovation positions it well for future growth and diversification in digital spaces.",                                                            │
+│    "investment_potential": "Meta's investment potential remains high, buoyed by its strong financial performance and strategic focus on efficiency and technological advancement. The        │
+│  company’s stocks are considered a good buy due to their robust growth potential and strong market positioning despite being somewhat impacted by regulatory scrutiny."                      │
+│  }                                                                                                                                                                                           │
+│  Thought: I have gathered detailed information regarding Meta Platforms, Inc. I will now proceed to find information on Microsoft Corporation.                                               │
+│                                                                                                                                                                                              │
+│  Using Tool: Search the internet with Serper                                                                                                                                                 │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────────────────────────── Tool Input ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  "{\"search_query\": \"Microsoft Corporation company analysis 2023\"}"                                                                                                                       │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────────────── Tool Output ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  {'searchParameters': {'q': 'Microsoft Corporation company analysis 2023', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title': 'Microsoft 2023: Strong Financials and    │
+│  Market Optimism - MEXEM', 'link': 'https://www.mexem.com/blog/microsoft-2023-strong-financials-and-market-optimism', 'snippet': 'In 2023, Microsoft Corporation {{ m-tag option="price"     │
+│  ticker="MSFT" currency="USD" }} demonstrated exceptional financial health, marked by a significant year-over-year revenue growth. The tech giant reported a year-to-date revenue of $56.52  │
+│  billion, a notable 12.76% increase from the previous year.', 'position': 1}, {'title': 'Microsoft 2023 Annual Report', 'link':                                                              │
+│  'https://www.microsoft.com/investor/reports/ar23/index.html', 'snippet': 'We delivered strong results in fiscal year 2023, including a record $211 billion in revenue and over $88 billion  │
+│  in operating income.', 'position': 2}, {'title': 'Download Center - Microsoft 2023 Annual Report', 'link': 'https://www.microsoft.com/investor/reports/ar23/download-center/', 'snippet':   │
+│  "Discussion & Analysis · Market Risk · Income Statements · Balance Sheets · Cash Flows Statements · Stockholders' Equity · Notes · Notes · Accounting Policies ...", 'position': 3},        │
+│  {'title': 'Microsoft: Facts and Statistics (2023) - Investing.com', 'link': 'https://www.investing.com/academy/statistics/microsoft-facts/', 'snippet': "Microsoft outperformed analysts'   │
+│  predictions of $49.61 billion by 11% in Q1 2023. In the second quarter, however, the company could not spring ...", 'position': 4}, {'title': 'FY23 Q4 - Balance Sheets - Investor          │
+│  Relations - Microsoft', 'link': 'https://www.microsoft.com/en-us/investor/earnings/fy-2023-q4/balance-sheets', 'snippet': 'FY23 Q4 Balance Sheets. IMPORTANT NOTICE TO USERS (summary       │
+│  only, click here for full text of notice); All information is unaudited unless otherwise noted.', 'position': 5}, {'title': 'Microsoft Corporation (MSFT) Analyst Ratings, Estimates &      │
+│  Forecasts', 'link': 'https://f...                                                                                                                                                           │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Delegate work to coworker (1)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 93ada82a-9770-43d9-b153-8a1a2ce1ab36
+    Status: Executing Task...
+    ├── 🔧 Used Search the internet with Serper (2)
+    ├── 🔧 Used Search the internet with Serper (3)
+    └── 🔧 Used Search the internet with Serper (4)
+╭─────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Final Answer:                                                                                                                                                                               │
+│  {                                                                                                                                                                                           │
+│    "research_list": [                                                                                                                                                                        │
+│      {                                                                                                                                                                                       │
+│        "name": "OpenAI",                                                                                                                                                                     │
+│        "market_position": "OpenAI is rapidly becoming a major player in the AI industry, with significant increases in both valuation and revenue. As of 2023, it was valued at $29 billion  │
+│  and is on track to hit substantial revenue targets over the next few years, including a $3.4 billion annualized revenue. The company's growth is marked by significant investments and      │
+│  advancements in AI technology, cementing its position in the market.",                                                                                                                      │
+│        "future_outlook": "The future outlook for OpenAI is positive, with projections indicating a substantial increase in revenue over the next decade, reaching $125 billion by 2029. The  │
+│  company is expected to continue its rapid growth trajectory and increase its market share as AI becomes more integral to various sectors.",                                                 │
+│        "investment_potential": "OpenAI holds strong investment potential due to its high growth rate and strategic positioning in the AI industry. Though currently private, it presents a   │
+│  lucrative opportunity for investors should it decide to go public or offer shares in a different capacity. Its innovation in technology, particularly in AI, makes it an attractive option  │
+│  in the technology sector."                                                                                                                                                                  │
+│      },                                                                                                                                                                                      │
+│      {                                                                                                                                                                                       │
+│        "name": "Meta Platforms, Inc.",                                                                                                                                                       │
+│        "market_position": "Meta Platforms, Inc. has firmly established itself as a leading player in the digital and social media sectors. In 2023, it reported remarkable financial growth  │
+│  with a valuation jumping to $909.6 billion by the year end. Their revenue has shown a significant increase, reflecting the company's strong market presence.",                              │
+│        "future_outlook": "The future outlook for Meta is optimistic as the company continues to focus on expanding its technological capabilities and exploring the metaverse. Despite       │
+│  facing regulatory challenges, its commitment to innovation positions it well for future growth and diversification in digital spaces.",                                                     │
+│        "investment_potential": "Meta's investment potential remains high, buoyed by its strong financial performance and strategic focus on efficiency and technological advancement. The    │
+│  company’s stocks are considered a good buy due to their robust growth potential and strong market positioning despite being somewhat impacted by regulatory scrutiny."                      │
+│      },                                                                                                                                                                                      │
+│      {                                                                                                                                                                                       │
+│        "name": "Microsoft Corporation",                                                                                                                                                      │
+│        "market_position": "Microsoft Corporation remains a dominant force in the global technology industry, with exceptional financial performance and significant investments in cloud     │
+│  computing and AI. In 2023, Microsoft reported a record $211 billion in revenue and over $88 billion in operating income, underscoring its strong market position.",                         │
+│        "future_outlook": "The future outlook for Microsoft is very promising, with continued expansion in cloud services and AI positioning it for ongoing growth. The company's strategic   │
+│  acquisitions and collaborations in AI are expected to sustain its leadership in technology sectors, supporting long-term growth prospects.",                                                │
+│        "investment_potential": "Microsoft's investment potential is robust, driven by its strong financial health and leadership in key technology areas. Its focus on technological         │
+│  innovation, particularly in AI and cloud computing, makes it a highly attractive investment option, with analysts consistently recommending it as a strong buy."                            │
+│      }                                                                                                                                                                                       │
+│    ]                                                                                                                                                                                         │
+│  }                                                                                                                                                                                           │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Delegate work to coworker (1)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 93ada82a-9770-43d9-b153-8a1a2ce1ab36
+    Assigned to: Manager
+    
+    Status: ✅ Completed
+    ├── 🔧 Used Search the internet with Serper (2)
+    ├── 🔧 Used Search the internet with Serper (3)
+    └── 🔧 Used Search the internet with Serper (4)
+╭────────────────────────────────────────────────────────────────────────────────────── Task Completion ───────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Task Completed                                                                                                                                                                              │
+│  Name: 93ada82a-9770-43d9-b153-8a1a2ce1ab36                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Tool Args:                                                                                                                                                                                  │
+│                                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Delegate work to coworker (1)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 93ada82a-9770-43d9-b153-8a1a2ce1ab36
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: 4cf13d98-af3d-4a26-bf12-7b2b483ed906
+    Status: Executing Task...
+╭────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Task: Analyze the research findings and pick the best company for investment. Send a push notification to the user with the decision and 1 sentence rationale. Then respond with a          │
+│  detailed report on why you chose this company, and which companies were not selected.                                                                                                       │
+│                                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Delegate work to coworker (1)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 93ada82a-9770-43d9-b153-8a1a2ce1ab36
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: 4cf13d98-af3d-4a26-bf12-7b2b483ed906
+    Status: Executing Task...
+    └── 🔧 Using Delegate work to coworker (3)
+╭────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Stock Picker from Research                                                                                                                                                           │
+│                                                                                                                                                                                              │
+│  Task: Analyze the research findings for OpenAI, Meta Platforms, Inc., and Microsoft Corporation to pick the best company for investment based on market position, future outlook, and       │
+│  investment potential.                                                                                                                                                                       │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Delegate work to coworker (1)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 93ada82a-9770-43d9-b153-8a1a2ce1ab36
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: 4cf13d98-af3d-4a26-bf12-7b2b483ed906
+    Status: Executing Task...
+    └── 🔧 Using Delegate work to coworker (3)
+╭─────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Stock Picker from Research                                                                                                                                                           │
+│                                                                                                                                                                                              │
+│  Final Answer:                                                                                                                                                                               │
+│  After careful analysis of the three companies—OpenAI, Meta Platforms, Inc., and Microsoft Corporation—I've concluded that Microsoft Corporation presents the best investment opportunity    │
+│  based on the criteria of market position, future outlook, and investment potential.                                                                                                         │
+│                                                                                                                                                                                              │
+│  1. **Market Position**: Microsoft is a well-established leader in multiple sectors, including software (Windows, Office), cloud computing (Azure), and hardware (Surface). Its diversified  │
+│  portfolio mitigates risks associated with relying on a single revenue stream. Furthermore, Microsoft's long-standing reputation and brand equity give it a competitive advantage.           │
+│                                                                                                                                                                                              │
+│  2. **Future Outlook**: Microsoft has been making significant strides in the cloud computing market with Azure, which is set to continue growing as more businesses transition to            │
+│  cloud-based solutions. The integration of AI technologies into its existing products, including recent developments in OpenAI partnerships, positions Microsoft at the forefront of         │
+│  innovation. Analysts predict growth rates between 15-20% annually for Azure over the next 5 years, signifying robust future prospects.                                                      │
+│                                                                                                                                                                                              │
+│  3. **Investment Potential**: Microsoft has shown consistent revenue growth, impressive margins, and a strong balance sheet. The company's financial health allows it to invest heavily in   │
+│  R&D and acquisitions, enhancing its competitive edge. Furthermore, Microsoft has a history of returning value to its shareholders through dividends and stock buybacks, yielding an         │
+│  attractive total return profile for investors.                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Comparatively, while OpenAI has tremendous innovation potential, it remains a private entity in a nascent stage, lacking the robust revenue generation and stability of publicly traded     │
+│  firms. Meta Platforms, though recovering from some recent turmoil, faces challenges in monetizing its metaverse strategy and adapting to changes in user behavior and privacy regulations.  │
+│                                                                                                                                                                                              │
+│  Given these considerations, Microsoft's strong market position, favorable future outlook, and solid investment potential make it the ideal choice for investment efforts going forward.     │
+│  This recommendation aims to secure attractive returns while benefiting from the transformative potential of cloud and AI technologies.                                                      │
+│                                                                                                                                                                                              │
+│  In conclusion, emphasizing Microsoft Corporation as the focus of investment efforts aligns with achieving sustained growth and maximizing shareholder value in the near and long term.      │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ───────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Thought: Thought: To determine the best company for investment, I need a detailed analysis of each company's market position, future outlook, and investment potential. The research list   │
+│  provides some insights, but I need a qualified perspective from our Stock Picker to ensure a well-informed decision.                                                                        │
+│                                                                                                                                                                                              │
+│  Using Tool: Delegate work to coworker                                                                                                                                                       │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────────────────────────── Tool Input ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  "{\"task\": \"Analyze the research findings for OpenAI, Meta Platforms, Inc., and Microsoft Corporation to pick the best company for investment based on market position, future outlook,   │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────────────── Tool Output ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  After careful analysis of the three companies—OpenAI, Meta Platforms, Inc., and Microsoft Corporation—I've concluded that Microsoft Corporation presents the best investment opportunity    │
+│  based on the criteria of market position, future outlook, and investment potential.                                                                                                         │
+│                                                                                                                                                                                              │
+│  1. **Market Position**: Microsoft is a well-established leader in multiple sectors, including software (Windows, Office), cloud computing (Azure), and hardware (Surface). Its diversified  │
+│  portfolio mitigates risks associated with relying on a single revenue stream. Furthermore, Microsoft's long-standing reputation and brand equity give it a competitive advantage.           │
+│                                                                                                                                                                                              │
+│  2. **Future Outlook**: Microsoft has been making significant strides in the cloud computing market with Azure, which is set to continue growing as more businesses transition to            │
+│  cloud-based solutions. The integration of AI technologies into its existing products, including recent developments in OpenAI partnerships, positions Microsoft at the forefront of         │
+│  innovation. Analysts predict growth rates between 15-20% annually for Azure over the next 5 years, signifying robust future prospects.                                                      │
+│                                                                                                                                                                                              │
+│  3. **Investment Potential**: Microsoft has shown consistent revenue growth, impressive margins, and a strong balance sheet. The company's financial health allows it to invest heavily in   │
+│  R&D and acquisitions, enhancing its competitive edge. Furthermore, Microsoft has a history of returning value to its shareholders through dividends and stock buybacks, yielding an         │
+│  attractive total return profile for investors.                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Comparatively, while OpenAI has tremendous innovation potential, it remains a private entity in a nascent stage, lacking the robust revenue generation and stability of publicly traded     │
+│  firms. Meta Platforms, though recovering from some recent turmoil, faces challenges in monetizing its metaverse strategy and adapting to changes in user behavior and privacy regulations.  │
+│                                                                                                                                                                                              │
+│  Given these considerations, Microsoft's strong market position, favorable future o...                                                                                                       │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Delegate work to coworker (1)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 93ada82a-9770-43d9-b153-8a1a2ce1ab36
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: 4cf13d98-af3d-4a26-bf12-7b2b483ed906
+    Status: Executing Task...
+    └── 🔧 Using Delegate work to coworker (3)
+╭─────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Final Answer:                                                                                                                                                                               │
+│  Chosen Company: Microsoft Corporation                                                                                                                                                       │
+│  Why it was chosen: Microsoft Corporation presents the best investment opportunity based on its strong market position, favorable future outlook, and robust investment potential. It is a   │
+│  well-established leader with a diversified portfolio, significant strides in cloud computing, and strategic integration of AI technologies. Microsoft has consistent revenue growth,        │
+│  impressive margins, and a strong financial position allowing investments in R&D and acquisitions. Additionally, it offers attractive total returns through dividends and stock buybacks.    │
+│                                                                                                                                                                                              │
+│  Companies not selected:                                                                                                                                                                     │
+│                                                                                                                                                                                              │
+│  1. OpenAI                                                                                                                                                                                   │
+│  Why not selected: Although OpenAI shows promising innovation potential, it is still a private entity with nascent financial capabilities compared to Microsoft. The company lacks the       │
+│  stability and extensive revenue streams of established publicly traded firms.                                                                                                               │
+│                                                                                                                                                                                              │
+│  2. Meta Platforms, Inc.                                                                                                                                                                     │
+│  Why not selected: Meta faces several challenges despite its strong financial position, including difficulties in monetizing the metaverse strategy, regulatory scrutiny, and adapting to    │
+│  changes in user behavior and privacy regulations. These uncertainties present risks that overshadow its growth prospects in comparison to Microsoft's more stable and predictable outlook.  │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: d09d83c2-353e-4c3e-a4f5-357960fb5c83
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Delegate work to coworker (1)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 93ada82a-9770-43d9-b153-8a1a2ce1ab36
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: 4cf13d98-af3d-4a26-bf12-7b2b483ed906
+    Assigned to: Manager
+    
+    Status: ✅ Completed
+    └── 🔧 Using Delegate work to coworker (3)
+╭────────────────────────────────────────────────────────────────────────────────────── Task Completion ───────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Task Completed                                                                                                                                                                              │
+│  Name: 4cf13d98-af3d-4a26-bf12-7b2b483ed906                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+│  Tool Args:                                                                                                                                                                                  │
+│                                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────────────────────────────────────────────────────────────── Crew Completion ───────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                              │
+│  Crew Execution Completed                                                                                                                                                                    │
+│  Name: crew                                                                                                                                                                                  │
+│  ID: 6e1fb452-6b53-4820-8b4e-728f74a3c9f9                                                                                                                                                    │
+│  Tool Args:                                                                                                                                                                                  │
+│  Final Output: Chosen Company: Microsoft Corporation                                                                                                                                         │
+│  Why it was chosen: Microsoft Corporation presents the best investment opportunity based on its strong market position, favorable future outlook, and robust investment potential. It is a   │
+│  well-established leader with a diversified portfolio, significant strides in cloud computing, and strategic integration of AI technologies. Microsoft has consistent revenue growth,        │
+│  impressive margins, and a strong financial position allowing investments in R&D and acquisitions. Additionally, it offers attractive total returns through dividends and stock buybacks.    │
+│                                                                                                                                                                                              │
+│  Companies not selected:                                                                                                                                                                     │
+│                                                                                                                                                                                              │
+│  1. OpenAI                                                                                                                                                                                   │
+│  Why not selected: Although OpenAI shows promising innovation potential, it is still a private entity with nascent financial capabilities compared to Microsoft. The company lacks the       │
+│  stability and extensive revenue streams of established publicly traded firms.                                                                                                               │
+│                                                                                                                                                                                              │
+│  2. Meta Platforms, Inc.                                                                                                                                                                     │
+│  Why not selected: Meta faces several challenges despite its strong financial position, including difficulties in monetizing the metaverse strategy, regulatory scrutiny, and adapting to    │
+│  changes in user behavior and privacy regulations. These uncertainties present risks that overshadow its growth prospects in comparison to Microsoft's more stable and predictable outlook.  │
+│                                                                                                                                                                                              │
+│                                                                                                                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+
+
+=== FINAL DECISION ===
+
+
+Chosen Company: Microsoft Corporation
+Why it was chosen: Microsoft Corporation presents the best investment opportunity based on its strong market position, favorable future outlook, and robust investment potential. It is a well-established leader with a diversified portfolio, significant strides in cloud computing, and strategic integration of AI technologies. Microsoft has consistent revenue growth, impressive margins, and a strong financial position allowing investments in R&D and acquisitions. Additionally, it offers attractive total returns through dividends and stock buybacks.
+
+Companies not selected:
+
+1. OpenAI
+Why not selected: Although OpenAI shows promising innovation potential, it is still a private entity with nascent financial capabilities compared to Microsoft. The company lacks the stability and extensive revenue streams of established publicly traded firms.
+
+2. Meta Platforms, Inc.
+Why not selected: Meta faces several challenges despite its strong financial position, including difficulties in monetizing the metaverse strategy, regulatory scrutiny, and adapting to changes in user behavior and privacy regulations. These uncertainties present risks that overshadow its growth prospects in comparison to Microsoft's more stable and predictable outlook.
+```
