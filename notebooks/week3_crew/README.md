@@ -1791,3 +1791,39 @@ In conclusion, while Apple Inc. is navigating a challenging economic landscape m
 
 Report has been saved to output/report.md
 ```
+
+**Why context matters and the problem with knowledge cutoffs**
+
+The key point is that the second agent, which generated the summary of the research report on Tesla, could do so effectively because it received the output from the first agent as its context. This is how it was able to produce a relevant summary. However, if you look at the details, you will notice the information was current only up to October 2023, such as the mention of “Key Financial Metrics Q3 2023.” This is disappointing, since it's not recent data. The reason for this is that we relied on the research agent, which used DeepSeek, and DeepSeek was last trained in 2023. It cannot provide more up-to-date information.
+
+**How to fix outdated research with tools**
+
+To solve this problem, you can add a tool that enables real-time search. The plan is to return to `crew.py`, the module where the crew is defined, and add a new import from crew\.ai tools. Specifically, you want to use the SERPA.dev tool. This tool lets the agent perform Google lookups using your SERPA.dev API key, which must be added to your `.env` file.
+
+
+**Assigning the search tool to the researcher agent**
+
+The next step is to ensure only the researcher agent has access to the SERPA.dev tool. This is done by adding the tool to the researcher's `tools` list when you create the agent instance. The implementation is simple: instantiate the SERPA.dev tool and include it in the researcher’s configuration. Only the researcher should have access; the analyst does not need it.
+
+
+**Running the process with the new tool**
+
+Once this change is saved, you can switch the LLM model if you wish— for speed, you might select OpenAI GPT-4o Mini. Then, open a terminal, navigate to your financial researcher directory, and run the workflow with `crew.ai run`.
+
+
+**Observing up-to-date results**
+
+Now, when the workflow executes, the researcher agent will use the SERPA.dev tool to search Google for up-to-date information, such as “Tesla latest news today.” The process includes multiple searches and gathers recent information— for example, results from 2025 appear in the search, showing you are now getting the latest data.
+
+The researcher completes the data collection, then hands off to the report writer agent (using, for example, Grok). The summary and final report now include the most current news about Tesla, including events from the last month or even last week. The final report is clear, accurate, and highly relevant.
+
+
+**Key takeaways and advantages**
+
+* The infrastructure is easy to build with Crew: just a few commands and clear YAML objectives for each agent and task.
+* Assigning tools to agents (like SERPA.dev to the researcher) is straightforward.
+* The costs are low or even free if you use the available credits.
+* The system now produces high-quality, up-to-date reports with very little manual effort.
+* The resulting reports are comparable to what a human would produce after 10–15 minutes of focused research and synthesis.
+
+> With these improvements, your automated financial researcher can gather and report the latest information, not just rely on LLM training cutoffs. Crew makes it simple to connect tools, agents, and tasks, and enables experimentation with different models and tool assignments for better results.
