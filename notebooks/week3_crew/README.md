@@ -7,8 +7,9 @@
     - [Define our files](#now-we-going-to-define-our-files)
   - [Run the project](#run-the-project)
   - [Recap: Your First Project with CrewAI](#recap-your-first-project-with-crewai)
-- [Building Crew AI Projects: Tools, Context & Google Search Integration]()
-- [Building Multi-Agent Financial Research System with Crew.ai]()
+- [Building Crew AI Projects: Tools, Context & Google Search Integration](#building-crew-ai-projects-tools-context--google-search-integration)
+- [Building Multi-Agent Financial Research System with Crew.ai](#introducing-the-second-project-financial-researcher)
+- [new project: **Stock Picker**](#stock-picker)
 
 
 
@@ -1827,3 +1828,172 @@ The researcher completes the data collection, then hands off to the report write
 * The resulting reports are comparable to what a human would produce after 10–15 minutes of focused research and synthesis.
 
 > With these improvements, your automated financial researcher can gather and report the latest information, not just rely on LLM training cutoffs. Crew makes it simple to connect tools, agents, and tasks, and enables experimentation with different models and tool assignments for better results.
+
+
+Here is your content, **fully ordered for clarity**, preserving every detail and keeping each code section with its related explanation, **titles in bold black** (no icons, no markdown headers), and all content organized for use as an educational doc or team onboarding:
+
+---
+
+## `Stock Picker`
+
+**Project Overview and Build Steps**
+
+Time to build a new project: **Stock Picker**—a tool for generating stock market recommendations (for learning and experimentation only, not for live trading).
+Remember the five basic CRU project build steps:
+
+1. Use `crewai create crew` to scaffold the project.
+2. Fill in the YAML files (agents and tasks).
+3. Complete the `crew.py` module.
+4. Update `main.py` to set any needed run inputs.
+5. Run the project using `crewai run`.
+
+For this project, we'll deepen the process in three new ways:
+
+* Use structured outputs (revisit from last week).
+* Add a custom tool (in addition to the SERPA tool).
+* Try out the hierarchical process (allowing CRU to manage what tasks go where).
+
+**Setting Up the Project**
+
+Open your terminal, navigate to your desired directory, and run:
+
+```sh
+crewai create crew
+```
+
+Name the project **Stock Picker**.
+Select OpenAI as your provider, pick GPT-4 and Mini, skip M variables.
+CRU creates the project for you.
+
+Now, open the Stock Picker folder, navigate to `src/config`, and start by defining your agents.
+
+**Agents (src/config/agents.yaml)**
+
+The Stock Picker project uses four agents, each with a specific financial or management role:
+
+```yml
+trending_company_finder:
+  role: >
+    Financial News Analyst that finds trending companies in {sector}
+  goal: >
+    You read the latest news, then find 2-3 companies that are trending in the news for further research.
+    Always pick new companies. Don't pick the same company twice.
+  backstory: >
+    You are a market expert with a knack for picking out the most interesting companies based on latest news.
+    You spot multiple companies that are trending in the news.
+  llm: openai/gpt-4o-mini
+```
+
+**Trending Company Finder:**
+Finds 2-3 trending companies in the news for a given sector. Ensures new companies are picked each time, based on latest news.
+
+```yml
+financial_researcher:
+  role: >
+    Senior Financial Researcher
+  goal: >
+    Given details of trending companies in the news, you provide comprehensive analysis of each in a report.
+  backstory: >
+    You are a financial expert with a proven track record of deeply analyzing hot companies and building comprehensive reports.
+  llm: openai/gpt-4o-mini
+```
+
+**Financial Researcher:**
+Given the trending companies, provides detailed, expert analysis of each one in a structured report.
+
+```yml
+stock_picker:
+  role: >
+    Stock Picker from Research
+  goal: >
+    Given a list of researched companies with investment potential, you select the best one for investment,
+    notifying the user and then providing a detailed report. Don't pick the same company twice.
+  backstory: >
+    You're a meticulous, skilled financial analyst with a proven track record of equity selection.
+    You have a talent for synthesizing research and picking the best company for investment.
+  llm: openai/gpt-4o-mini
+```
+
+**Stock Picker:**
+Given all research, picks the single best company for investment. Notifies the user and provides a detailed report. Avoids duplicate picks.
+
+```yml
+manager:
+  role: >
+    Manager
+  goal: >
+    You are a skilled project manager who can delegate tasks in order to achieve your goal, which is to pick the best company for investment.
+  backstory: >
+    You are an experienced and highly effective project manager who can delegate tasks to the right people.
+  llm: openai/gpt-4o
+```
+
+**Manager:**
+A simple agent responsible for overseeing and delegating tasks, aiming to get the best investment pick.
+
+
+**Tasks (src/config/tasks.yaml)**
+
+Each task is written to be clear and direct, using consistent language (like "trending companies") throughout agents and tasks for stability and coherence.
+
+```yml
+find_trending_companies:
+  description: >
+    Find the top trending companies in the news in {sector} by searching the latest news. Find new companies that you've not found before.
+  expected_output: >
+    A list of trending companies in {sector}
+  agent: trending_company_finder
+  output_file: output/trending_companies.json
+```
+
+**Find Trending Companies Task:**
+The trending company finder agent searches the latest news in the given sector, outputs a list of new trending companies (never repeats), and saves results to `output/trending_companies.json`.
+The output is structured as JSON for clarity and later use.
+
+```yml
+research_trending_companies:
+  description: >
+    Given a list of trending companies, provide detailed analysis of each company in a report by searching online
+  expected_output: >
+    A report containing detailed analysis of each company
+  agent: financial_researcher
+  context:
+    - find_trending_companies
+  output_file: output/research_report.json
+```
+
+**Research Trending Companies Task:**
+The financial researcher agent takes the trending company list and generates a report with a detailed analysis for each, saved to `output/research_report.json`.
+This task uses the output from the previous task as its context.
+
+```yml
+pick_best_company:
+  description: >
+    Analyze the research findings and pick the best company for investment.
+    Send a push notification to the user with the decision and 1 sentence rationale.
+    Then respond with a detailed report on why you chose this company, and which companies were not selected.
+  expected_output: >
+    The chosen company and why it was chosen; the companies that were not selected and why they were not selected.
+  agent: stock_picker
+  context:
+    - research_trending_companies
+  output_file: output/decision.md
+```
+
+**Pick Best Company Task:**
+The stock picker analyzes all research and picks the best company. It sends a push notification to the user with a brief rationale, and then gives a full report including why that company was chosen and why others were not. Results are saved to `output/decision.md`.
+
+**Tips and Notes from Experience**
+
+* Each agent/task pair is well-matched; there's currently a one-to-one mapping.
+* Writing very crisp, instructive task descriptions and consistent language helps produce more coherent results.
+* In earlier versions, inconsistent wording between tasks and agents led to confusion and less stable results.
+* Structured outputs (like JSON and MD files) make it easier to consume results and pass them between agents.
+
+**Next Steps**
+
+After agents and tasks are defined, proceed to implement the process in `crew.py` and set up input handling in `main.py`, then run your project and review the outputs.
+You can experiment with different models for each agent, or add custom tools as needed to expand capabilities (for example, integrating notifications or news scraping tools).
+Remember, this workflow is for educational and research purposes only, not for live trading or investment advice.
+
+
