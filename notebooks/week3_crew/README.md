@@ -2923,10 +2923,7 @@ Finally, there is **user memory**, designed for storing user-specific informatio
 
 In the code we're about to explore, we’ll be focusing primarily on contextual memory, meaning we’ll see how short-term, long-term, and entity memory are integrated into the stock picker solution to give our agents more meaningful, persistent awareness throughout the session.
 
-#### Setting Up Memory in **`crew.py`**
-
-
-**Setting Up Memory in `crew.py`**
+### Setting Up Memory in **`crew.py`**
 
 We are looking at the `crew.py` module, and we're going to start by including new imports related to memory. These imports allow us to use the different memory types supported by CrewAI.
 
