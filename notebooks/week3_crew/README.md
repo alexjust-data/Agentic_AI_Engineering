@@ -2874,8 +2874,6 @@ Today’s session covered three core elements: structured outputs, hierarchical 
 
 ---
 
-![](../img/22.png)
-
 ## Memory - more prescriptive
 
 **Final Touches to the Stock Picker and Transition to Developer Agent**
@@ -2893,6 +2891,8 @@ Third, we move to the `crew.py` module, where we instantiate the agents and task
 Fourth, we update the `main.py` script to handle user inputs and bind them to the templated fields in the task definitions.
 
 And finally, we execute the project using `cruai run`.
+
+![](../img/22.png)
 
 
 **PIntroduction to Memory in CRU**
