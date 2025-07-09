@@ -2876,7 +2876,7 @@ Today’s session covered three core elements: structured outputs, hierarchical 
 
 ![](../img/22.png)
 
-## Memory - more prespcriptive
+## Memory - more prescriptive
 
 Perfect. Here's the improved and structured version of your text, **without losing any words**, and with each part **labeled with a period title** (`Part 1.`, `Part 2.`, etc.). No icons, no schematic lists, just clear blocks:
 
