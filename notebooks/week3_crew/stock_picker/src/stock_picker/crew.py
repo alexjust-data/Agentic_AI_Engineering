@@ -4,6 +4,9 @@ from crewai_tools import SerperDevTool
 from pydantic import BaseModel, Field
 from typing import List
 from .tools.push_tool import PushNotificationTool
+from crewai.memory import LongTermMemory, ShortTermMemory, EntityMemory
+from crewai.memory.storage.rag_storage import RAGStorage
+from crewai.memory.storage.ltm_sqlite_storage import LTMSQLiteStorage
 
 class TrendingCompany(BaseModel):
     """ A company that is in the news and attracting attention """

@@ -2942,20 +2942,41 @@ Now, you define the actual tool class. This inherits from `BaseTool`, sets the t
 ```python
 from crewai.tools import BaseTool
 from typing import Type
+from pydantic import BaseModel, Field
 import os
 import requests
 
+
+class PushNotification(BaseModel):
+    """A message to be sent to the user"""
+    message: str = Field(..., description="The message to be sent to the user.")
+
 class PushNotificationTool(BaseTool):
+
     name: str = "Send a Push Notification"
-    description: str = "This tool is used to send a push notification to the user."
+    description: str = (
+        "This tool is used to send a push notification to the user."
+    )
     args_schema: Type[BaseModel] = PushNotification
 
     def _run(self, message: str) -> str:
+        # If message is a dict, extract the correct field
+        if isinstance(message, dict):
+            if 'description' in message:
+                message = message['description']
+            elif 'message' in message:
+                message = message['message']
+            else:
+                # Fallback: all to string
+                message = str(message)
         pushover_user = os.getenv("PUSHOVER_USER")
         pushover_token = os.getenv("PUSHOVER_TOKEN")
         pushover_url = "https://api.pushover.net/1/messages.json"
+
         print(f"Push: {message}")
-        payload = {"user": pushover_user, "token": pushover_token, "message": message}
+        payload = {"user": pushover_user, 
+                   "token": pushover_token, 
+                   "message": message}
         requests.post(pushover_url, data=payload)
         return '{"notification": "ok"}'
 ```
@@ -3979,28 +4000,6 @@ We’re importing `ShortTermMemory`, `LongTermMemory`, and `EntityMemory`, which
 
 Now we move to the `crew()` function—the method that constructs the Crew object. Before defining the crew itself, we need to instantiate the memory modules one by one.
 
-```python
-short_term_memory = ShortTermMemory(
-    storage=RAGStorage(
-        provider="openai",
-        model="text-embedding-3-small",
-        path="memory/stm"
-    )
-)
-
-long_term_memory = LongTermMemory(
-    storage=LTMSQLiteStorage(path="memory/ltm.sqlite")
-)
-
-entity_memory = EntityMemory(
-    storage=RAGStorage(
-        provider="openai",
-        model="text-embedding-3-small",
-        path="memory/entity"
-    )
-)
-```
-
 For **short-term memory**, we use a `RAGStorage` instance with an embedding model (here, `"text-embedding-3-small"` from OpenAI) and a Chroma-compatible memory directory. **Long-term memory** is stored in an SQLite database, and **entity memory** works similarly to short-term memory but focuses on people, organizations, or concepts, also using vector similarity.
 
 **Creating the Crew with Memory**
@@ -4008,31 +4007,57 @@ For **short-term memory**, we use a `RAGStorage` instance with an embedding mode
 Now we’re ready to create the crew. In the `@crew` method, we pass the memory objects directly to the `Crew()` constructor.
 
 ```python
-@crew
-def crew(self) -> Crew:
-    """Creates the StockPicker crew"""
+    @crew
+    def crew(self) -> Crew:
+        """Creates the StockPicker crew"""
 
-    manager = Agent(
-        config=self.agents_config['manager'],
-        allow_delegation=True
-    )
-        
-    return Crew(
-        agents=self.agents,
-        tasks=self.tasks, 
-        process=Process.hierarchical,
-        verbose=True,
-        manager_agent=manager,
-        memory=True,
-        long_term_memory=long_term_memory,
-        short_term_memory=short_term_memory,
-        entity_memory=entity_memory
-    )
+        manager = Agent(
+            config=self.agents_config['manager'],
+            allow_delegation=True
+        )
+
+        short_term_memory = ShortTermMemory(
+            storage=RAGStorage(
+                embedder_config={
+                    "provider": "openai",
+                    "config": {
+                        "model": "text-embedding-3-small"
+                    }
+                },
+                type="short_term",
+                path="./memory/"
+            )
+        )
+
+        long_term_memory = LongTermMemory(
+            storage=LTMSQLiteStorage(path="memory/long_term_storage.db")
+        )
+
+        entity_memory = EntityMemory(
+            embedder_config={
+                "provider": "openai",
+                "config": {
+                    "model": "text-embedding-3-small"
+                }
+            },
+            type="short_term",
+            path="./memory/"
+        )
+            
+        return Crew(
+            agents=self.agents,
+            tasks=self.tasks, 
+            process=Process.hierarchical,
+            verbose=True,
+            manager_agent=manager,
+            long_term_memory=long_term_memory,
+            short_term_memory=short_term_memory,
+            entity_memory=entity_memory
+        )
 ```
+**Assigning Memory to Individual Agents**
 
 Notice the `memory=True` flag as well as the specific memory objects passed into the Crew. This tells the system to activate memory handling and apply each configured memory module as needed.
-
-**Assigning Memory to Individual Agents**
 
 There’s one more small but essential step. You need to explicitly assign memory to the agents that should retain context across interactions. This is done with `memory=True` when defining the agents.
 
@@ -4063,3 +4088,1040 @@ To fully benefit from memory, make sure your YAML files (agent and task definiti
 
 With that, memory is now set up in your `StockPicker` project. You can now open your terminal and run the project. The memory modules will automatically store, retrieve, and pass relevant context to the agents, enhancing the intelligence of your crew.
 
+
+
+
+```sh
+(agents) ➜  stock_picker git:(main) ✗ crewai run
+
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+└── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+    Status: Executing Task...
+    ├── 🔧 Used Search the internet with Serper (3)
+    ├── 🔧 Used Search the internet with Serper (4)
+    └── 🔧 Used Search the internet with Serper (5)
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: The search results provide general information about the smart energy market but lack specific insights into GRYD Energy's market position, future outlook, and investment    │
+│  potential. I'll next search for details on "Perplexity AI".                                                                                                                                     │
+│                                                                                                                                                                                                  │
+│  Using Tool: Search the internet with Serper                                                                                                                                                     │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"search_query\": \"Perplexity AI Enterprise Pro market position future outlook investment potential\"}"                                                                                      │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  {'searchParameters': {'q': 'Perplexity AI Enterprise Pro market position future outlook investment potential', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title': 'Invest  │
+│  in Perplexity AI: Private Investment Guide', 'link': 'https://tsginvest.com/perplexity-ai/', 'snippet': 'The Future Outlook of Perplexity AI  Revenue projections anticipate $127M by 2025 and  │
+│  $656M by 2026 , driven by the shift from traditional to AI-powered search, particularly for complex queries. Enterprise search expansion and browser integration could expand their             │
+│  addressable market.', 'position': 1}, {'title': 'How to Invest in Perplexity AI in 2025 - Stock Analysis', 'link': 'https://stockanalysis.com/article/invest-in-perplexity-ai-stock/',          │
+│  'snippet': 'Missing: position outlook potential', 'position': 2}, {'title': 'The AI Productivity Powerhouse Poised for $30B Market Dominance', 'link':                                          │
+│  'https://www.ainvest.com/news/perplexity-labs-ai-productivity-powerhouse-poised-30b-market-dominance-2505/', 'snippet': 'At the vanguard of this revolution is Perplexity Labs, a company       │
+│  whose valuation has skyrocketed from $1 billion in April 2024 to a reported $14 ...', 'position': 3}, {'title': 'How Perplexity AI Boomed From US$500m to US$9bn', 'link':                      │
+│  'https://technologymagazine.com/articles/from-500m-to-9bn-charting-perplexitys-soaring-valuation', 'snippet': 'Perplexity AI is set to be valued at US$9 billion. The funding round is          │
+│  expected to be led by Institutional Venture Partners (IVP). Perplexity ...', 'position': 4}, {'title': 'Perplexity AI Stock: Exploring Valuation and Future Prospects', 'link':                 │
+│  'https://www.timothysykes.com/blog/perplexity-ai-stock/', 'snippet': "Perplexity AI is still private and shows no signs of rushing into the public market. That's typical for high-growth tech  │
+│  companies with strong venture backing.", 'position': 5}, {'title': 'Perplexity in talks to double valuation to $18 billion via new funding', 'link':                                            │
+│  'https://www.cnbc.com/2025/03/20/perplexity-i...                                                                                                                                                │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+└── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+    Status: Executing Task...
+    ├── 🔧 Used Search the internet with Serper (3)
+    ├── 🔧 Used Search the internet with Serper (4)
+    ├── 🔧 Used Search the internet with Serper (5)
+    └── 🔧 Using Delegate work to coworker (2)
+╭──────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Senior Financial Researcher                                                                                                                                                              │
+│                                                                                                                                                                                                  │
+│  Task: Research the market position, future outlook, and investment potential of GRYD Energy and Rebound Technologies.                                                                           │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+└── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+    Status: Executing Task...
+    ├── 🔧 Used Search the internet with Serper (3)
+    ├── 🔧 Used Search the internet with Serper (4)
+    ├── 🔧 Used Search the internet with Serper (5)
+    ├── 🔧 Using Delegate work to coworker (2)
+    └── 🔧 Used Search the internet with Serper (6)
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Senior Financial Researcher                                                                                                                                                              │
+│                                                                                                                                                                                                  │
+│  Thought: I need to gather information on GRYD Energy and Rebound Technologies regarding their market position, future outlook, investment potential, and any other relevant details that fit    │
+│  the criteria provided.                                                                                                                                                                          │
+│                                                                                                                                                                                                  │
+│  Using Tool: Search the internet with Serper                                                                                                                                                     │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"search_query\": \"GRYD Energy market position future outlook investment potential 2023\"}"                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  {'searchParameters': {'q': 'GRYD Energy market position future outlook investment potential 2023', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title': 'Solar on a budget:  │
+│  GRYD Energy secures €1.1 million ... - EU-Startups', 'link': 'https://www.eu-startups.com/2025/01/solar-on-a-budget-gryd-energy-secures-e1-1-million-for-its-subscription-model/', 'snippet':   │
+│  "GRYD Energy, a solar tech startup and developer of the UK's “first true solar subscription“, today announces it has raised €1.1 million to expand its team.", 'position': 1}, {'title': 'GRYD  │
+│  Energy secures £1 million Pre-Seed Investment from ...', 'link':                                                                                                                                │
+│  'https://www.uktechnews.info/2025/01/27/gryd-energy-secures-1-million-pre-seed-investment-from-investors-including-black-seed-vc/', 'snippet': "GRYD plans to use the new funds to invest in a  │
+│  series of key hires, secure further energy import and export partnerships, and expand GRYD's ...", 'position': 2}, {'title': 'Overview and key findings – World Energy Investment 2023 - IEA',  │
+│  'link': 'https://www.iea.org/reports/world-energy-investment-2023/overview-and-key-findings', 'snippet': 'We estimate that around USD 2.8 trillion will be invested in energy in 2023. More     │
+│  than USD 1.7 trillion is going to clean energy, including renewable power, ...', 'position': 3}, {'title': "Can the solar subscription startup disrupt UK's clean energy market?", 'link':      │
+│  'https://techfundingnews.com/gryd-energy-charges-up-with-1m-funding-can-its-solar-subscription-disrupt-the-uks-clean-energy-market/', 'snippet': 'The solar tech startup GRYD has secured £1    │
+│  million in pre-seed funding from Black Seed VC and SFC Capital.', 'position': 4}, {'title': 'GRYD Energy raises Pre-Seed funding for solar hardware subscription', 'link':                      │
+│  'https://proptechconnect.com/gryd-energy-raises-pre-seed-funding-for-solar-hardware-subscription/', 'snippet': 'Solartech startup GRYD Energy has raised £1 million Pre-Seed funding to         │
+│  finance its national expansion. GRYD has developed a UK-fir...                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+└── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+    Status: Executing Task...
+    ├── 🔧 Used Search the internet with Serper (3)
+    ├── 🔧 Used Search the internet with Serper (4)
+    ├── 🔧 Used Search the internet with Serper (5)
+    ├── 🔧 Using Delegate work to coworker (2)
+    ├── 🔧 Used Search the internet with Serper (6)
+    └── 🔧 Used Search the internet with Serper (7)
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Senior Financial Researcher                                                                                                                                                              │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: I have gathered initial information on GRYD Energy, including their funding and strategic position in the market. Now I need to gather information on Rebound Technologies    │
+│  to complete the report.                                                                                                                                                                         │
+│                                                                                                                                                                                                  │
+│  Using Tool: Search the internet with Serper                                                                                                                                                     │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"search_query\": \"Rebound Technologies market position future outlook investment potential 2023\"}"                                                                                         │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  {'searchParameters': {'q': 'Rebound Technologies market position future outlook investment potential 2023', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title':             │
+│  'MarketWise: Leaner, Stronger, And Ready For A Rebound', 'link': 'https://seekingalpha.com/article/4799847-marketwise-leaner-stronger-ready-for-a-rebound', 'snippet': 'MarketWise is           │
+│  rebounding after a volatile 2024, with new leadership and improved profitability boosting investor confidence.', 'position': 1}, {'title': '2025 technology industry outlook | Deloitte         │
+│  Insights', 'link': 'https://www.deloitte.com/us/en/insights/industry/technology/technology-media-telecom-outlooks/technology-industry-outlook.html', 'snippet': 'The technology industry        │
+│  appears poised for growth in 2025, aided by increased IT spending, AI investments, and a renewed focus on innovation.', 'position': 2}, {'title': 'The Magnificent Seven Are Leading the Stock  │
+│  Market Rebound. Can ...', 'link': 'https://www.morningstar.com/markets/magnificent-seven-are-leading-stock-market-rebound-can-that-continue', 'snippet': 'Megacap tech stocks drove the market  │
+│  to new records in 2023 and 2024, and they reliably rebounded even after the market stumbled. Mark Hackett, ...', 'position': 3}, {'title': 'Market Analysis: Implications of Moderating         │
+│  Capital Expenditures for ...', 'link': 'https://www.usbank.com/investing/financial-perspectives/market-news/is-a-market-correction-coming.html', 'snippet': 'Information technology has been    │
+│  among the best performing S&P 500 sectors in recent years, advancing 56.4% in 2023 and 35.7% in 2024, led by ...', 'position': 4}, {'title': '[PDF] Technology Trends Outlook 2023 - McKinsey   │
+│  & Company', 'link':                                                                                                                                                                             │
+│  'https://www.mckinsey.com/~/media/mckinsey/business%20functions/mckinsey%20digital/our%20insights/mckinsey%20technology%20trends%20outlook%202023/mckinsey-technology-trends-outlook-2023-v5.p  │
+│  df', 'snippet': 'Instead, companies seeking longer-term growth should focus on a portfolio-oriented investment ...                                                                              │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+└── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+    Status: Executing Task...
+    ├── 🔧 Used Search the internet with Serper (3)
+    ├── 🔧 Used Search the internet with Serper (4)
+    ├── 🔧 Used Search the internet with Serper (5)
+    ├── 🔧 Using Delegate work to coworker (2)
+    ├── 🔧 Used Search the internet with Serper (6)
+    ├── 🔧 Used Search the internet with Serper (7)
+    └── 🔧 Used Search the internet with Serper (8)
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Senior Financial Researcher                                                                                                                                                              │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: I've gathered relevant insights about GRYD Energy's current funding and market positioning. However, I could not find sufficient specific information regarding Rebound       │
+│  Technologies from the previous search, and I should conduct further searches focusing on both companies to complete the report.                                                                 │
+│                                                                                                                                                                                                  │
+│  Using Tool: Search the internet with Serper                                                                                                                                                     │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"search_query\": \"Rebound Technologies company profile overview climate tech 2023\"}"                                                                                                       │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  {'searchParameters': {'q': 'Rebound Technologies company profile overview climate tech 2023', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title': 'Rebound Technologies     │
+│  company profile & job openings ...', 'link': 'https://www.climatetechlist.com/company/rebound-technologies', 'snippet': "Rebound Technologies's profile, current job openings, and hiring       │
+│  trends on ClimateTechList - the web's most comprehensive climate, climate tech, clean tech, ...", 'position': 1}, {'title': 'Rebound Technologies Inc. | LinkedIn', 'link':                     │
+│  'https://www.linkedin.com/company/reboundtech', 'snippet': 'Rebound has developed a freeze point suppression cycle that offers a 3-in-1 solution, combining agile freezing, unprecedented       │
+│  humidity control and demand ...', 'position': 2}, {'title': 'Rebound Technologies - CB Insights', 'link': 'https://www.cbinsights.com/company/rebound-technology', 'snippet': 'The company      │
+│  offers climate control solutions for various applications, including agricultural, commercial, retail, and IT environments, as well as solar ...', 'position': 3}, {'title': 'Rebound           │
+│  Technologies: Home', 'link': 'https://www.rebound-tech.com/', 'snippet': 'Missing: profile climate 2023', 'position': 4, 'sitelinks': [{'title': 'Tech', 'link':                                │
+│  'https://www.rebound-tech.com/technology'}, {'title': 'Back to Login', 'link': 'https://www.rebound-tech.com/web/login'}, {'title': 'Patents', 'link':                                          │
+│  'https://www.rebound-tech.com/patents'}, {'title': 'Ice Rinks', 'link': 'https://www.rebound-tech.com/applications/ice-rinks'}]}, {'title': 'Rebound Technologies 2025 Company Profile -        │
+│  PitchBook', 'link': 'https://pitchbook.com/profiles/company/91334-71', 'snippet': 'Developer of an advanced refrigeration system designed to offer accelerated freeze times and save energy     │
+│  costs.', 'position': 5}, {'title': 'Rebound Technologies - Overview, News & Similar companies', 'link': 'https://www.zoominfo.com/c/rebound-technologies-inc/356668129', 'snippet': "Rebound    │
+│  Technologies is an adv...                                                                                                                                                                       │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+└── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+    Status: Executing Task...
+    ├── 🔧 Used Search the internet with Serper (3)
+    ├── 🔧 Used Search the internet with Serper (4)
+    ├── 🔧 Used Search the internet with Serper (5)
+    ├── 🔧 Using Delegate work to coworker (2)
+    ├── 🔧 Used Search the internet with Serper (6)
+    ├── 🔧 Used Search the internet with Serper (7)
+    ├── 🔧 Used Search the internet with Serper (8)
+    └── 🔧 Used Search the internet with Serper (9)
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Senior Financial Researcher                                                                                                                                                              │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: I have found diverse sources detailing Rebound Technologies' offerings and developments; however, it is important to assess their market position, potential for growth, and  │
+│  strategic insights comprehensively. I will compile both GRYD Energy and Rebound Technologies into a structured report.                                                                          │
+│                                                                                                                                                                                                  │
+│  Using Tool: Search the internet with Serper                                                                                                                                                     │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"search_query\": \"Rebound Technologies investment analysis future outlook 2023\"}"                                                                                                          │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  {'searchParameters': {'q': 'Rebound Technologies investment analysis future outlook 2023', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title': 'Technology Sector           │
+│  Investment Analysis - First in the Series', 'link': 'https://www.bankchampaign.com/technology-sector-investment-analysis-first-in-the-series/', 'snippet': 'This report analyzes the current    │
+│  state of the technology sector, identifies key players across market capitalizations, and provides a detailed financial and ...', 'position': 1}, {'title': 'When Will the Tech Sector          │
+│  Rebound? - Futuriom', 'link': 'https://www.futuriom.com/articles/news/when-will-the-tech-sector-rebound/2023/10', 'snippet': 'Despite the pullbacks, the RJ team estimates that year-over-year  │
+│  growth in cloud capex for 2023 will be 8%. Equipment Providers Will Benefit.', 'position': 2}, {'title': '2025 technology industry outlook | Deloitte Insights', 'link':                        │
+│  'https://www.deloitte.com/us/en/insights/industry/technology/technology-media-telecom-outlooks/technology-industry-outlook.html', 'snippet': 'The technology industry appears poised for        │
+│  growth in 2025, aided by increased IT spending, AI investments, and a renewed focus on innovation.', 'position': 3, 'sitelinks': [{'title': 'Despite Recent Uncertainty...', 'link':            │
+│  'https://www.deloitte.com/us/en/insights/industry/technology/technology-media-telecom-outlooks/technology-industry-outlook.html#:~:text=Despite%20recent%20uncertainty%20and%20economic%20turb  │
+│  ulence%2C%20the%20technology%20industry%20appears%20poised%20for%20growth%20in%202025%2C%20aided%20by%20increased%20IT%20spending%2C%20AI%20investments%2C%20and%20a%20renewed%20focus%20on%20  │
+│  innovation'}, {'title': "About Deloitte's Tmt Center...", 'link':                                                                                                                               │
+│  'https://www.deloitte.com/us/en/insights/industry/technology/technology-media-telecom-outlooks/technology-industry-outlook.html#:~:text=About%20Deloitte%27s%20TMT%20Center%20Outlooks'},       │
+│  {'title': 'Protecting The Future By...', 'link': 'https://www.deloitte.com/us/en/insi...                                                                                                        │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+└── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+    Status: Executing Task...
+    ├── 🔧 Used Search the internet with Serper (3)
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+└── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+    Status: Executing Task...
+    ├── 🔧 Used Search the internet with Serper (3)
+    ├── 🔧 Used Search the internet with Serper (4)
+    ├── 🔧 Used Search the internet with Serper (5)
+    ├── 🔧 Using Delegate work to coworker (2)
+    ├── 🔧 Used Search the internet with Serper (6)
+    ├── 🔧 Used Search the internet with Serper (7)
+    ├── 🔧 Used Search the internet with Serper (8)
+    └── 🔧 Used Search the internet with Serper (9)
+╭───────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Senior Financial Researcher                                                                                                                                                              │
+│                                                                                                                                                                                                  │
+│  Final Answer:                                                                                                                                                                                   │
+│  ### GRYD Energy Overview                                                                                                                                                                        │
+│  **Market Position**: GRYD Energy is positioned as a disruptive force in the UK's energy landscape through its innovative solar subscription model. By abandoning the traditional solar          │
+│  purchase model and instead offering a low-cost subscription, GRYD is catering to a broader audience who may be reluctant to invest heavily in upfront solar panel costs. Their recent funding   │
+│  of £1 million from Black Seed VC has positioned them for growth, enabling the hiring of key staff and securing additional energy partnerships.                                                  │
+│                                                                                                                                                                                                  │
+│  **Future Outlook**: With the global push towards cleaner energy solutions, GRYD is poised to benefit from increased adoption of renewable energy technologies. Their unique business model      │
+│  aligns with extended government incentives for green energy, suggesting strong growth potential through customer acquisition and expansion efforts.                                             │
+│                                                                                                                                                                                                  │
+│  **Investment Potential**: The funds raised will allow GRYD to develop its operations while tapping into the increasingly lucrative market for residential solar solutions. As the demand for    │
+│  renewable energy continues to surge, investing in GRYD Energy could offer attractive returns, especially if they successfully execute their expansion strategy.                                 │
+│                                                                                                                                                                                                  │
+│  ---                                                                                                                                                                                             │
+│                                                                                                                                                                                                  │
+│  ### Rebound Technologies Overview                                                                                                                                                               │
+│  **Market Position**: Rebound Technologies specializes in innovative refrigeration technologies, particularly its IcePoint® cooling system that combines agile freezing with advanced humidity   │
+│  control. The company aims to revolutionize the cooling industry across various applications, including agricultural and commercial sectors, making it relevatory in climate technology.         │
+│                                                                                                                                                                                                  │
+│  **Future Outlook**: As companies globally aim to decrease their carbon footprint, Rebound Technologies stands to gain significant traction in the market for energy-efficient cooling           │
+│  solutions. The increasing demand for preservation solutions in agriculture and the food sector further underscores their growth prospects.                                                      │
+│                                                                                                                                                                                                  │
+│  **Investment Potential**: Given the proactive shift towards sustainable technologies, investing in Rebound Technologies could yield high returns. The company, focused on energy cost savings   │
+│  and improved efficiency, is well-positioned to capitalize on emerging trends that favor climate-tech innovations.                                                                               │
+│                                                                                                                                                                                                  │
+│  ---                                                                                                                                                                                             │
+│                                                                                                                                                                                                  │
+│  ### Conclusion                                                                                                                                                                                  │
+│  Both GRYD Energy and Rebound Technologies represent exciting investment opportunities within the climate tech landscape. GRYD's innovative subscription model in solar energy and Rebound's     │
+│  advanced refrigeration solutions offer unique approaches to tackling energy sustainability challenges. As investor interest in these sectors continues to grow, careful analysis of their       │
+│  strategic movements and market developments will be essential for appreciating their long-term value.                                                                                           │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: The information regarding Perplexity AI is more specific compared to the other companies, providing details on their market position, revenue projections, and growth         │
+│  potential. However, information about GRYD Energy and Rebound Technologies needs further investigation for a detailed report. Since my internet searches didn't yield sufficient details on     │
+│  these two companies, I will delegate the task of researching their market position, future outlook, and investment potential for these companies to our Senior Financial Researcher.            │
+│                                                                                                                                                                                                  │
+│  Using Tool: Delegate work to coworker                                                                                                                                                           │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"task\": \"Research the market position, future outlook, and investment potential of GRYD Energy and Rebound Technologies.\", \"context\": \"These companies are emerging in the fields of   │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  ### GRYD Energy Overview                                                                                                                                                                        │
+│  **Market Position**: GRYD Energy is positioned as a disruptive force in the UK's energy landscape through its innovative solar subscription model. By abandoning the traditional solar          │
+│  purchase model and instead offering a low-cost subscription, GRYD is catering to a broader audience who may be reluctant to invest heavily in upfront solar panel costs. Their recent funding   │
+│  of £1 million from Black Seed VC has positioned them for growth, enabling the hiring of key staff and securing additional energy partnerships.                                                  │
+│                                                                                                                                                                                                  │
+│  **Future Outlook**: With the global push towards cleaner energy solutions, GRYD is poised to benefit from increased adoption of renewable energy technologies. Their unique business model      │
+│  aligns with extended government incentives for green energy, suggesting strong growth potential through customer acquisition and expansion efforts.                                             │
+│                                                                                                                                                                                                  │
+│  **Investment Potential**: The funds raised will allow GRYD to develop its operations while tapping into the increasingly lucrative market for residential solar solutions. As the demand for    │
+│  renewable energy continues to surge, investing in GRYD Energy could offer attractive returns, especially if they successfully execute their expansion strategy.                                 │
+│                                                                                                                                                                                                  │
+│  ---                                                                                                                                                                                             │
+│                                                                                                                                                                                                  │
+│  ### Rebound Technologies Overview                                                                                                                                                               │
+│  **Market Position**: Rebound Technologies specializes in innovative refrigeration technologies, particularly its IcePoint® cooling system that combines agile freezing with advanced humidity   │
+│  control. The company aims to revolutionize the cooling industry across various applications, including agricultural and commercial sectors, making it relevatory in climate technology.         │
+│                                                                                                                                                                                                  │
+│  **Future Outlook**: As companies globally aim to decrease their carbon footprint, Rebound Technologies stands to gain significant traction in the market for energy-efficient cooling           │
+│  solutions. The increasing demand for preservation solutions in agriculture and the food sector further underscores their growth prospects.                                                      │
+│                                                                                                                                                                                                  │
+│  **Investment Potential**: Given t...                                                                                                                                                            │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+└── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+    Status: Executing Task...
+    ├── 🔧 Used Search the internet with Serper (3)
+    ├── 🔧 Used Search the internet with Serper (4)
+    ├── 🔧 Used Search the internet with Serper (5)
+    ├── 🔧 Using Delegate work to coworker (2)
+    ├── 🔧 Used Search the internet with Serper (6)
+    ├── 🔧 Used Search the internet with Serper (7)
+    ├── 🔧 Used Search the internet with Serper (8)
+    └── 🔧 Used Search the internet with Serper (9)
+╭───────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Final Answer:                                                                                                                                                                                   │
+│  {                                                                                                                                                                                               │
+│    "research_list": [                                                                                                                                                                            │
+│      {                                                                                                                                                                                           │
+│        "name": "Rebound Technologies",                                                                                                                                                           │
+│        "market_position": "Rebound Technologies specializes in innovative refrigeration technologies, particularly its IcePoint® cooling system that combines agile freezing with advanced       │
+│  humidity control. The company aims to revolutionize the cooling industry across various applications, including agricultural and commercial sectors, making it relevatory in climate            │
+│  technology.",                                                                                                                                                                                   │
+│        "future_outlook": "As companies globally aim to decrease their carbon footprint, Rebound Technologies stands to gain significant traction in the market for energy-efficient cooling      │
+│  solutions. The increasing demand for preservation solutions in agriculture and the food sector further underscores their growth prospects.",                                                    │
+│        "investment_potential": "Given the proactive shift towards sustainable technologies, investing in Rebound Technologies could yield high returns. The company, focused on energy cost      │
+│  savings and improved efficiency, is well-positioned to capitalize on emerging trends that favor climate-tech innovations."                                                                      │
+│      },                                                                                                                                                                                          │
+│      {                                                                                                                                                                                           │
+│        "name": "GRYD Energy",                                                                                                                                                                    │
+│        "market_position": "GRYD Energy is positioned as a disruptive force in the UK's energy landscape through its innovative solar subscription model. By abandoning the traditional solar     │
+│  purchase model and instead offering a low-cost subscription, GRYD is catering to a broader audience who may be reluctant to invest heavily in upfront solar panel costs.",                      │
+│        "future_outlook": "With the global push towards cleaner energy solutions, GRYD is poised to benefit from increased adoption of renewable energy technologies. Their unique business       │
+│  model aligns with extended government incentives for green energy, suggesting strong growth potential through customer acquisition and expansion efforts.",                                     │
+│        "investment_potential": "The funds raised will allow GRYD to develop its operations while tapping into the increasingly lucrative market for residential solar solutions. As the demand   │
+│  for renewable energy continues to surge, investing in GRYD Energy could offer attractive returns, especially if they successfully execute their expansion strategy."                            │
+│      },                                                                                                                                                                                          │
+│      {                                                                                                                                                                                           │
+│        "name": "Perplexity AI",                                                                                                                                                                  │
+│        "market_position": "Perplexity AI is a rapidly growing company in the AI sector, focusing on AI-powered search solutions with significant potential for market growth and influence.",    │
+│        "future_outlook": "The company is projected to increase revenue significantly, leveraging the shift from traditional to AI-powered search, particularly for complex queries, and          │
+│  expanding into enterprise search solutions and browser integration.",                                                                                                                           │
+│        "investment_potential": "Perplexity AI exhibits high growth potential, especially with its robust revenue projections and market valuation increase, suggesting it as a promising         │
+│  venture for investment."                                                                                                                                                                        │
+│      }                                                                                                                                                                                           │
+│    ]                                                                                                                                                                                             │
+│  }                                                                                                                                                                                               │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+└── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+    Assigned to: Manager
+    
+    Status: ✅ Completed
+    ├── 🔧 Used Search the internet with Serper (3)
+    ├── 🔧 Used Search the internet with Serper (4)
+    ├── 🔧 Used Search the internet with Serper (5)
+    ├── 🔧 Using Delegate work to coworker (2)
+    ├── 🔧 Used Search the internet with Serper (6)
+    ├── 🔧 Used Search the internet with Serper (7)
+    ├── 🔧 Used Search the internet with Serper (8)
+    └── 🔧 Used Search the internet with Serper (9)
+╭──────────────────────────────────────────────────────────────────────────────────────── Task Completion ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Task Completed                                                                                                                                                                                  │
+│  Name: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473                                                                                                                                                      │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Tool Args:                                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+├── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   ├── 🔧 Used Search the internet with Serper (4)
+│   ├── 🔧 Used Search the internet with Serper (5)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (6)
+│   ├── 🔧 Used Search the internet with Serper (7)
+│   ├── 🔧 Used Search the internet with Serper (8)
+│   └── 🔧 Used Search the internet with Serper (9)
+└── 📋 Task: 0685d7f7-e61a-42e0-a673-9954363d4e12
+    Status: Executing Task...
+╭──────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Task: Analyze the research findings and pick the best company for investment. Send a push notification to the user with the decision and 1 sentence rationale. Then respond with a detailed     │
+│  report on why you chose this company, and which companies were not selected.                                                                                                                    │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+├── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   ├── 🔧 Used Search the internet with Serper (4)
+│   ├── 🔧 Used Search the internet with Serper (5)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (6)
+│   ├── 🔧 Used Search the internet with Serper (7)
+│   ├── 🔧 Used Search the internet with Serper (8)
+│   └── 🔧 Used Search the internet with Serper (9)
+└── 📋 Task: 0685d7f7-e61a-42e0-a673-9954363d4e12
+    Status: Executing Task...
+    └── 🔧 Using Delegate work to coworker (3)
+╭──────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Stock Picker from Research                                                                                                                                                               │
+│                                                                                                                                                                                                  │
+│  Task: Analyze the investment potential of each company and pick the best one for investment                                                                                                     │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+├── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   ├── 🔧 Used Search the internet with Serper (4)
+│   ├── 🔧 Used Search the internet with Serper (5)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (6)
+│   ├── 🔧 Used Search the internet with Serper (7)
+│   ├── 🔧 Used Search the internet with Serper (8)
+│   └── 🔧 Used Search the internet with Serper (9)
+└── 📋 Task: 0685d7f7-e61a-42e0-a673-9954363d4e12
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    └── 🔧 Failed Send a Push Notification (1)
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Error ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Tool Usage Failed                                                                                                                                                                               │
+│  Name: Send a Push Notification                                                                                                                                                                  │
+│  Error: Arguments validation failed: 1 validation error for PushNotification                                                                                                                     │
+│  message                                                                                                                                                                                         │
+│    Input should be a valid string [type=string_type, input_value={'description': 'The best...eturns.', 'type': 'str'}, input_type=dict]                                                          │
+│      For further information visit https://errors.pydantic.dev/2.11/v/string_type                                                                                                                │
+│  Tool Args:                                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+├── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   ├── 🔧 Used Search the internet with Serper (4)
+│   ├── 🔧 Used Search the internet with Serper (5)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (6)
+│   ├── 🔧 Used Search the internet with Serper (7)
+│   ├── 🔧 Used Search the internet with Serper (8)
+│   └── 🔧 Used Search the internet with Serper (9)
+└── 📋 Task: 0685d7f7-e61a-42e0-a673-9954363d4e12
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    └── 🔧 Failed Send a Push Notification (2)
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Error ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Tool Usage Failed                                                                                                                                                                               │
+│  Name: Send a Push Notification                                                                                                                                                                  │
+│  Error: Arguments validation failed: 1 validation error for PushNotification                                                                                                                     │
+│  message                                                                                                                                                                                         │
+│    Input should be a valid string [type=string_type, input_value={'description': 'The best...eturns.', 'type': 'str'}, input_type=dict]                                                          │
+│      For further information visit https://errors.pydantic.dev/2.11/v/string_type                                                                                                                │
+│  Tool Args:                                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+├── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   ├── 🔧 Used Search the internet with Serper (4)
+│   ├── 🔧 Used Search the internet with Serper (5)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (6)
+│   ├── 🔧 Used Search the internet with Serper (7)
+│   ├── 🔧 Used Search the internet with Serper (8)
+│   └── 🔧 Used Search the internet with Serper (9)
+└── 📋 Task: 0685d7f7-e61a-42e0-a673-9954363d4e12
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    └── 🔧 Failed Send a Push Notification (3)
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Error ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Tool Usage Failed                                                                                                                                                                               │
+│  Name: Send a Push Notification                                                                                                                                                                  │
+│  Error: Arguments validation failed: 1 validation error for PushNotification                                                                                                                     │
+│  message                                                                                                                                                                                         │
+│    Input should be a valid string [type=string_type, input_value={'description': 'The best...eturns.', 'type': 'str'}, input_type=dict]                                                          │
+│      For further information visit https://errors.pydantic.dev/2.11/v/string_type                                                                                                                │
+│  Tool Args:                                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Stock Picker from Research                                                                                                                                                               │
+│                                                                                                                                                                                                  │
+│  Thought: I need to evaluate each company's market position, future outlook, and investment potential based on the provided research findings.                                                   │
+│  1. **Rebound Technologies**: This company is focused on innovation in recycling and sustainable materials. Its market position is bolstered by increasing global demand for eco-friendly        │
+│  solutions. The future outlook is strong, with potential government incentives for sustainable practices and a growing consumer base concerned about environmental issues. Investment potential  │
+│  appears good as they are positioned in a rapidly growing sector.                                                                                                                                │
+│  2. **GRYD Energy**: This company operates in the renewable energy sector, offering solutions that address energy efficiency and sustainability. GRYD Energy has established partnerships with   │
+│  major corporations, enhancing its market position. The overall trend towards renewable energy adoption gives this company a favorable future outlook, especially with increasing regulations    │
+│  on carbon emissions. Investment potential looks promising, especially as energy transition is at the forefront of public policy.                                                                │
+│  3. **Perplexity AI**: Perplexity AI specializes in artificial intelligence and machine learning solutions. It has recently reported strong revenue growth and has a solid market position       │
+│  among tech companies. The future outlook is undoubtedly bright, as AI technology continues to be a key driver for innovation across various sectors. The investment potential is very high,     │
+│  given the increasing reliance on AI in business operations and consumer products.                                                                                                               │
+│  After analyzing each company's strengths and potential for growth, it's clear that **Perplexity AI** stands out due to its robust revenue growth, innovative technology, and dominant position  │
+│  in an expanding industry.                                                                                                                                                                       │
+│                                                                                                                                                                                                  │
+│  Using Tool: Send a Push Notification                                                                                                                                                            │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"message\": {\"description\": \"The best company for investment is Perplexity AI due to its strong market position, significant revenue growth, and the bright future outlook in the artifi  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  I encountered an error while trying to use the tool. This was the error: Arguments validation failed: 1 validation error for PushNotification                                                   │
+│  message                                                                                                                                                                                         │
+│    Input should be a valid string [type=string_type, input_value={'description': 'The best...eturns.', 'type': 'str'}, input_type=dict]                                                          │
+│      For further information visit https://errors.pydantic.dev/2.11/v/string_type.                                                                                                               │
+│   Tool Send a Push Notification accepts these inputs: Tool Name: Send a Push Notification                                                                                                        │
+│  Tool Arguments: {'message': {'description': 'The message to be sent to the user.', 'type': 'str'}}                                                                                              │
+│  Tool Description: This tool is used to send a push notification to the user..                                                                                                                   │
+│  Moving on then. I MUST either use a tool (use one at time) OR give my best final answer not both at the same time. When responding, I must use the following format:                            │
+│                                                                                                                                                                                                  │
+│  ```                                                                                                                                                                                             │
+│  Thought: you should always think about what to do                                                                                                                                               │
+│  Action: the action to take, should be one of [Send a Push Notification]                                                                                                                         │
+│  Action Input: the input to the action, dictionary enclosed in curly braces                                                                                                                      │
+│  Observation: the result of the action                                                                                                                                                           │
+│  ```                                                                                                                                                                                             │
+│  This Thought/Action/Action Input/Result can repeat N times. Once I know the final answer, I must return the following format:                                                                   │
+│                                                                                                                                                                                                  │
+│  ```                                                                                                                                                                                             │
+│  Thought: I now can give a great answer                                                                                                                                                          │
+│  Final Answer: Your final answer must be the great and the most complete as possible, it must be outcome described                                                                               │
+│                                                                                                                                                                                                  │
+│  ```                                                                                                                                                                                             │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+Push: The best company for investment is Perplexity AI due to its strong market position, significant revenue growth, and the bright future outlook in the artificial intelligence sector. Investing
+in Perplexity AI offers excellent potential for high returns.
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+├── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   ├── 🔧 Used Search the internet with Serper (4)
+│   ├── 🔧 Used Search the internet with Serper (5)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (6)
+│   ├── 🔧 Used Search the internet with Serper (7)
+│   ├── 🔧 Used Search the internet with Serper (8)
+│   └── 🔧 Used Search the internet with Serper (9)
+└── 📋 Task: 0685d7f7-e61a-42e0-a673-9954363d4e12
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    ├── 🔧 Failed Send a Push Notification (3)
+    └── 🔧 Used Send a Push Notification (4)
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Stock Picker from Research                                                                                                                                                               │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: I must analyze the best option carefully and communicate it effectively through a push notification. I will initiate the action to send the notification about the best       │
+│  investment choice based on my analysis.                                                                                                                                                         │
+│                                                                                                                                                                                                  │
+│  Using Tool: Send a Push Notification                                                                                                                                                            │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"message\": \"The best company for investment is Perplexity AI due to its strong market position, significant revenue growth, and the bright future outlook in the artificial intelligence   │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  {"notification": "ok"}                                                                                                                                                                          │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+├── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   ├── 🔧 Used Search the internet with Serper (4)
+│   ├── 🔧 Used Search the internet with Serper (5)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (6)
+│   ├── 🔧 Used Search the internet with Serper (7)
+│   ├── 🔧 Used Search the internet with Serper (8)
+│   └── 🔧 Used Search the internet with Serper (9)
+└── 📋 Task: 0685d7f7-e61a-42e0-a673-9954363d4e12
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    ├── 🔧 Failed Send a Push Notification (3)
+    └── 🔧 Used Send a Push Notification (4)
+╭───────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Stock Picker from Research                                                                                                                                                               │
+│                                                                                                                                                                                                  │
+│  Final Answer:                                                                                                                                                                                   │
+│  The best company for investment is Perplexity AI due to its strong market position, significant revenue growth, and the bright future outlook in the artificial intelligence sector. Investing  │
+│  in Perplexity AI offers excellent potential for high returns, especially as the reliance on AI technology continues to expand across numerous industries. This makes it a compelling choice     │
+│  for investment in the current market landscape.                                                                                                                                                 │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: I need to delegate the task of analyzing the investment potential of each company and picking the best one for investment to the Stock Picker from Research. Once I have      │
+│  their analysis, I can send a push notification to the user with the decision and provide a detailed report.                                                                                     │
+│                                                                                                                                                                                                  │
+│  Using Tool: Delegate work to coworker                                                                                                                                                           │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"task\": \"Analyze the investment potential of each company and pick the best one for investment\", \"context\": \"You need to evaluate the following companies based on their market posit  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  The best company for investment is Perplexity AI due to its strong market position, significant revenue growth, and the bright future outlook in the artificial intelligence sector. Investing  │
+│  in Perplexity AI offers excellent potential for high returns, especially as the reliance on AI technology continues to expand across numerous industries. This makes it a compelling choice     │
+│  for investment in the current market landscape.                                                                                                                                                 │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+Push: Investment decision: Perplexity AI is chosen for investment due to its strong market position in AI and significant growth potential. More details to follow in the report.
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+├── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   ├── 🔧 Used Search the internet with Serper (4)
+│   ├── 🔧 Used Search the internet with Serper (5)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (6)
+│   ├── 🔧 Used Search the internet with Serper (7)
+│   ├── 🔧 Used Search the internet with Serper (8)
+│   └── 🔧 Used Search the internet with Serper (9)
+└── 📋 Task: 0685d7f7-e61a-42e0-a673-9954363d4e12
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    ├── 🔧 Failed Send a Push Notification (3)
+    ├── 🔧 Used Send a Push Notification (4)
+    └── 🔧 Used Send a Push Notification (5)
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: I now have the analysis from the Stock Picker and can send a push notification to the user with the decision and a brief rationale. Following that, I will provide a          │
+│  detailed report explaining the decision, including why the other companies were not selected.                                                                                                   │
+│                                                                                                                                                                                                  │
+│  Using Tool: Send a Push Notification                                                                                                                                                            │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"message\": \"Investment decision: Perplexity AI is chosen for investment due to its strong market position in AI and significant growth potential. More details to follow in the report.\"  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  {"notification": "ok"}                                                                                                                                                                          │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+├── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   ├── 🔧 Used Search the internet with Serper (4)
+│   ├── 🔧 Used Search the internet with Serper (5)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (6)
+│   ├── 🔧 Used Search the internet with Serper (7)
+│   ├── 🔧 Used Search the internet with Serper (8)
+│   └── 🔧 Used Search the internet with Serper (9)
+└── 📋 Task: 0685d7f7-e61a-42e0-a673-9954363d4e12
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    ├── 🔧 Failed Send a Push Notification (3)
+    ├── 🔧 Used Send a Push Notification (4)
+    └── 🔧 Used Send a Push Notification (5)
+╭───────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Final Answer:                                                                                                                                                                                   │
+│  **Chosen Company for Investment: Perplexity AI**                                                                                                                                                │
+│                                                                                                                                                                                                  │
+│  - **Why Chosen:**                                                                                                                                                                               │
+│    - **Market Position:** Perplexity AI is growing rapidly and has staked a significant claim in the AI sector, focusing on superior AI-powered search solutions.                                │
+│    - **Future Outlook:** The company is projected to experience significant revenue growth as trends shift towards AI search solutions over traditional methods, with potential expansion into   │
+│  enterprise markets.                                                                                                                                                                             │
+│    - **Investment Potential:** High growth potential is underscored by robust revenue projections and increased market valuation. Given the increasing dependence on advanced AI technologies,   │
+│  there is promising potential for high returns on investment.                                                                                                                                    │
+│                                                                                                                                                                                                  │
+│  **Companies Not Selected:**                                                                                                                                                                     │
+│                                                                                                                                                                                                  │
+│  1. **Rebound Technologies:**                                                                                                                                                                    │
+│     - **Reason for Not Choosing:** While Rebound Technologies has a revolutionary approach to climate technology with its IcePoint® system, the investment potential, although strong in         │
+│  sustainability, does not currently match the exponential growth and market influence projected for Perplexity AI.                                                                               │
+│                                                                                                                                                                                                  │
+│  2. **GRYD Energy:**                                                                                                                                                                             │
+│     - **Reason for Not Choosing:** GRYD Energy presents an innovative solar subscription model with expected growth due to renewable energy trends. However, the company's current market        │
+│  position and scale of innovation are less compelling compared to the vast opportunities and scaling prospects presented by the AI sector with Perplexity AI.                                    │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 2ee005a1-2f54-47d5-a61d-d5ee02823dca
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   ├── 🔧 Used Search the internet with Serper (1)
+│   └── 🔧 Used Search the internet with Serper (2)
+├── 📋 Task: eaa7dd41-8e8d-4f9d-9065-e93f0ad27473
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   ├── 🔧 Used Search the internet with Serper (4)
+│   ├── 🔧 Used Search the internet with Serper (5)
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (6)
+│   ├── 🔧 Used Search the internet with Serper (7)
+│   ├── 🔧 Used Search the internet with Serper (8)
+│   └── 🔧 Used Search the internet with Serper (9)
+└── 📋 Task: 0685d7f7-e61a-42e0-a673-9954363d4e12
+    Assigned to: Manager
+    
+    Status: ✅ Completed
+    ├── 🔧 Using Delegate work to coworker (3)
+    ├── 🔧 Failed Send a Push Notification (3)
+    ├── 🔧 Used Send a Push Notification (4)
+    └── 🔧 Used Send a Push Notification (5)
+╭──────────────────────────────────────────────────────────────────────────────────────── Task Completion ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Task Completed                                                                                                                                                                                  │
+│  Name: 0685d7f7-e61a-42e0-a673-9954363d4e12                                                                                                                                                      │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Tool Args:                                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────────── Crew Completion ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Crew Execution Completed                                                                                                                                                                        │
+│  Name: crew                                                                                                                                                                                      │
+│  ID: 2ea835e4-df44-45f6-9153-f4883c828da9                                                                                                                                                        │
+│  Tool Args:                                                                                                                                                                                      │
+│  Final Output: **Chosen Company for Investment: Perplexity AI**                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  - **Why Chosen:**                                                                                                                                                                               │
+│    - **Market Position:** Perplexity AI is growing rapidly and has staked a significant claim in the AI sector, focusing on superior AI-powered search solutions.                                │
+│    - **Future Outlook:** The company is projected to experience significant revenue growth as trends shift towards AI search solutions over traditional methods, with potential expansion into   │
+│  enterprise markets.                                                                                                                                                                             │
+│    - **Investment Potential:** High growth potential is underscored by robust revenue projections and increased market valuation. Given the increasing dependence on advanced AI technologies,   │
+│  there is promising potential for high returns on investment.                                                                                                                                    │
+│                                                                                                                                                                                                  │
+│  **Companies Not Selected:**                                                                                                                                                                     │
+│                                                                                                                                                                                                  │
+│  1. **Rebound Technologies:**                                                                                                                                                                    │
+│     - **Reason for Not Choosing:** While Rebound Technologies has a revolutionary approach to climate technology with its IcePoint® system, the investment potential, although strong in         │
+│  sustainability, does not currently match the exponential growth and market influence projected for Perplexity AI.                                                                               │
+│                                                                                                                                                                                                  │
+│  2. **GRYD Energy:**                                                                                                                                                                             │
+│     - **Reason for Not Choosing:** GRYD Energy presents an innovative solar subscription model with expected growth due to renewable energy trends. However, the company's current market        │
+│  position and scale of innovation are less compelling compared to the vast opportunities and scaling prospects presented by the AI sector with Perplexity AI.                                    │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+
+
+=== FINAL DECISION ===
+
+
+**Chosen Company for Investment: Perplexity AI**
+
+- **Why Chosen:** 
+  - **Market Position:** Perplexity AI is growing rapidly and has staked a significant claim in the AI sector, focusing on superior AI-powered search solutions. 
+  - **Future Outlook:** The company is projected to experience significant revenue growth as trends shift towards AI search solutions over traditional methods, with potential expansion into enterprise markets.
+  - **Investment Potential:** High growth potential is underscored by robust revenue projections and increased market valuation. Given the increasing dependence on advanced AI technologies, there is promising potential for high returns on investment.
+
+**Companies Not Selected:**
+
+1. **Rebound Technologies:**
+   - **Reason for Not Choosing:** While Rebound Technologies has a revolutionary approach to climate technology with its IcePoint® system, the investment potential, although strong in sustainability, does not currently match the exponential growth and market influence projected for Perplexity AI.
+
+2. **GRYD Energy:**
+   - **Reason for Not Choosing:** GRYD Energy presents an innovative solar subscription model with expected growth due to renewable energy trends. However, the company's current market position and scale of innovation are less compelling compared to the vast opportunities and scaling prospects presented by the AI sector with Perplexity AI.
+```
+
+When you run your CrewAI project, several components automatically generate directories and files as part of their normal operation:
+
+```sh
+➜  my_agents git:(main) ✗ cd notebooks/week3_crew/stock_picker
+➜  stock_picker git:(main) ✗ tree -L 2
+.
+├── README.md
+├── knowledge
+│   └── user_preference.txt
+├── memory
+│   ├── a1106669-537d-46b4-9a38-3c88ac61fcfa
+│   ├── chroma.sqlite3
+│   └── long_term_memory_storage.db
+├── output
+│   ├── decision.md
+│   ├── research_report.json
+│   └── trending_companies.json
+├── pyproject.toml
+├── src
+│   └── stock_picker
+├── tests
+└── uv.lock
+```
+
+**Memory Folder**
+
+The `memory` folder is created by CrewAI (and the memory backends you configure) to store data required by the agentic memory system.
+
+* **Short-term and entity memory:** These often use vector databases (like Chroma) to store embeddings and recent interactions. CrewAI (through Chroma or similar libraries) automatically creates the folder and necessary files if the specified `path` does not exist.
+* **Long-term memory:** If you configure long-term memory to use SQLite (as in your code), CrewAI creates the SQLite database file at the given path.
+* **Example:**
+
+  * `chroma.sqlite3` and folders like `a1106669-...` are generated by Chroma’s storage engine to store vector data and metadata.
+  * `long_term_memory_storage.db` is created by the SQLite storage backend for long-term memory.
+
+All these files and folders are created the **first time** the memory system needs to write data, so you don’t need to create them manually.
+
+**Output Folder**
+
+The `output` folder is used to store the results of your tasks as specified in your `tasks.yaml` configuration.
+
+* In each task definition, there is an `output_file` parameter (for example, `output/decision.md`, `output/research_report.json`, `output/trending_companies.json`).
+* When a task completes, CrewAI writes its result to the specified file. If the `output` directory does not exist, CrewAI (or Python’s file writing logic) will create it automatically.
+
+
+**In short:**
+Whenever you specify a path for memory or output in your configuration or code, CrewAI and its underlying libraries create all the required folders and files on-demand. This is why you see these new subdirectories and files appear in your project each time you run a workflow.
