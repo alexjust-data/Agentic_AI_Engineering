@@ -2922,3 +2922,107 @@ Finally, there is **user memory**, designed for storing user-specific informatio
 **Focus of Upcoming Code: Contextual Memory in Stock Picker**
 
 In the code we're about to explore, we’ll be focusing primarily on contextual memory, meaning we’ll see how short-term, long-term, and entity memory are integrated into the stock picker solution to give our agents more meaningful, persistent awareness throughout the session.
+
+#### Setting Up Memory in **`crew.py`**
+
+
+**Setting Up Memory in `crew.py`**
+
+We are looking at the `crew.py` module, and we're going to start by including new imports related to memory. These imports allow us to use the different memory types supported by CrewAI.
+
+```python
+from crewai.memory import LongTermMemory, ShortTermMemory, EntityMemory
+from crewai.memory.storage.rag_storage import RAGStorage
+from crewai.memory.storage.ltm_sqlite_storage import LTMSQLiteStorage
+```
+
+We’re importing `ShortTermMemory`, `LongTermMemory`, and `EntityMemory`, which are the three memory types we’ll be working with. You can also implement **user memory**, but that one requires manual handling. From the storage modules, we import `RAGStorage` for vector-based retrieval (used by short-term and entity memory), and `LTMSQLiteStorage` to persist long-term memory using SQLite.
+
+**Initializing Memory Objects**
+
+Now we move to the `crew()` function—the method that constructs the Crew object. Before defining the crew itself, we need to instantiate the memory modules one by one.
+
+```python
+short_term_memory = ShortTermMemory(
+    storage=RAGStorage(
+        provider="openai",
+        model="text-embedding-3-small",
+        path="memory/stm"
+    )
+)
+
+long_term_memory = LongTermMemory(
+    storage=LTMSQLiteStorage(path="memory/ltm.sqlite")
+)
+
+entity_memory = EntityMemory(
+    storage=RAGStorage(
+        provider="openai",
+        model="text-embedding-3-small",
+        path="memory/entity"
+    )
+)
+```
+
+For **short-term memory**, we use a `RAGStorage` instance with an embedding model (here, `"text-embedding-3-small"` from OpenAI) and a Chroma-compatible memory directory. **Long-term memory** is stored in an SQLite database, and **entity memory** works similarly to short-term memory but focuses on people, organizations, or concepts, also using vector similarity.
+
+**Creating the Crew with Memory**
+
+Now we’re ready to create the crew. In the `@crew` method, we pass the memory objects directly to the `Crew()` constructor.
+
+```python
+@crew
+def crew(self) -> Crew:
+    """Creates the StockPicker crew"""
+
+    manager = Agent(
+        config=self.agents_config['manager'],
+        allow_delegation=True
+    )
+        
+    return Crew(
+        agents=self.agents,
+        tasks=self.tasks, 
+        process=Process.hierarchical,
+        verbose=True,
+        manager_agent=manager,
+        memory=True,
+        long_term_memory=long_term_memory,
+        short_term_memory=short_term_memory,
+        entity_memory=entity_memory
+    )
+```
+
+Notice the `memory=True` flag as well as the specific memory objects passed into the Crew. This tells the system to activate memory handling and apply each configured memory module as needed.
+
+**Assigning Memory to Individual Agents**
+
+There’s one more small but essential step. You need to explicitly assign memory to the agents that should retain context across interactions. This is done with `memory=True` when defining the agents.
+
+```python
+@agent
+def trending_company_finder(self) -> Agent:
+    return Agent(config=self.agents_config['trending_company_finder'],
+                 tools=[SerperDevTool()], memory=True)
+
+@agent
+def financial_researcher(self) -> Agent:
+    return Agent(config=self.agents_config['financial_researcher'], 
+                 tools=[SerperDevTool()])
+
+@agent
+def stock_picker(self) -> Agent:
+    return Agent(config=self.agents_config['stock_picker'], 
+                 tools=[PushNotificationTool()], memory=True)
+```
+
+We give **memory** to the `trending_company_finder` and the `stock_picker`. We do **not** give memory to the `financial_researcher` because we want it to perform fresh research every time. In contrast, we want the other two agents to remember previous results—for instance, to avoid recommending the same stock twice.
+
+---
+
+Finally, remember that memory is not magic. Even though CRU’s abstractions make memory seem effortless, what’s actually happening is that relevant past interactions are retrieved and injected into the prompt when you call the LLM. That’s what gives the model "contextual awareness."
+
+To fully benefit from memory, make sure your YAML files (agent and task definitions) contain clear instructions about using memory—for example, telling the agent not to recommend duplicate companies or to surface new ones.
+
+With that, memory is now set up in your `StockPicker` project. You can now open your terminal and run the project. The memory modules will automatically store, retrieve, and pass relevant context to the agents, enhancing the intelligence of your crew.
+
