@@ -2140,6 +2140,58 @@ return Crew(
 * Using larger models (like GPT-4o) for the manager yields better coherence, but increases cost.
 * Consistent naming and output schemas boost system stability and make downstream integration easier.
 
+**Writing the `main.py` and the run Function**
+
+Now we need to write our entry point, which is the main.py file containing the run function. I deleted the default template, and I'm replacing it with a minimal version that simply runs the crew. In this function, we pass the sector as "technology." There’s no need to use a current date, so we can omit that. The function will call the crew's kickoff method, passing the inputs, and finally print result.raw.
+
+Here is a basic version of main.py:
+
+```py
+#!/usr/bin/env python
+import sys
+import warnings
+import os
+from datetime import datetime
+from stock_picker.crew import StockPicker
+warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+
+
+def run():
+    """
+    Run the research crew.
+    """
+    inputs = {
+        'sector': 'Technology',
+        "current_date": str(datetime.now())
+    }
+
+    # Create and run the crew
+    result = StockPicker().crew().kickoff(inputs=inputs)
+
+    # Print the result
+    print("\n\n=== FINAL DECISION ===\n\n")
+    print(result.raw)
+
+
+if __name__ == "__main__":
+    run()
+```
+
+Here’s your improved, clearly organized explanation with **no icons** and **the code integrated**—ready for reference or documentation. The content is clarified and each stage is distinctly presented:
+
+**Running the Crew in the Terminal**
+
+Once the code is ready, bring up your terminal with control and the tick (\`), navigate into your stock\_picker folder, and run the project:
+
+```bash
+crewai run
+```
+
+The crew process is, by its nature, somewhat unpredictable. Since it's agentic and autonomous, it can use multiple agents and tools, going through different research and decision steps in a non-linear fashion. Sometimes the process will involve fetching news, doing analysis, or using the researcher agent repeatedly. Depending on your machine and your setup, this may take a while.
+
+
+
+
 ```sh
 (agents) ➜  my_agents git:(main) ✗ cd notebooks/week3_crew/stock_picker && crewai run
 Running the Crew
@@ -2854,6 +2906,994 @@ Why not selected: Although OpenAI shows promising innovation potential, it is st
 Why not selected: Meta faces several challenges despite its strong financial position, including difficulties in monetizing the metaverse strategy, regulatory scrutiny, and adapting to changes in user behavior and privacy regulations. These uncertainties present risks that overshadow its growth prospects in comparison to Microsoft's more stable and predictable outlook.
 ```
 
+**Autonomous AI and Outputs**
+
+One important thing to note is that autonomous agentic AI frameworks like Crew give us less direct control over the precise sequence of actions. The crew manager agent can assign tasks and orchestrate agents as it sees fit. This can sometimes make the process seem slow or convoluted, but it’s also the strength of agentic systems—flexibility and emergent decision-making.
+
+After the process completes, you’ll find the output in your terminal and also in the `outputs` folder. The result should be a well-formed JSON that matches the schema you defined with Pydantic models. You will also find the research list and the trending companies list there.
+
+For example, in a recent run, the agent recommended Anthropic (while declining Peregrine and Circle) as the best pick in the technology sector. All outputs were structured as expected, thanks to the use of structured output schemas.
+
+`output/research_report.json`
+
+**Next Steps: Adding More Tools `/tools/push_tool.py`**
+
+With the basics working and outputs validated, you can now move on to adding more “bells and whistles,” such as custom tools to further enhance your crew’s capabilities.
+
+Inside the `tools` folder of your stock picker project, you'll see that Accru has provided a `custom_tool.py` template as an example. You should rename this file to `push_tool.py` to reflect its actual purpose. This tool will allow agents to send push notifications to the user.
+
+
+**Defining the Pydantic Schema for the Tool**
+
+To create a custom tool, you first need to define a schema for the expected input using a Pydantic model. For the push notification tool, we define a class called `PushNotification`, which specifies that the tool will receive a single string field, `message`, representing the notification to be sent to the user.
+
+```python
+from pydantic import BaseModel, Field
+
+class PushNotification(BaseModel):
+    """A message to be sent to the user"""
+    message: str = Field(..., description="The message to be sent to the user.")
+```
+
+**Implementing the Push Notification Tool**
+
+Now, you define the actual tool class. This inherits from `BaseTool`, sets the tool's name and description, and specifies `PushNotification` as the argument schema. The `_run` method implements the tool’s action: sending a notification using the Pushover API. It reads the `PUSHOVER_USER` and `PUSHOVER_TOKEN` from environment variables, constructs the message payload, sends it via HTTP POST, and returns a confirmation.
+
+```python
+from crewai.tools import BaseTool
+from typing import Type
+import os
+import requests
+
+class PushNotificationTool(BaseTool):
+    name: str = "Send a Push Notification"
+    description: str = "This tool is used to send a push notification to the user."
+    args_schema: Type[BaseModel] = PushNotification
+
+    def _run(self, message: str) -> str:
+        pushover_user = os.getenv("PUSHOVER_USER")
+        pushover_token = os.getenv("PUSHOVER_TOKEN")
+        pushover_url = "https://api.pushover.net/1/messages.json"
+        print(f"Push: {message}")
+        payload = {"user": pushover_user, "token": pushover_token, "message": message}
+        requests.post(pushover_url, data=payload)
+        return '{"notification": "ok"}'
+```
+
+**Assigning the Tool to the Stock Picker Agent**
+
+With the tool defined, import it in your `crew.py` module. Assign it to the `stock_picker` agent by including it in the agent’s `tools` parameter. This gives only the stock picker agent the power to send push notifications.
+
+```python
+from stock_picker.tools.push_tool import PushNotificationTool
+
+@agent
+def stock_picker(self) -> Agent:
+    return Agent(
+        config=self.agents_config['stock_picker'],
+        tools=[PushNotificationTool()],
+        memory=True
+    )
+```
+
+**Running and Testing the Crew with the New Tool**
+
+During execution, the stock picker agent can now send push notifications via the tool you’ve built. You’ll see messages printed in your console and, if you’ve set up Pushover credentials correctly, you’ll receive notifications on your device. The integration is complete, and the push notification capability is live in your agent crew.
+
+
+```sh
+(agents) ➜  my_agents git:(main) ✗ cd notebooks/week3_crew/stock_picker && crewai run
+Running the Crew
+warning: `VIRTUAL_ENV=/Users/alex/Desktop/00_projects/AI_agents/my_agents/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+/Users/alex/Desktop/00_projects/AI_agents/my_agents/notebooks/week3_crew/stock_picker/.venv/lib/python3.12/site-packages/pydantic/fields.py:1093: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'required'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.11/migration/
+  warn(
+╭───────────────────────────────────────────────────────────────────────────────────── Crew Execution Started ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Crew Execution Started                                                                                                                                                                          │
+│  Name: crew                                                                                                                                                                                      │
+│  ID: b9abacfb-ed06-478c-a4bd-de9cae235216                                                                                                                                                        │
+│  Tool Args:                                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+    Status: Executing Task...
+╭──────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Task: Find the top trending companies in the news in Technology by searching the latest news. Find new companies that you've not found before.                                                  │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+    Status: Executing Task...
+    └── 🔧 Using Delegate work to coworker (1)
+╭──────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Financial News Analyst that finds trending companies in Technology                                                                                                                       │
+│                                                                                                                                                                                                  │
+│  Task: Identify the top trending technology companies based on the latest news.                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (1)
+    └── 🔧 Used Search the internet with Serper (1)
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Financial News Analyst that finds trending companies in Technology                                                                                                                       │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: I need to search for the latest news on trending technology companies to find notable ones that are making headlines for their performance, innovation, or market impact.     │
+│                                                                                                                                                                                                  │
+│  Using Tool: Search the internet with Serper                                                                                                                                                     │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"search_query\": \"trending technology companies news October 2023\"}"                                                                                                                       │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  {'searchParameters': {'q': 'trending technology companies news October 2023', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title': '2023 in review: October to December -    │
+│  TechInformed', 'link': 'https://techinformed.com/2023-in-review-october-to-december/', 'snippet': "October. Cyber attacks continued to be a significant challenge in 2023, with several large   │
+│  enterprises revealing they'd been hit with a breach.", 'position': 1}, {'title': 'October 2023 – Tech News & Insights - by Lawrence Teixeira', 'link': 'https://lawrence.eti.br/2023/10/',      │
+│  'snippet': 'On September 25th, 2023, OpenAI expanded the capabilities of its advanced model, GPT-4, by introducing the ability to interpret images and ...', 'position': 2}, {'title': 'The     │
+│  Top 10 Business Technology Stories Of 2023 - Forbes', 'link': 'https://www.forbes.com/sites/quickerbettertech/2023/12/31/the-top-10-business-technology-stories-of-2023/', 'snippet': 'From AI  │
+│  to robotics, drones to data breaches and IKEA to Apple, these are the stories that most impacted businesses in the last year.', 'position': 3}, {'title': 'My Top 10 Tech Stocks for October    │
+│  2023 | The Motley Fool', 'link': 'https://www.fool.com/investing/2023/10/02/my-top-10-tech-stocks-for-october-2023/', 'snippet': 'The Motley Fool has positions in and recommends Advanced      │
+│  Micro Devices, Amazon.com, Cloudflare, CrowdStrike, PayPal, Qualcomm, Sea Limited, ...', 'position': 4}, {'title': '6 Biggest Tech Stories of 2023 - Investopedia', 'link':                     │
+│  'https://www.investopedia.com/biggest-tech-stories-of-2023-8405468', 'snippet': "From massive layoffs and the collapse of Silicon Valley Bank to Microsoft's purchase of Activision and         │
+│  attempts to ban TikTok, these are the ...", 'position': 5}, {'title': 'Startups Of The Month - October 2023 - Vestbee', 'link':                                                                 │
+│  'https://www.vestbee.com/blog/articles/startups-of-the-month-october-2023', 'snippet': "Meet 10 interesting startups selected by Vestbeee in the Startups Of The Month Vestbee's series -       │
+│  Neuron...                                                                                                                                                                                       │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (1)
+    └── 🔧 Used Search the internet with Serper (1)
+╭───────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Financial News Analyst that finds trending companies in Technology                                                                                                                       │
+│                                                                                                                                                                                                  │
+│  Final Answer:                                                                                                                                                                                   │
+│  The top trending technology companies based on the latest news include:                                                                                                                         │
+│                                                                                                                                                                                                  │
+│  1. **OpenAI**: Recently expanded the capabilities of GPT-4 to include image interpretation, showcasing its continued innovation in artificial intelligence.                                     │
+│     - [Read more here](https://lawrence.eti.br/2023/10/)                                                                                                                                         │
+│                                                                                                                                                                                                  │
+│  2. **Neurons**: Highlighted as an interesting startup that demonstrates innovation in technology, making waves in the industry this month.                                                      │
+│     - [Find out more here](https://www.vestbee.com/blog/articles/startups-of-the-month-october-2023)                                                                                             │
+│                                                                                                                                                                                                  │
+│  3. **Cloudflare**: Mentioned as one of the top tech stocks to watch, indicating strong performance and importance in the tech market.                                                           │
+│     - [Learn more here](https://www.fool.com/investing/2023/10/02/my-top-10-tech-stocks-for-october-2023/)                                                                                       │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: It is important to delegate the task of identifying trending companies in the technology sector to someone with expertise in financial news analysis. This will help ensure   │
+│  that the information collected is accurate and up-to-date.                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│  Using Tool: Delegate work to coworker                                                                                                                                                           │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"task\": \"Identify the top trending technology companies based on the latest news.\", \"context\": \"The focus is on finding new and trending technology companies that have become promin  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  The top trending technology companies based on the latest news include:                                                                                                                         │
+│                                                                                                                                                                                                  │
+│  1. **OpenAI**: Recently expanded the capabilities of GPT-4 to include image interpretation, showcasing its continued innovation in artificial intelligence.                                     │
+│     - [Read more here](https://lawrence.eti.br/2023/10/)                                                                                                                                         │
+│                                                                                                                                                                                                  │
+│  2. **Neurons**: Highlighted as an interesting startup that demonstrates innovation in technology, making waves in the industry this month.                                                      │
+│     - [Find out more here](https://www.vestbee.com/blog/articles/startups-of-the-month-october-2023)                                                                                             │
+│                                                                                                                                                                                                  │
+│  3. **Cloudflare**: Mentioned as one of the top tech stocks to watch, indicating strong performance and importance in the tech market.                                                           │
+│     - [Learn more here](https://www.fool.com/investing/2023/10/02/my-top-10-tech-stocks-for-october-2023/)                                                                                       │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (1)
+    └── 🔧 Used Search the internet with Serper (1)
+╭───────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Final Answer:                                                                                                                                                                                   │
+│  {                                                                                                                                                                                               │
+│    "companies": [                                                                                                                                                                                │
+│      {                                                                                                                                                                                           │
+│        "name": "OpenAI",                                                                                                                                                                         │
+│        "ticker": "N/A",                                                                                                                                                                          │
+│        "reason": "Recently expanded the capabilities of GPT-4 to include image interpretation, showcasing its continued innovation in artificial intelligence."                                  │
+│      },                                                                                                                                                                                          │
+│      {                                                                                                                                                                                           │
+│        "name": "Neurons",                                                                                                                                                                        │
+│        "ticker": "N/A",                                                                                                                                                                          │
+│        "reason": "Highlighted as an interesting startup that demonstrates innovation in technology, making waves in the industry this month."                                                    │
+│      },                                                                                                                                                                                          │
+│      {                                                                                                                                                                                           │
+│        "name": "Cloudflare",                                                                                                                                                                     │
+│        "ticker": "N/A",                                                                                                                                                                          │
+│        "reason": "Mentioned as one of the top tech stocks to watch, indicating strong performance and importance in the tech market."                                                            │
+│      }                                                                                                                                                                                           │
+│    ]                                                                                                                                                                                             │
+│  }                                                                                                                                                                                               │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+    Assigned to: Manager
+    
+    Status: ✅ Completed
+    ├── 🔧 Using Delegate work to coworker (1)
+    └── 🔧 Used Search the internet with Serper (1)
+╭──────────────────────────────────────────────────────────────────────────────────────── Task Completion ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Task Completed                                                                                                                                                                                  │
+│  Name: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9                                                                                                                                                      │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Tool Args:                                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+    Status: Executing Task...
+╭──────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Task: Given a list of trending companies, provide detailed analysis of each company in a report by searching online                                                                             │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+    Status: Executing Task...
+    └── 🔧 Using Delegate work to coworker (2)
+╭──────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Senior Financial Researcher                                                                                                                                                              │
+│                                                                                                                                                                                                  │
+│  Task: Research and analyze each company in the following list, focusing on their market position, future outlook, and investment potential: OpenAI, Neurons, and Cloudflare. OpenAI has         │
+│  recently expanded the capabilities of GPT-4 to include image interpretation, showcasing innovation in AI. Neurons is highlighted as an innovative startup making waves in the tech industry.    │
+│  Cloudflare is noted as a top tech stock to watch. Provide a detailed report for each company.                                                                                                   │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (2)
+    └── 🔧 Used Search the internet with Serper (2)
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Senior Financial Researcher                                                                                                                                                              │
+│                                                                                                                                                                                                  │
+│  Thought: I need to gather more information on each company to provide a comprehensive analysis on their market position, future outlook, and investment potential.                              │
+│                                                                                                                                                                                                  │
+│  Using Tool: Search the internet with Serper                                                                                                                                                     │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"search_query\": \"OpenAI GPT-4 image interpretation market position future outlook investment potential\"}"                                                                                 │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  {'searchParameters': {'q': 'OpenAI GPT-4 image interpretation market position future outlook investment potential', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title':     │
+│  'Invest in OpenAI: Private Investment Guide', 'link': 'https://tsginvest.com/openai/', 'snippet': 'Despite projecting potential revenue of $100 billion by 2029, OpenAI faces substantial       │
+│  operational costs, with estimated losses of $5 billion this year due to ...', 'position': 1}, {'title': "OpenAI's Market Position: Revenue Growth, Competitive Landscape ...", 'link':          │
+│  'https://deepai.tn/papers/openai-market-position-report/', 'snippet': 'OpenAI is valued at approximately $80 billion as of October 2023, reflecting its rapid growth. The company plans to      │
+│  raise fresh funding, potentially exceeding a ...', 'position': 2}, {'title': 'OpenAI revenue, growth rate & funding | Sacra', 'link': 'https://sacra.com/c/openai/', 'snippet': 'OpenAI is on   │
+│  track to achieve its 2025 revenue target of $12.7B and maintains its longer-term projection of reaching $125B in revenue by 2029 and $174B by 2030.', 'position': 3}, {'title': 'Morgan         │
+│  Stanley uses AI evals to shape the future of financial services', 'link': 'https://openai.com/index/morgan-stanley/', 'snippet': "To evaluate GPT‑4's performance against their experts,        │
+│  Morgan Stanley ran summarization evals to test how effectively the model condensed vast amounts of ...", 'position': 4}, {'title': 'OpenAI Statistics 2025: Investment, Audience, Growth &      │
+│  Results', 'link': 'https://www.pihappiness.com/openai-statistics/', 'snippet': 'It anticipates a significant revenue surge from $20-$30 million in 2022 to $200 million in 2023, culminating    │
+│  in a projected annual revenue of $1 billion by ...', 'position': 5}, {'title': 'OpenAI Upgrades GPT-4o With Advanced Image AI in Chatbot Race ...', 'link':                                     │
+│  'https://www.theglobeandmail.com/investing/markets/stocks/MSFT/pressreleases/31585846/openai-upgrades-gpt-4o-with-advanced-image-ai-in-chatbot-race-for-multimodal...                           │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (2)
+    ├── 🔧 Used Search the internet with Serper (2)
+    └── 🔧 Used Search the internet with Serper (3)
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Senior Financial Researcher                                                                                                                                                              │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: I've gathered initial information on OpenAI, focusing on its recent innovations and market evaluations. Next, I need to research Neurons for their market presence and        │
+│  outlook.                                                                                                                                                                                        │
+│                                                                                                                                                                                                  │
+│  Using Tool: Search the internet with Serper                                                                                                                                                     │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"search_query\": \"Neurons startup innovation technology market position analysis\"}"                                                                                                        │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  {'searchParameters': {'q': 'Neurons startup innovation technology market position analysis', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title': 'Neurons Inc – Funding,    │
+│  Valuation, Investors, News - Parsers VC', 'link': 'https://o.parsers.vc/startup/neuronsinc.com/', 'snippet': 'Essential stats, news, real-time insights on Neurons Inc. Connect with decision   │
+│  makers, founders, investors. Explore valuation, funding rounds, reviews.', 'position': 1}, {'title': 'Neuroscience startup Neurons Inc raises €6M as one of the largest ...', 'link':           │
+│  'https://techfundingnews.com/neuroscience-startup-neurons-inc-secures-e6m-in-one-of-the-largest-global-seed-rounds/', 'snippet': 'Danish consumer neuroscience company Neurons Inc has secured  │
+│  over €6 million in seed funding, in one of the largest global seed rounds ever.', 'position': 2}, {'title': 'Neurons | See Through the Eyes of Your Audience', 'link':                          │
+│  'https://www.neuronsinc.com/', 'snippet': 'Visualize customer attention & get instant feedback on your visuals from the only Marketing AI powered by neuroscience. Improve campaign             │
+│  effectiveness with ...', 'position': 3}, {'title': 'Neuromarketing: Definition, Techniques, Examples, Pros & Cons ...', 'link': 'https://www.neuronsinc.com/neuromarketing', 'snippet': 'For    │
+│  instance, an IAT can determine whether consumers associate a brand with innovation or tradition, helping marketers tailor their positioning strategies.', 'position': 4}, {'title': 'My big     │
+│  idea: Neurons Inc - Business Age', 'link': 'https://www.businessage.com/post/my-big-idea-neurons-inc', 'snippet': 'Today, we are in a leading position, as we have established the              │
+│  industry-leading consumer neuroscience database and keep adding billions of ...', 'position': 5}, {'title': 'Neurons Inc Company Information - Funding, Investors, and More', 'link':           │
+│  'https://www.seedtable.com/startups/Neurons_Inc-R9YM6PJ', 'snippet': 'The company Neurons Inc has raised a total of $12.19m in funding over 2 rounds. Key Insigh...                             │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (2)
+    ├── 🔧 Used Search the internet with Serper (2)
+    ├── 🔧 Used Search the internet with Serper (3)
+    └── 🔧 Used Search the internet with Serper (4)
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Senior Financial Researcher                                                                                                                                                              │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: I've now collected information on Neurons, specifically regarding its funding and market initiatives. The next step is to research Cloudflare, focusing on its market         │
+│  performance and significance.                                                                                                                                                                   │
+│                                                                                                                                                                                                  │
+│  Using Tool: Search the internet with Serper                                                                                                                                                     │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"search_query\": \"Cloudflare stock performance market position analysis investment potential\"}"                                                                                            │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  {'searchParameters': {'q': 'Cloudflare stock performance market position analysis investment potential', 'type': 'search', 'num': 10, 'engine': 'google'}, 'organic': [{'title': 'Cloudflare    │
+│  Improves Sales Execution: Will Margin Gain Continue?', 'link': 'https://www.nasdaq.com/articles/cloudflare-improves-sales-execution-will-margin-gain-continue', 'snippet': "Cloudflare's        │
+│  operating margin reached 11.7% in the first quarter of 2025, marking a 50-bps year-over-year increase, continuing its trend of ...", 'position': 1}, {'title': 'Cloudflare Stock: Strong Key    │
+│  Metrics Driving The Rise In Share Price', 'link': 'https://seekingalpha.com/article/4790132-cloudflare-stock-strong-key-metrics-driving-the-rise-in-share-price', 'snippet': "Cloudflare is     │
+│  expected to have strong revenue growth in the coming years. The company's recent pipeline of large deals and edge AI opportunities ...", 'position': 2}, {'title': 'Cloudflare, Inc. (NET) Is   │
+│  a Trending Stock: Facts to Know Before ...', 'link': 'https://finance.yahoo.com/news/cloudflare-inc-net-trending-stock-130003172.html', 'snippet': 'Cloudflare is expected to post earnings of  │
+│  $0.18 per share for the current quarter, representing a year-over-year change of -10%. Over the last ...', 'position': 3}, {'title': 'Cloudflare (NYSE:NET) - Stock Price, News & Analysis',    │
+│  'link': 'https://simplywall.st/stocks/us/software/nyse-net/cloudflare', 'snippet': "Research Cloudflare's (NYSE:NET) stock price, latest news & stock analysis. Find everything from its        │
+│  Valuation, Future Growth, Past Performance and more.", 'position': 4}, {'title': 'Is Cloudflare a Buy After Its Roller Coaster Ride? - Morningstar', 'link':                                    │
+│  'https://www.morningstar.com/stocks/is-cloudflare-buy-after-its-roller-coaster-ride', 'snippet': 'Cloudflare NET stock is up 50% since the start of 2024, even with a 27% drop since the        │
+│  middle of February. For investors, the question is whether to jump in or ...', 'position': 5}, {'title': 'Cloudflare (NET) Stock Forecast: Analyst Ra...                                        │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (2)
+    ├── 🔧 Used Search the internet with Serper (2)
+    ├── 🔧 Used Search the internet with Serper (3)
+    └── 🔧 Used Search the internet with Serper (4)
+╭───────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Senior Financial Researcher                                                                                                                                                              │
+│                                                                                                                                                                                                  │
+│  Final Answer:                                                                                                                                                                                   │
+│  **OpenAI**                                                                                                                                                                                      │
+│  - **Market Position**: OpenAI is currently valued at approximately $80 billion as of October 2023, indicating rapid growth. The company has expanded the capabilities of GPT-4 to include       │
+│  image interpretation, showcasing its continuous innovation in artificial intelligence. This is a significant differentiator in the increasingly competitive AI market.                          │
+│  - **Future Outlook**: OpenAI is projected to achieve its 2025 revenue target of approximately $12.7 billion and aims for long-term revenues of $100 billion by 2029. There are expectations     │
+│  for substantial future growth, with a potential valuation hitting around $300 billion, fueled by advances in AI capabilities and integrations.                                                  │
+│  - **Investment Potential**: Despite an estimated loss of $5 billion this year due to operational costs, OpenAI's innovation timeline represents promising investment potential. The growth      │
+│  trajectory looks favorable, especially given the expected revenues and expansions in user applications.                                                                                         │
+│                                                                                                                                                                                                  │
+│  **Neurons**                                                                                                                                                                                     │
+│  - **Market Position**: Neurons, a consumer neuroscience company, has established a promising position in the tech industry by leveraging neuroscience to improve marketing effectiveness. It    │
+│  recently secured €6 million in funding, one of the largest global seed rounds, which highlights substantial investor confidence in its business model.                                          │
+│  - **Future Outlook**: The company is focusing on becoming a leader in the neuroscience software market and expanding its capabilities. The global neuroscience market is on track to grow       │
+│  significantly over the next decade, which positions Neurons favorably within this expanding sector.                                                                                             │
+│  - **Investment Potential**: Given its recent funding success and focus on innovative research areas, Neurons presents a potentially high-reward investment in the tech startup space. However,  │
+│  risks associated with early-stage ventures should be considered.                                                                                                                                │
+│                                                                                                                                                                                                  │
+│  **Cloudflare**                                                                                                                                                                                  │
+│  - **Market Position**: Cloudflare is recognized as a top technology stock, with strong sales execution marked by an operating margin of 11.7%. It holds a dominant position with about 98.21%   │
+│  market share in the cloud security segment, which underscores its applicability in contemporary tech infrastructure.                                                                            │
+│  - **Future Outlook**: Analysts forecast substantial earnings and revenue growth for Cloudflare, with projections of revenue growth at 27% CAGR over the next five years. The steady influx of   │
+│  large deals and edge AI opportunities contributes to an optimistic growth trajectory.                                                                                                           │
+│  - **Investment Potential**: Cloudflare has been rated as a Moderate Buy, reflecting a consensus among analysts about its financial strength and growth prospects. While the stock's             │
+│  performance has been volatile, the overall outlook remains positive as the company continues to invest in its operations.                                                                       │
+│                                                                                                                                                                                                  │
+│  These analyses highlight each company's substantial potential, but it is essential to consider the associated risks and market dynamics.                                                        │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: I need to gather detailed information about each company: OpenAI, Neurons, and Cloudflare. This includes their market position, future outlook, and investment potential. I   │
+│  will start by delegating this task to the Senior Financial Researcher to ensure comprehensive and detailed analysis.                                                                            │
+│                                                                                                                                                                                                  │
+│  Using Tool: Delegate work to coworker                                                                                                                                                           │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"task\": \"Research and analyze each company in the following list, focusing on their market position, future outlook, and investment potential: OpenAI, Neurons, and Cloudflare. OpenAI ha  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  **OpenAI**                                                                                                                                                                                      │
+│  - **Market Position**: OpenAI is currently valued at approximately $80 billion as of October 2023, indicating rapid growth. The company has expanded the capabilities of GPT-4 to include       │
+│  image interpretation, showcasing its continuous innovation in artificial intelligence. This is a significant differentiator in the increasingly competitive AI market.                          │
+│  - **Future Outlook**: OpenAI is projected to achieve its 2025 revenue target of approximately $12.7 billion and aims for long-term revenues of $100 billion by 2029. There are expectations     │
+│  for substantial future growth, with a potential valuation hitting around $300 billion, fueled by advances in AI capabilities and integrations.                                                  │
+│  - **Investment Potential**: Despite an estimated loss of $5 billion this year due to operational costs, OpenAI's innovation timeline represents promising investment potential. The growth      │
+│  trajectory looks favorable, especially given the expected revenues and expansions in user applications.                                                                                         │
+│                                                                                                                                                                                                  │
+│  **Neurons**                                                                                                                                                                                     │
+│  - **Market Position**: Neurons, a consumer neuroscience company, has established a promising position in the tech industry by leveraging neuroscience to improve marketing effectiveness. It    │
+│  recently secured €6 million in funding, one of the largest global seed rounds, which highlights substantial investor confidence in its business model.                                          │
+│  - **Future Outlook**: The company is focusing on becoming a leader in the neuroscience software market and expanding its capabilities. The global neuroscience market is on track to grow       │
+│  significantly over the next decade, which positions Neurons favorably within this expanding sector.                                                                                             │
+│  - **Investment Potential**: Given its recent funding success and focus on innovative research areas, Neurons presents a potentially high-reward investment in the tech startup space. However,  │
+│  risks associated with early-stage ventures should be considered.                                                                                                                                │
+│                                                                                                                                                                                                  │
+│  **Cloudflare**                                                                                                                                                                                  │
+│  - **Market Position**: Cloudflare is recognized as a top technology stock, with strong sales executi...                                                                                         │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (2)
+    ├── 🔧 Used Search the internet with Serper (2)
+    ├── 🔧 Used Search the internet with Serper (3)
+    └── 🔧 Used Search the internet with Serper (4)
+╭───────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Final Answer:                                                                                                                                                                                   │
+│  {                                                                                                                                                                                               │
+│    "research_list": [                                                                                                                                                                            │
+│      {                                                                                                                                                                                           │
+│        "name": "OpenAI",                                                                                                                                                                         │
+│        "market_position": "OpenAI is currently valued at approximately $80 billion as of October 2023, indicating rapid growth. The company has expanded the capabilities of GPT-4 to include    │
+│  image interpretation, showcasing its continuous innovation in artificial intelligence. This is a significant differentiator in the increasingly competitive AI market.",                        │
+│        "future_outlook": "OpenAI is projected to achieve its 2025 revenue target of approximately $12.7 billion and aims for long-term revenues of $100 billion by 2029. There are expectations  │
+│  for substantial future growth, with a potential valuation hitting around $300 billion, fueled by advances in AI capabilities and integrations.",                                                │
+│        "investment_potential": "Despite an estimated loss of $5 billion this year due to operational costs, OpenAI's innovation timeline represents promising investment potential. The growth   │
+│  trajectory looks favorable, especially given the expected revenues and expansions in user applications."                                                                                        │
+│      },                                                                                                                                                                                          │
+│      {                                                                                                                                                                                           │
+│        "name": "Neurons",                                                                                                                                                                        │
+│        "market_position": "Neurons, a consumer neuroscience company, has established a promising position in the tech industry by leveraging neuroscience to improve marketing effectiveness.    │
+│  It recently secured €6 million in funding, one of the largest global seed rounds, which highlights substantial investor confidence in its business model.",                                     │
+│        "future_outlook": "The company is focusing on becoming a leader in the neuroscience software market and expanding its capabilities. The global neuroscience market is on track to grow    │
+│  significantly over the next decade, which positions Neurons favorably within this expanding sector.",                                                                                           │
+│        "investment_potential": "Given its recent funding success and focus on innovative research areas, Neurons presents a potentially high-reward investment in the tech startup space.        │
+│  However, risks associated with early-stage ventures should be considered."                                                                                                                      │
+│      },                                                                                                                                                                                          │
+│      {                                                                                                                                                                                           │
+│        "name": "Cloudflare",                                                                                                                                                                     │
+│        "market_position": "Cloudflare is recognized as a top technology stock, with strong sales execution marked by an operating margin of 11.7%. It holds a dominant position with about       │
+│  98.21% market share in the cloud security segment, which underscores its applicability in contemporary tech infrastructure.",                                                                   │
+│        "future_outlook": "Analysts forecast substantial earnings and revenue growth for Cloudflare, with projections of revenue growth at 27% CAGR over the next five years. The steady influx   │
+│  of large deals and edge AI opportunities contributes to an optimistic growth trajectory.",                                                                                                      │
+│        "investment_potential": "Cloudflare has been rated as a Moderate Buy, reflecting a consensus among analysts about its financial strength and growth prospects. While the stock's          │
+│  performance has been volatile, the overall outlook remains positive as the company continues to invest in its operations."                                                                      │
+│      }                                                                                                                                                                                           │
+│    ]                                                                                                                                                                                             │
+│  }                                                                                                                                                                                               │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+└── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+    Assigned to: Manager
+    
+    Status: ✅ Completed
+    ├── 🔧 Using Delegate work to coworker (2)
+    ├── 🔧 Used Search the internet with Serper (2)
+    ├── 🔧 Used Search the internet with Serper (3)
+    └── 🔧 Used Search the internet with Serper (4)
+╭──────────────────────────────────────────────────────────────────────────────────────── Task Completion ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Task Completed                                                                                                                                                                                  │
+│  Name: 212df200-f20b-4924-9988-25dba948fa3f                                                                                                                                                      │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Tool Args:                                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: dc2ce151-f939-4374-a7be-360f5cdfc4a9
+    Status: Executing Task...
+╭──────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Task: Analyze the research findings and pick the best company for investment. Send a push notification to the user with the decision and 1 sentence rationale. Then respond with a detailed     │
+│  report on why you chose this company, and which companies were not selected.                                                                                                                    │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: dc2ce151-f939-4374-a7be-360f5cdfc4a9
+    Status: Executing Task...
+    └── 🔧 Using Delegate work to coworker (3)
+╭──────────────────────────────────────────────────────────────────────────────────────── 🤖 Agent Started ────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Stock Picker from Research                                                                                                                                                               │
+│                                                                                                                                                                                                  │
+│  Task: Analyze the provided research data for OpenAI, Neurons, and Cloudflare to determine the best company for investment.                                                                      │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: dc2ce151-f939-4374-a7be-360f5cdfc4a9
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    └── 🔧 Failed Send a Push Notification (1)
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Error ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Tool Usage Failed                                                                                                                                                                               │
+│  Name: Send a Push Notification                                                                                                                                                                  │
+│  Error: Arguments validation failed: 1 validation error for PushNotification                                                                                                                     │
+│  message                                                                                                                                                                                         │
+│    Input should be a valid string [type=string_type, input_value={'description': 'The best...eurons.', 'type': 'str'}, input_type=dict]                                                          │
+│      For further information visit https://errors.pydantic.dev/2.11/v/string_type                                                                                                                │
+│  Tool Args:                                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: dc2ce151-f939-4374-a7be-360f5cdfc4a9
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    └── 🔧 Failed Send a Push Notification (2)
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Error ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Tool Usage Failed                                                                                                                                                                               │
+│  Name: Send a Push Notification                                                                                                                                                                  │
+│  Error: Arguments validation failed: 1 validation error for PushNotification                                                                                                                     │
+│  message                                                                                                                                                                                         │
+│    Input should be a valid string [type=string_type, input_value={'description': 'The best...eurons.', 'type': 'str'}, input_type=dict]                                                          │
+│      For further information visit https://errors.pydantic.dev/2.11/v/string_type                                                                                                                │
+│  Tool Args:                                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: dc2ce151-f939-4374-a7be-360f5cdfc4a9
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    └── 🔧 Failed Send a Push Notification (3)
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Error ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Tool Usage Failed                                                                                                                                                                               │
+│  Name: Send a Push Notification                                                                                                                                                                  │
+│  Error: Arguments validation failed: 1 validation error for PushNotification                                                                                                                     │
+│  message                                                                                                                                                                                         │
+│    Input should be a valid string [type=string_type, input_value={'description': 'The best...eurons.', 'type': 'str'}, input_type=dict]                                                          │
+│      For further information visit https://errors.pydantic.dev/2.11/v/string_type                                                                                                                │
+│  Tool Args:                                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Stock Picker from Research                                                                                                                                                               │
+│                                                                                                                                                                                                  │
+│  Thought: I need to analyze the provided research data to determine which of the three companies - OpenAI, Neurons, or Cloudflare - holds the best investment potential.                         │
+│  1. **OpenAI**: The valuation of $80 billion and projected revenue of $12.7 billion in 2025 shows strong growth potential, especially with long-term revenues projected at $100 billion by       │
+│  2029. However, the current operational loss of $5 billion poses a risk.                                                                                                                         │
+│  2. **Neurons**: While Neurons has gained investor confidence with recent funding, and is positioned in a niche market, its long-term revenue potential and overall market impact appear less    │
+│  established compared to the other two.                                                                                                                                                          │
+│  3. **Cloudflare**: With a solid operating margin of 11.7% and an impressive 98.21% market share in cloud security, Cloudflare's projected revenue growth of 27% CAGR over the next five years   │
+│  highlights its robust growth strategy and market dominance.                                                                                                                                     │
+│  Based on this analysis, Cloudflare emerges as the best investment option due to its consistent growth projections, strong market positioning, and financial stability.                          │
+│                                                                                                                                                                                                  │
+│  Using Tool: Send a Push Notification                                                                                                                                                            │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"message\": {\"description\": \"The best company for investment is Cloudflare given its strong growth metrics, impressive market share in cloud security, and stable operating margin, maki  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  I encountered an error while trying to use the tool. This was the error: Arguments validation failed: 1 validation error for PushNotification                                                   │
+│  message                                                                                                                                                                                         │
+│    Input should be a valid string [type=string_type, input_value={'description': 'The best...eurons.', 'type': 'str'}, input_type=dict]                                                          │
+│      For further information visit https://errors.pydantic.dev/2.11/v/string_type.                                                                                                               │
+│   Tool Send a Push Notification accepts these inputs: Tool Name: Send a Push Notification                                                                                                        │
+│  Tool Arguments: {'message': {'description': 'The message to be sent to the user.', 'type': 'str'}}                                                                                              │
+│  Tool Description: This tool is used to send a push notification to the user..                                                                                                                   │
+│  Moving on then. I MUST either use a tool (use one at time) OR give my best final answer not both at the same time. When responding, I must use the following format:                            │
+│                                                                                                                                                                                                  │
+│  ```                                                                                                                                                                                             │
+│  Thought: you should always think about what to do                                                                                                                                               │
+│  Action: the action to take, should be one of [Send a Push Notification]                                                                                                                         │
+│  Action Input: the input to the action, dictionary enclosed in curly braces                                                                                                                      │
+│  Observation: the result of the action                                                                                                                                                           │
+│  ```                                                                                                                                                                                             │
+│  This Thought/Action/Action Input/Result can repeat N times. Once I know the final answer, I must return the following format:                                                                   │
+│                                                                                                                                                                                                  │
+│  ```                                                                                                                                                                                             │
+│  Thought: I now can give a great answer                                                                                                                                                          │
+│  Final Answer: Your final answer must be the great and the most complete as possible, it must be outcome described                                                                               │
+│                                                                                                                                                                                                  │
+│  ```                                                                                                                                                                                             │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+Push: The best company for investment is Cloudflare given its strong growth metrics, impressive market share in cloud security, and stable operating margin, making it a far better option than 
+OpenAI and Neurons.
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: dc2ce151-f939-4374-a7be-360f5cdfc4a9
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    ├── 🔧 Failed Send a Push Notification (3)
+    └── 🔧 Used Send a Push Notification (4)
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Stock Picker from Research                                                                                                                                                               │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: I need to send the push notification again with a correctly formatted message to inform the user about the best company for investment.                                       │
+│                                                                                                                                                                                                  │
+│  Using Tool: Send a Push Notification                                                                                                                                                            │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"message\": \"The best company for investment is Cloudflare given its strong growth metrics, impressive market share in cloud security, and stable operating margin, making it a far better  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  {"notification": "ok"}                                                                                                                                                                          │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: dc2ce151-f939-4374-a7be-360f5cdfc4a9
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    ├── 🔧 Failed Send a Push Notification (3)
+    └── 🔧 Used Send a Push Notification (4)
+╭───────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Stock Picker from Research                                                                                                                                                               │
+│                                                                                                                                                                                                  │
+│  Final Answer:                                                                                                                                                                                   │
+│  The best company for investment is Cloudflare, given its strong growth metrics, impressive market share in cloud security, and stable operating margin. This positions it as a far better       │
+│  option compared to OpenAI, which is facing significant operational losses, and Neurons, which, while promising, lacks the established growth potential. Cloudflare projects a revenue growth    │
+│  of 27% CAGR over the next five years, making it a sound investment choice.                                                                                                                      │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ─────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Thought: Thought: I need to analyze the research findings to determine the best company for investment. I will delegate this analysis to the Stock Picker from Research to ensure a thorough    │
+│  evaluation based on market position, future outlook, and investment potential.                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Using Tool: Delegate work to coworker                                                                                                                                                           │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────── Tool Input ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  "{\"task\": \"Analyze the provided research data for OpenAI, Neurons, and Cloudflare to determine the best company for investment.\", \"context\": \"Here is the research data you need to ana  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────── Tool Output ───────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  The best company for investment is Cloudflare, given its strong growth metrics, impressive market share in cloud security, and stable operating margin. This positions it as a far better       │
+│  option compared to OpenAI, which is facing significant operational losses, and Neurons, which, while promising, lacks the established growth potential. Cloudflare projects a revenue growth    │
+│  of 27% CAGR over the next five years, making it a sound investment choice.                                                                                                                      │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: dc2ce151-f939-4374-a7be-360f5cdfc4a9
+    Status: Executing Task...
+    ├── 🔧 Using Delegate work to coworker (3)
+    ├── 🔧 Failed Send a Push Notification (3)
+    └── 🔧 Used Send a Push Notification (4)
+╭───────────────────────────────────────────────────────────────────────────────────── ✅ Agent Final Answer ──────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Final Answer:                                                                                                                                                                                   │
+│  Chosen Company: Cloudflare                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│  Rationale: Cloudflare is chosen as the best company for investment due to its strong growth metrics, impressive market share in the cloud security sector (98.21%), and stable operating        │
+│  margin (11.7%). These factors reflect its financial strength and growth potential, making it a worthwhile investment. The company's revenue growth is projected at a 27% CAGR over the next     │
+│  five years, underlining its potential for substantial future appreciation.                                                                                                                      │
+│                                                                                                                                                                                                  │
+│  Companies Not Selected:                                                                                                                                                                         │
+│  1. OpenAI: Despite its innovative advancements and projected future revenue growth, OpenAI currently faces significant operational losses ($5 billion this year). This creates a higher risk    │
+│  profile compared to Cloudflare.                                                                                                                                                                 │
+│                                                                                                                                                                                                  │
+│  2. Neurons: Although Neurons shows promise due to its recent funding success and growing influence in the neuroscience sector, its status as an early-stage venture introduces a higher level   │
+│  of investment risk and lacks the established growth trajectory seen with Cloudflare.                                                                                                            │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+├── 📋 Task: 7c7bfd71-c9b0-4bfa-9714-2f35c53ca5a9
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (1)
+│   └── 🔧 Used Search the internet with Serper (1)
+├── 📋 Task: 212df200-f20b-4924-9988-25dba948fa3f
+│   Assigned to: Manager
+│   
+│   Status: ✅ Completed
+│   ├── 🔧 Using Delegate work to coworker (2)
+│   ├── 🔧 Used Search the internet with Serper (2)
+│   ├── 🔧 Used Search the internet with Serper (3)
+│   └── 🔧 Used Search the internet with Serper (4)
+└── 📋 Task: dc2ce151-f939-4374-a7be-360f5cdfc4a9
+    Assigned to: Manager
+    
+    Status: ✅ Completed
+    ├── 🔧 Using Delegate work to coworker (3)
+    ├── 🔧 Failed Send a Push Notification (3)
+    └── 🔧 Used Send a Push Notification (4)
+╭──────────────────────────────────────────────────────────────────────────────────────── Task Completion ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Task Completed                                                                                                                                                                                  │
+│  Name: dc2ce151-f939-4374-a7be-360f5cdfc4a9                                                                                                                                                      │
+│  Agent: Manager                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+│  Tool Args:                                                                                                                                                                                      │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────────── Crew Completion ─────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                  │
+│  Crew Execution Completed                                                                                                                                                                        │
+│  Name: crew                                                                                                                                                                                      │
+│  ID: b9abacfb-ed06-478c-a4bd-de9cae235216                                                                                                                                                        │
+│  Tool Args:                                                                                                                                                                                      │
+│  Final Output: Chosen Company: Cloudflare                                                                                                                                                        │
+│                                                                                                                                                                                                  │
+│  Rationale: Cloudflare is chosen as the best company for investment due to its strong growth metrics, impressive market share in the cloud security sector (98.21%), and stable operating        │
+│  margin (11.7%). These factors reflect its financial strength and growth potential, making it a worthwhile investment. The company's revenue growth is projected at a 27% CAGR over the next     │
+│  five years, underlining its potential for substantial future appreciation.                                                                                                                      │
+│                                                                                                                                                                                                  │
+│  Companies Not Selected:                                                                                                                                                                         │
+│  1. OpenAI: Despite its innovative advancements and projected future revenue growth, OpenAI currently faces significant operational losses ($5 billion this year). This creates a higher risk    │
+│  profile compared to Cloudflare.                                                                                                                                                                 │
+│                                                                                                                                                                                                  │
+│  2. Neurons: Although Neurons shows promise due to its recent funding success and growing influence in the neuroscience sector, its status as an early-stage venture introduces a higher level   │
+│  of investment risk and lacks the established growth trajectory seen with Cloudflare.                                                                                                            │
+│                                                                                                                                                                                                  │
+│                                                                                                                                                                                                  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+
+
+=== FINAL DECISION ===
+
+
+Chosen Company: Cloudflare
+
+Rationale: Cloudflare is chosen as the best company for investment due to its strong growth metrics, impressive market share in the cloud security sector (98.21%), and stable operating margin (11.7%). These factors reflect its financial strength and growth potential, making it a worthwhile investment. The company's revenue growth is projected at a 27% CAGR over the next five years, underlining its potential for substantial future appreciation.
+
+Companies Not Selected:
+1. OpenAI: Despite its innovative advancements and projected future revenue growth, OpenAI currently faces significant operational losses ($5 billion this year). This creates a higher risk profile compared to Cloudflare.
+
+2. Neurons: Although Neurons shows promise due to its recent funding success and growing influence in the neuroscience sector, its status as an early-stage venture introduces a higher level of investment risk and lacks the established growth trajectory seen with Cloudflare.
+```
+
+
+---
 
 Block 1 – Structured Outputs
 We implemented structured outputs by requiring all tasks to respond using a predefined JSON schema. This ensured consistency and allowed downstream processing to be more robust and predictable.
