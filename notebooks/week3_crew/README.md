@@ -6,12 +6,12 @@
   - [Structure and Workflow of a CrewAI Project](#structure-and-workflow-of-a-crewai-project)
     - [Define our files](#now-we-going-to-define-our-files)
     - [Run the project](#run-the-project)
-  - [Recap: Your First Project with CrewAI](#recap-your-first-project-with-crewai)
-    - [Building Crew AI Projects: Tools, Context & Google Search Integration](#building-crew-ai-projects-tools-context--google-search-integration)
+    - [Recap: Your First Project with CrewAI](#recap-your-first-project-with-crewai)
+  - [Building Crew AI Projects: Tools, Context & Google Search Integration](#building-crew-ai-projects-tools-context--google-search-integration)
     - [new project: Building Multi-Agent **Financial Research System** with Crew.ai](#introducing-the-second-project-financial-researcher)
     - [new project: **Stock Picker**](#stock-picker)
     - [Memory - more prespcriptive](#memory---more-prescriptive∫)
-- [Giving coding skills to an Agent](#giving-coding-skills-to-an-agent)
+  - [Giving coding skills to an Agent](#giving-coding-skills-to-an-agent)
 
 
 
