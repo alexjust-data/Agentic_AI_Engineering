@@ -8,8 +8,9 @@
   - [Run the project](#run-the-project)
   - [Recap: Your First Project with CrewAI](#recap-your-first-project-with-crewai)
 - [Building Crew AI Projects: Tools, Context & Google Search Integration](#building-crew-ai-projects-tools-context--google-search-integration)
-- [Building Multi-Agent Financial Research System with Crew.ai](#introducing-the-second-project-financial-researcher)
+- [new project: Building Multi-Agent **Financial Research System** with Crew.ai](#introducing-the-second-project-financial-researcher)
 - [new project: **Stock Picker**](#stock-picker)
+- [Memory - more prespcriptive](#memory---more-prespcriptive)
 
 
 
@@ -2852,3 +2853,74 @@ Why not selected: Although OpenAI shows promising innovation potential, it is st
 2. Meta Platforms, Inc.
 Why not selected: Meta faces several challenges despite its strong financial position, including difficulties in monetizing the metaverse strategy, regulatory scrutiny, and adapting to changes in user behavior and privacy regulations. These uncertainties present risks that overshadow its growth prospects in comparison to Microsoft's more stable and predictable outlook.
 ```
+
+
+Block 1 – Structured Outputs
+We implemented structured outputs by requiring all tasks to respond using a predefined JSON schema. This ensured consistency and allowed downstream processing to be more robust and predictable.
+
+Block 2 – Hierarchical Process
+Instead of using a sequential task execution flow, we adopted a hierarchical model. Tasks could be assigned either by passing a model name directly or by using an agent responsible for delegating subtasks to other agents. This demonstrated both benefits and drawbacks in execution flow and control.
+
+Block 3 – Custom Tool Integration
+We introduced a custom-built tool: a push notification sender. An agent was equipped with this functionality and executed it successfully, showcasing the system’s extensibility and modularity.
+
+Block 4 – Project Status and Next Steps
+Although this wraps up the work for today, the stock picker project is not yet complete. Additional enhancements ("bells and whistles") are planned for tomorrow. The focus will then shift to the upcoming developer agent project, which will expand capabilities further.
+
+Block 5 – Recap and Transition
+Today’s session covered three core elements: structured outputs, hierarchical task assignment, and integration of a custom tool. Tomorrow will continue with enhancements and move into the next phase.
+
+![](../img/21.png)
+
+---
+
+![](../img/22.png)
+
+## Memory - more prespcriptive
+
+Perfect. Here's the improved and structured version of your text, **without losing any words**, and with each part **labeled with a period title** (`Part 1.`, `Part 2.`, etc.). No icons, no schematic lists, just clear blocks:
+
+**Final Touches to the Stock Picker and Transition to Developer Agent**
+
+We did a stock picker project, and we still have a tiny bit left to add to it before moving on to our next project, the developer agent. But before that, let's go over some fundamentals again. I know it may seem repetitive, but repetition helps solidify the process.
+
+**The Five Steps to Building a CRU Project**
+
+Building a CRU project involves five main steps. First, we use `cruai create cru <project_name>` to scaffold the project. This command sets up the directories and initial files.
+
+Second, we locate the YAML files for agents and tasks, where we define the agents’ roles and their responsibilities.
+
+Third, we move to the `crew.py` module, where we instantiate the agents and tasks using decorators, and construct the crew itself. This is also where structured outputs are defined using JSON schemas to ensure consistent and validated agent responses. Additionally, within this file we can equip agents with tools—both built-in ones like Serpa (a remote search tool), and custom tools like the one we wrote to send push notifications.
+
+Fourth, we update the `main.py` script to handle user inputs and bind them to the templated fields in the task definitions.
+
+And finally, we execute the project using `cruai run`.
+
+
+**PIntroduction to Memory in CRU**
+
+Now, let’s cover a new feature in CRU: memory. This is a slightly more opinionated part of the CRU framework. Memory, in this context, refers to how contextual information is provided to LLMs during execution.
+
+In CRU, you can manage memory manually by storing variables and passing them into tasks. However, CRU also offers built-in constructs for memory, which bring certain advantages—mainly ease of use and prebuilt logic—but they also introduce trade-offs, such as added abstraction and reduced visibility into what's happening under the hood.
+
+
+**Embracing CRU's Memory Framework**
+
+Let’s say we embrace CRU’s approach to memory. There are five kinds of memory constructs you can include.
+
+* **short-term memory**, which stores recent interactions in a vector database using Retrieval Augmented Generation (RAG). This allows agents to access the most relevant recent information during execution.
+
+* **long-term memory**, which stores more important or persistent information in a SQL database, allowing knowledge to accumulate over time.
+
+* **entity memory**, which is quite similar to short-term memory but focuses on storing data about people, places, and key concepts. It also uses a vector database for similarity search and is useful for retrieving contextualized entity information.
+
+* **contextual memory**, which CRU lists as a separate type, though it's arguably just a combination of the three previous memory types. It allows these different memories to be queried and injected into prompts as context automatically. This makes memory integration very straightforward with just a few lines of code, though again, at the cost of losing some control and debuggability.
+
+**The Special Case of User Memory**
+
+Finally, there is **user memory**, designed for storing user-specific information. This one stands out because, although CRU acknowledges it and provides some framework support, it still requires manual management in most cases. You are expected to handle querying and injecting user memory data yourself when building tasks.
+
+
+**Focus of Upcoming Code: Contextual Memory in Stock Picker**
+
+In the code we're about to explore, we’ll be focusing primarily on contextual memory, meaning we’ll see how short-term, long-term, and entity memory are integrated into the stock picker solution to give our agents more meaningful, persistent awareness throughout the session.
