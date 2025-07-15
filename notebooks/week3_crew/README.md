@@ -1071,7 +1071,7 @@ We’ll use **[Serper.dev](https://serper.dev)** — a lightning-fast and free A
 SERPER_API_KEY=your_key_here
 ```
 
-> ⚠️ Don’t confuse **Serper.dev** with **SerpAPI** – they are different services!
+⚠️ Don’t confuse **Serper.dev** with **SerpAPI** – they are different services!
 
 ---
 >
