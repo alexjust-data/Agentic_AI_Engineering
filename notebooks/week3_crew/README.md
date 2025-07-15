@@ -1121,7 +1121,8 @@ Let’s get started and see just how easy CrewAI makes it to build intelligent a
 
 --- 
 >
->build intelligent agents with real coding and execution capabilities:
+>build intelligent agents with real coding and execution capabilities:  
+>   
 >[Setting Up the `agents with real coding and execution capabilities`](./coder/README.md#giving-coding-skills-to-an-agent)
->
+>  
 ---
