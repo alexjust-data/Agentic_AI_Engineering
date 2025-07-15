@@ -5141,3 +5141,5 @@ Once the code is executed in the container, the agent can examine the results an
 This type of system is often called a "coder agent"—an agent that not only produces code but can also execute it as a step towards solving more complex, multi-step problems. Our project this week will focus on building exactly that: an agent that writes code, runs it, and uses the results to inform its next steps.
 
 Let’s get started and see just how easy CrewAI makes it to build intelligent agents with real coding and execution capabilities.
+
+61 -> 2:22
