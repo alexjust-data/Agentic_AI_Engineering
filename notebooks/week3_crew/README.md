@@ -4287,7 +4287,7 @@ Selected model: gpt-4.1-mini-2025-04-14
 Crew coder created successfully!
 ```
 
-**Define Agents**
+**Define simple Agents**
 
 ```sh
 (agents) ➜  my_agents git:(main) cat notebooks/week3_crew/coder/src/coder/config/agents.yaml 
@@ -4310,4 +4310,78 @@ reporting_analyst:
     You're a meticulous analyst with a keen eye for detail. You're known for
     your ability to turn complex data into clear and concise reports, making
     it easy for others to understand and act on the information you provide.%   
+```
+
+**Define simple Tasks**
+
+```sh
+(agents) ➜  my_agents git:(main) cat notebooks/week3_crew/coder/src/coder/config/tasks.yaml 
+coding_task:
+  description: >
+    Write python code to achieve this: {assignment}
+  expected_output: >
+    A text file that includes the code itself, along with the output of the code.
+  agent: coder
+  output_file: output/code_and_output.txt
+```
+
+**crew module**
+
+There is a link to how you can install Docker if you don't already have it installed. This is the Docker Desktop webpage for you. As it does claim, it is a one-click install for Mac or Windows or Linux, and it should be as simple as that. Many of you, I suspect, from an engineering background already know and love Docker. If you don't, then welcome to it. This should be as simple as installing it, and then it's installed, and you can then leave it be. But you will need to have it installed for this to work properly in a Docker setting.
+
+Configuring the Agent
+
+So what is our agent going to do? Well, we'll press tab there. The config is going to be the config that we set in the YAML file, but then we will have verbose being true as usual. Now, what else do we want? We now want this super complex, super hard step of making sure that this agent has the power to run, to execute code, which is as simple as allow code execution equals true. There it is. Now we can execute code. There's this step of saying code execution, execution mode is safe. And now that ensures that it runs it within a Docker container so that it's not just running the code on your platform.
+
+Defining the Task
+
+So now we have a task, and the task is going to be a coding task, and I rather suspect that we can just use what Kester does, but we can take out expected output because we already defined the expected output in the task itself, so it's not needed again. All right, so there we go. We have our agent and our task defined.
+
+```sh
+(agents) ➜  my_agents git:(main) ✗ cat notebooks/week3_crew/coder/src/coder/crew.py
+
+from crewai import Agent, Crew, Process, Task
+from crewai.project import CrewBase, agent, crew, task
+
+
+@CrewBase
+class Coder():
+    """Coder crew"""
+
+    agents_config = 'config/agents.yaml'
+    tasks_config = 'config/tasks.yaml'
+
+    # One click install for Docker Desktop:
+    #https://docs.docker.com/desktop/
+
+    @agent
+    def coder(self) -> Agent:
+        return Agent(
+            config=self.agents_config['coder'],
+            verbose=True,
+            allow_code_execution=True,
+            code_execution_mode="safe",  # Uses Docker for safety
+            max_execution_time=30, 
+            max_retry_limit=3 
+    )
+
+
+    @task
+    def coding_task(self) -> Task:
+        return Task(
+            config=self.tasks_config['coding_task'],
+        )
+
+
+    @crew
+    def crew(self) -> Crew:
+        """Creates the Coder crew"""
+
+
+        return Crew(
+            agents=self.agents, 
+            tasks=self.tasks,
+            process=Process.sequential,
+            verbose=True,
+        )
 ```
