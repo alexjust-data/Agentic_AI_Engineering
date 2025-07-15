@@ -1857,6 +1857,7 @@ For this project, we'll deepen the process in three new ways:
 >
 > [Setting Up the Project](./stock_picker/README.md#new-project-stock-picker)
 >
+---
 
 ## Giving coding skills to an Agent
 
@@ -1875,3 +1876,4 @@ Let’s get started and see just how easy CrewAI makes it to build intelligent a
 >
 >[build intelligent agents with real coding and execution capabilities](./coder/README.md#giving-coding-skills-to-an-agent)
 >
+---
