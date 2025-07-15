@@ -9,8 +9,8 @@
     - [Recap: Your First Project with CrewAI](#recap-your-first-project-with-crewai)
   - [Building Crew AI Projects: Tools, Context & Google Search Integration](#building-crew-ai-projects-tools-context--google-search-integration)
     - [new project: Building Multi-Agent **Financial Research System** with Crew.ai](#introducing-the-second-project-financial-researcher)
-    - [new project: **Stock Picker**](#stock-picker)
-    - [Memory - more prespcriptive](#memory---more-prescriptive∫)
+    - [new project: **Stock Picker**](#new-project-stock-picker)
+    - [Memory - more prespcriptive](#memory---more-prescriptive)
   - [Giving coding skills to an Agent](#giving-coding-skills-to-an-agent)
 
 
