@@ -1049,7 +1049,7 @@ And you'll remember that there are **five steps** that we went through when we s
   <img src="../img/17.png" width="500"/>
 </p>
 
-## Introducing the Second Project: Financial Researcher
+### Introducing the Second Project: Financial Researcher
 
 Now we’re going to go a little bit deeper in two ways in our next project:
 
@@ -1836,7 +1836,7 @@ Here is your content, **fully ordered for clarity**, preserving every detail and
 
 ---
 
-## `Stock Picker`
+### new project: `Stock Picker`
 
 **Project Overview and Build Steps**
 
@@ -3936,7 +3936,7 @@ Today’s session covered three core elements: structured outputs, hierarchical 
 
 ---
 
-## Memory - more prescriptive
+### Memory - more prescriptive
 
 **Final Touches to the Stock Picker and Transition to Developer Agent**
 
@@ -3985,7 +3985,7 @@ Finally, there is **user memory**, designed for storing user-specific informatio
 
 In the code we're about to explore, we’ll be focusing primarily on contextual memory, meaning we’ll see how short-term, long-term, and entity memory are integrated into the stock picker solution to give our agents more meaningful, persistent awareness throughout the session.
 
-### Setting Up Memory in **`crew.py`**
+#### Setting Up Memory in **`crew.py`**
 
 We are looking at the `crew.py` module, and we're going to start by including new imports related to memory. These imports allow us to use the different memory types supported by CrewAI.
 
@@ -4088,8 +4088,6 @@ Finally, remember that memory is not magic. Even though CRU’s abstractions mak
 To fully benefit from memory, make sure your YAML files (agent and task definitions) contain clear instructions about using memory—for example, telling the agent not to recommend duplicate companies or to surface new ones.
 
 With that, memory is now set up in your `StockPicker` project. You can now open your terminal and run the project. The memory modules will automatically store, retrieve, and pass relevant context to the agents, enhancing the intelligence of your crew.
-
-
 
 
 ```sh
