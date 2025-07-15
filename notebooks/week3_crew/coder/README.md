@@ -5,7 +5,7 @@
 
 ## Giving coding skills to an Agent
 
-![](../img/23.png)
+![](../../img/23.png)
 
 Now for something completely different. We’re going to work on building an agent that can actually write Python code—and not only write it, but also run it. While this might sound challenging and complex, CrewAI’s agentic environment makes it surprisingly accessible.
 
