@@ -1075,7 +1075,7 @@ SERPER_API_KEY=your_key_here
 
 ---
 >
->[Now let’s create our new project called `financial_researcher`](./financial_researcher/README.md)
+>[Setting Up the `financial_researcher` Project](./financial_researcher/README.md)
 >
 ---
 
@@ -1101,7 +1101,7 @@ For this project, we'll deepen the process in three new ways:
 
 ---
 >
-> [Setting Up the Project](./stock_picker/README.md#new-project-stock-picker)
+> [Setting Up the `Stock Picker` Project](./stock_picker/README.md#new-project-stock-picker)
 >
 ---
 
@@ -1121,6 +1121,7 @@ Let’s get started and see just how easy CrewAI makes it to build intelligent a
 
 --- 
 >
->[build intelligent agents with real coding and execution capabilities](./coder/README.md#giving-coding-skills-to-an-agent)
+>build intelligent agents with real coding and execution capabilities:
+>[Setting Up the `agents with real coding and execution capabilities`](./coder/README.md#giving-coding-skills-to-an-agent)
 >
 ---
