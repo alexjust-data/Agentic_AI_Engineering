@@ -8,8 +8,8 @@
     - [Run the project](#run-the-project)
     - [Recap: Your First Project with CrewAI](#recap-your-first-project-with-crewai)
   - [Building Crew AI Projects: Tools, Context & Google Search Integration](#building-crew-ai-projects-tools-context--google-search-integration)
-    - [new project: Building Multi-Agent **Financial Research System** with Crew.ai](#introducing-the-second-project-financial-researcher)
-    - [new project: **Stock Picker**](#new-project-stock-picker)
+    - [New project: Building Multi-Agent **Financial Research System** with Crew.ai](#introducing-the-second-project-financial-researcher)
+    - [New project: **Stock Picker**](#new-project-stock-picker)
     - [Memory - more prespcriptive](#memory---more-prescriptive)
   - [Giving coding skills to an Agent](#giving-coding-skills-to-an-agent)
 
@@ -1048,7 +1048,7 @@ And you'll remember that there are **five steps** that we went through when we s
   <img src="../img/17.png" width="500"/>
 </p>
 
-### Introducing the Second Project: Financial Researcher
+### Second Project: Financial Researcher
 
 Now we’re going to go a little bit deeper in two ways in our next project:
 
@@ -1080,7 +1080,7 @@ SERPER_API_KEY=your_key_here
 ---
 
 
-### new project: `Stock Picker`
+### New project: `Stock Picker`
 
 **Project Overview and Build Steps**
 
