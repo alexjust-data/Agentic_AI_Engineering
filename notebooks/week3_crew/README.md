@@ -1075,7 +1075,7 @@ SERPER_API_KEY=your_key_here
 
 ---
 >
->[Setting Up the `financial_researcher` Project](./financial_researcher/README.md)
+>[Setting Up the **financial_researcher** Project](./financial_researcher/README.md)
 >
 ---
 
@@ -1101,7 +1101,7 @@ For this project, we'll deepen the process in three new ways:
 
 ---
 >
-> [Setting Up the `Stock Picker` Project](./stock_picker/README.md#new-project-stock-picker)
+> [Setting Up the **Stock Picker** Project](./stock_picker/README.md#new-project-stock-picker)
 >
 ---
 
