@@ -14,7 +14,6 @@
   - [Giving coding skills to an Agent](#giving-coding-skills-to-an-agent)
 
 
-
 ## Crew AI
 
 This marks a transition from the familiar **OpenAI Agents SDK** to the world of **Crew AI**. Although the shift may feel abrupt, it's part of an ongoing process of exploring different agent frameworks. Each one offers unique perspectives and tools, and each will be more or less suited depending on the project at hand.
@@ -4238,4 +4237,52 @@ This type of system is often called a "coder agent"—an agent that not only pro
 
 Let’s get started and see just how easy CrewAI makes it to build intelligent agents with real coding and execution capabilities.
 
-61 -> 2:22
+```sh
+(agents) ➜  my_agents git:(main) cd notebooks/week3_crew 
+(agents) ➜  week3_crew git:(main) crewai create crew coder
+Creating folder coder...
+Cache expired or not found. Fetching provider data from the web...
+Downloading  [####################################]  577306/26968
+Select a provider to set up:
+1. openai
+2. anthropic
+3. gemini
+4. nvidia_nim
+5. groq
+6. huggingface
+7. ollama
+8. watson
+9. bedrock
+10. azure
+11. cerebras
+12. sambanova
+13. other
+q. Quit
+Enter the number of your choice or 'q' to quit: 1
+Select a model to use for Openai:
+1. gpt-4
+2. gpt-4.1
+3. gpt-4.1-mini-2025-04-14
+4. gpt-4.1-nano-2025-04-14
+5. gpt-4o
+6. gpt-4o-mini
+7. o1-mini
+8. o1-preview
+q. Quit
+Enter the number of your choice or 'q' to quit: 3
+Enter your OPENAI API key (press Enter to skip): 
+API keys and model saved to .env file
+Selected model: gpt-4.1-mini-2025-04-14
+  - Created coder/.gitignore
+  - Created coder/pyproject.toml
+  - Created coder/README.md
+  - Created coder/knowledge/user_preference.txt
+  - Created coder/src/coder/__init__.py
+  - Created coder/src/coder/main.py
+  - Created coder/src/coder/crew.py
+  - Created coder/src/coder/tools/custom_tool.py
+  - Created coder/src/coder/tools/__init__.py
+  - Created coder/src/coder/config/agents.yaml
+  - Created coder/src/coder/config/tasks.yaml
+Crew coder created successfully!
+```
