@@ -64,7 +64,7 @@ Selected model: gpt-4.1-mini-2025-04-14
 Crew coder created successfully!
 ```
 
-**Define simple Agents**
+### Define simple Agents
 
 ```sh
 (agents) ➜  my_agents git:(main) cat notebooks/week3_crew/coder/src/coder/config/agents.yaml 
@@ -89,7 +89,7 @@ reporting_analyst:
     it easy for others to understand and act on the information you provide.%   
 ```
 
-**Define simple Tasks**
+### Define simple Tasks
 
 ```sh
 (agents) ➜  my_agents git:(main) cat notebooks/week3_crew/coder/src/coder/config/tasks.yaml 
@@ -102,7 +102,7 @@ coding_task:
   output_file: output/code_and_output.txt
 ```
 
-**crew module**
+### crew module
 
 There is a link to how you can install Docker if you don't already have it installed. This is the Docker Desktop webpage for you. As it does claim, it is a one-click install for Mac or Windows or Linux, and it should be as simple as that. Many of you, I suspect, from an engineering background already know and love Docker. If you don't, then welcome to it. This should be as simple as installing it, and then it's installed, and you can then leave it be. But you will need to have it installed for this to work properly in a Docker setting.
 
