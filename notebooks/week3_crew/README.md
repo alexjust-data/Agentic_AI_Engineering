@@ -4237,4 +4237,4 @@ This type of system is often called a "coder agent"—an agent that not only pro
 
 Let’s get started and see just how easy CrewAI makes it to build intelligent agents with real coding and execution capabilities.
 
-- [build intelligent agents with real coding and execution capabilities][./coder/readme.md#giving-coding-skills-to-an-agent]
+- [build intelligent agents with real coding and execution capabilities](./coder/README.md#giving-coding-skills-to-an-agent)
