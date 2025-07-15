@@ -1,7 +1,7 @@
--[Giving coding skills to an Agent](#giving-coding-skills-to-an-agent)
-    -[Define Agents](#define-simple-agents)
-    -[Define Tasks](#define-simple-tasks)
-    -[Define Crew module](#crew-module)
+-[Giving coding skills to an Agent](#giving-coding-skills-to-an-agent)  
+    -[Define Agents](#define-simple-agents)  
+    -[Define Tasks](#define-simple-tasks)  
+    -[Define Crew module](#crew-module)  
 
 ## Giving coding skills to an Agent
 
