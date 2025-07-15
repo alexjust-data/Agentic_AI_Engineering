@@ -165,3 +165,242 @@ class Coder():
             verbose=True,
         )
 ```
+
+Well, this might be a bit of an anti-climax. I was just saying we have to write our crew function.
+We don't have to write our crew function because the default that is there is all that we need. We don't need to do anything else. We've already got something which can do exactly what we want.
+
+What we do need to do still is come into `main.py` and rewrite it. Of course, it's got all of the usual stuff. We don't need any of the stuff that's there. We'll just delete everything and come back here and write our own run function. This is the function that will run the crew.
+
+So, we are going to say `inputs = assignment`. Let's just give that a variable, assignment, for now. And we're going to do something challenging here because we want to be sure the agent really runs code and doesn't just predict the output. For example, a trivial script like "print hello world" would be too easy, and a language model could just pretend the output.
+So let's ask something where it cannot simply fake it:
+
+```sh
+(agents) ➜  my_agents git:(main) cat notebooks/week3_crew/coder/src/coder/main.py  
+#!/usr/bin/env python
+import sys
+import warnings
+import os
+from datetime import datetime
+
+from coder.crew import Coder
+
+warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+
+# Create output directory if it doesn't exist
+os.makedirs('output', exist_ok=True)
+
+assignment = 'Write a python program to calculate the first 10,000 terms \
+    of this series, multiplying the total by 4: 1 - 1/3 + 1/5 - 1/7 + ...'
+```
+This is, in fact, a slow way of calculating π (pi). If the agent does it right, it should output an approximation of pi, but not the exact value.
+
+Now, let's actually run the code. Here is the run function:
+```sh
+def run():
+    """
+    Run the crew.
+    """
+    inputs = {
+        'assignment': assignment,
+    }
+    
+    result = Coder().crew().kickoff(inputs=inputs)
+    print(result.raw)
+```
+
+```sh
+(agents) ➜  my_agents git:(main) cat notebooks/week3_crew/coder/src/coder/main.py  
+#!/usr/bin/env python
+import sys
+import warnings
+import os
+from datetime import datetime
+
+from coder.crew import Coder
+
+warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+
+# Create output directory if it doesn't exist
+os.makedirs('output', exist_ok=True)
+
+assignment = 'Write a python program to calculate the first 10,000 terms \
+    of this series, multiplying the total by 4: 1 - 1/3 + 1/5 - 1/7 + ...'
+
+def run():
+    """
+    Run the crew.
+    """
+    inputs = {
+        'assignment': assignment,
+    }
+    
+    result = Coder().crew().kickoff(inputs=inputs)
+    print(result.raw)
+```
+
+```sh
+(agents) ➜  my_agents git:(main) ✗ cd notebooks/week3_crew/coder 
+(agents) ➜  coder git:(main) ✗ crewai run                   
+Running the Crew
+warning: `VIRTUAL_ENV=/Users/alex/Desktop/00_projects/AI_agents/my_agents/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+╭─────────────────────────────────────────────────────────────── Crew Execution Started ───────────────────────────────────────────────────────────────╮
+│                                                                                                                                                      │
+│  Crew Execution Started                                                                                                                              │
+│  Name: crew                                                                                                                                          │
+│  ID: f0baf277-b512-465d-a3ea-bc9311597e1b                                                                                                            │
+│  Tool Args:                                                                                                                                          │
+│                                                                                                                                                      │
+│                                                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+🚀 Crew: crew
+└── 📋 Task: f5880d32-5b70-405a-814f-fcda34692bc9
+    Status: Executing Task...
+╭────────────────────────────────────────────────────────────────── 🤖 Agent Started ──────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                      │
+│  Agent: Python Developer                                                                                                                             │
+│                                                                                                                                                      │
+│  Task: Write python code to achieve this: Write a python program to calculate the first 10,000 terms     of this series, multiplying the total by    │
+│  4: 1 - 1/3 + 1/5 - 1/7 + ...                                                                                                                        │
+│                                                                                                                                                      │
+│                                                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+ Docker is installed but not running or inaccessible.
+ Running code in restricted sandbox
+🚀 Crew: crew
+└── 📋 Task: f5880d32-5b70-405a-814f-fcda34692bc9
+    Status: Executing Task...
+    └── 🔧 Used Code Interpreter (1)
+╭────────────────────────────────────────────────────────────── 🔧 Agent Tool Execution ───────────────────────────────────────────────────────────────╮
+│                                                                                                                                                      │
+│  Agent: Python Developer                                                                                                                             │
+│                                                                                                                                                      │
+│  Thought: I need to write a Python program that calculates the first 10,000 terms of the series \( 1 - \frac{1}{3} + \frac{1}{5} - \frac{1}{7} +     │
+│  \ldots \), multiplies the total by 4, and outputs the code along with the result.                                                                   │
+│                                                                                                                                                      │
+│  Using Tool: Code Interpreter                                                                                                                        │
+│                                                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────── Tool Input ─────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                      │
+│  "{\"code\": \"def calculate_series(n):\\n    total = 0.0\\n    for i in range(n):\\n        term = (-1) ** i / (2 * i + 1)\\n        total += term  │
+│                                                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────── Tool Output ─────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                      │
+│  3.1414926535900345                                                                                                                                  │
+│                                                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: f5880d32-5b70-405a-814f-fcda34692bc9
+    Status: Executing Task...
+    └── 🔧 Used Code Interpreter (1)
+╭─────────────────────────────────────────────────────────────── ✅ Agent Final Answer ────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                      │
+│  Agent: Python Developer                                                                                                                             │
+│                                                                                                                                                      │
+│  Final Answer:                                                                                                                                       │
+│  """                                                                                                                                                 │
+│  # Python Program to Calculate the Series                                                                                                            │
+│                                                                                                                                                      │
+│  def calculate_series(n):                                                                                                                            │
+│      total = 0.0                                                                                                                                     │
+│      for i in range(n):                                                                                                                              │
+│          term = (-1) ** i / (2 * i + 1)                                                                                                              │
+│          total += term                                                                                                                               │
+│      return total * 4                                                                                                                                │
+│                                                                                                                                                      │
+│  # Number of terms                                                                                                                                   │
+│  n_terms = 10000                                                                                                                                     │
+│                                                                                                                                                      │
+│  # Calculate the series                                                                                                                              │
+│  result = calculate_series(n_terms)                                                                                                                  │
+│                                                                                                                                                      │
+│  # Print the result                                                                                                                                  │
+│  print(result)                                                                                                                                       │
+│  """                                                                                                                                                 │
+│                                                                                                                                                      │
+│  Output: 3.1414926535900345                                                                                                                          │
+│                                                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: f5880d32-5b70-405a-814f-fcda34692bc9
+    Assigned to: Python Developer
+    
+    Status: ✅ Completed
+    └── 🔧 Used Code Interpreter (1)
+╭────────────────────────────────────────────────────────────────── Task Completion ───────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                      │
+│  Task Completed                                                                                                                                      │
+│  Name: f5880d32-5b70-405a-814f-fcda34692bc9                                                                                                          │
+│  Agent: Python Developer                                                                                                                             │
+│                                                                                                                                                      │
+│  Tool Args:                                                                                                                                          │
+│                                                                                                                                                      │
+│                                                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────────────────────────────────────────── Crew Completion ───────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                      │
+│  Crew Execution Completed                                                                                                                            │
+│  Name: crew                                                                                                                                          │
+│  ID: f0baf277-b512-465d-a3ea-bc9311597e1b                                                                                                            │
+│  Tool Args:                                                                                                                                          │
+│  Final Output: """                                                                                                                                   │
+│  # Python Program to Calculate the Series                                                                                                            │
+│                                                                                                                                                      │
+│  def calculate_series(n):                                                                                                                            │
+│      total = 0.0                                                                                                                                     │
+│      for i in range(n):                                                                                                                              │
+│          term = (-1) ** i / (2 * i + 1)                                                                                                              │
+│          total += term                                                                                                                               │
+│      return total * 4                                                                                                                                │
+│                                                                                                                                                      │
+│  # Number of terms                                                                                                                                   │
+│  n_terms = 10000                                                                                                                                     │
+│                                                                                                                                                      │
+│  # Calculate the series                                                                                                                              │
+│  result = calculate_series(n_terms)                                                                                                                  │
+│                                                                                                                                                      │
+│  # Print the result                                                                                                                                  │
+│  print(result)                                                                                                                                       │
+│  """                                                                                                                                                 │
+│                                                                                                                                                      │
+│  Output: 3.1414926535900345                                                                                                                          │
+│                                                                                                                                                      │
+│                                                                                                                                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+"""
+# Python Program to Calculate the Series
+
+def calculate_series(n):
+    total = 0.0
+    for i in range(n):
+        term = (-1) ** i / (2 * i + 1)
+        total += term
+    return total * 4
+
+# Number of terms
+n_terms = 10000
+
+# Calculate the series
+result = calculate_series(n_terms)
+
+# Print the result
+print(result)
+"""
+
+Output: 3.1414926535900345
+
+```
+
+And it's now going to be thinking about it, and something just ran and failed in the code interpreter. So, that 1 means it's the first try, and it's trying again. So, it's not like it always works; at least it shows us that something is trying to run in an interpreter.
+
+Okay, it's done some code, it's got an answer, and it still happened really fast. This is the code that it has written, and this is the output. It's used an interesting technique: you can see it's iterating through the number of terms, as required. The number of terms is set in the code, which is nicely done.
+
+Then, it's using the idea of taking minus one to the power of the index, which gives alternating -1 and +1 values (to alternate the signs). That's a clever trick, and dividing by the right denominator, which looks correct.
+
+And then, where do we see it multiplying the result by 4? There, right there, it does multiply the result by 4 as required. That's why the output is 3.14149, not 3.14159, because it's just an approximation of pi using the first 10,000 terms of the series.
