@@ -1854,8 +1854,9 @@ For this project, we'll deepen the process in three new ways:
 * Add a custom tool (in addition to the SERPA tool).
 * Try out the hierarchical process (allowing CRU to manage what tasks go where).
 
-- [Setting Up the Project](./stock_picker/README.md#new-project-stock-picker)
-
+>
+> [Setting Up the Project](./stock_picker/README.md#new-project-stock-picker)
+>
 
 ## Giving coding skills to an Agent
 
@@ -1871,4 +1872,6 @@ This type of system is often called a "coder agent"—an agent that not only pro
 
 Let’s get started and see just how easy CrewAI makes it to build intelligent agents with real coding and execution capabilities.
 
-- [build intelligent agents with real coding and execution capabilities](./coder/README.md#giving-coding-skills-to-an-agent)
+>
+>[build intelligent agents with real coding and execution capabilities](./coder/README.md#giving-coding-skills-to-an-agent)
+>
