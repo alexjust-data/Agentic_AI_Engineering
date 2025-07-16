@@ -1132,6 +1132,8 @@ Let’s get started and see just how easy CrewAI makes it to build intelligent a
 
 ![](../img/24.png)
 
+In this project, we’re transforming our CODA into a full engineering team, composed of specialized agents: an engineering lead, a back-end engineer, a front-end engineer, and a test engineer. Each agent is given a clear role and a specific task, and they collaborate to create a complete Python module with a simple UI and unit tests.
+
 --- 
 >
 >Building AI Teams: Configure Crew AI for Collaborative Development:  
