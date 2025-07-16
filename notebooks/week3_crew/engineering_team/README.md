@@ -92,6 +92,8 @@ Each agent is assigned one task. These tasks act like **user prompts**, while th
 
 **`design_task`**
 
+The **engineering lead** uses this task to produce a Markdown blueprint of the module structure, classes, and methods.
+
 ```yaml
 description: >
   Take the high level requirements described here and prepare a detailed design for the engineer;
@@ -104,9 +106,9 @@ agent: engineering_lead
 output_file: output/{module_name}_design.md
 ```
 
-The **engineering lead** uses this task to produce a Markdown blueprint of the module structure, classes, and methods.
-
 **`code_task`**
+
+The **backend engineer** receives both the high-level requirements and the design output, then implements it as a valid Python file. The task **explicitly warns** against markdown formatting to avoid corrupting the Python output.
 
 ```yaml
 description: >
@@ -121,10 +123,10 @@ context:
 output_file: output/{module_name}
 ```
 
-The **backend engineer** receives both the high-level requirements and the design output, then implements it as a valid Python file. The task **explicitly warns** against markdown formatting to avoid corrupting the Python output.
-
 
 **`frontend_task`**
+
+The **frontend engineer** builds a Gradio demo UI that imports and interacts with the backend module. It also inherits context from the `code_task` to correctly reference the backend code.
 
 ```yaml
 description: >
@@ -141,10 +143,10 @@ context:
 output_file: output/app.py
 ```
 
-The **frontend engineer** builds a Gradio demo UI that imports and interacts with the backend module. It also inherits context from the `code_task` to correctly reference the backend code.
-
 
 **`test_task`**
+
+Finally, the **test engineer** uses the backend module as context and writes a complete suite of unit tests for it. Like the others, it outputs pure code only.
 
 ```yaml
 description: >
@@ -157,5 +159,3 @@ context:
   - code_task
 output_file: output/test_{module_name}
 ```
-
-Finally, the **test engineer** uses the backend module as context and writes a complete suite of unit tests for it. Like the others, it outputs pure code only.
