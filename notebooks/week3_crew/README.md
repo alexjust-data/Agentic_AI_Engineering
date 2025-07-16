@@ -12,6 +12,7 @@
     - [New project: **Stock Picker**](#new-project-stock-picker)
     - [Memory - more prespcriptive](#memory---more-prescriptive)
   - [Giving coding skills to an Agent](#giving-coding-skills-to-an-agent)
+  - [Building AI Teams: Configure Crew AI for Collaborative Development](#building-ai-teams-configure-crew-ai-for-collaborative-development)
 
 
 ## Crew AI
@@ -1124,5 +1125,17 @@ Let’s get started and see just how easy CrewAI makes it to build intelligent a
 >build intelligent agents with real coding and execution capabilities:  
 >   
 >[Setting Up the `agents with real coding and execution capabilities`](./coder/README.md#giving-coding-skills-to-an-agent)
+>  
+---
+
+## Building AI Teams: Configure Crew AI for Collaborative Development
+
+![](../img/24.png)
+
+--- 
+>
+>Building AI Teams: Configure Crew AI for Collaborative Development:  
+>   
+>[Configure Crew AI for Collaborative Development](./engineering_team/README.md#building-ai-teams-configure-crew-ai-for-collaborative-development)
 >  
 ---
