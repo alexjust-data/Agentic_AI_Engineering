@@ -1169,7 +1169,7 @@ Certainly! Here is a **continuation and summary** of the text, keeping the same 
 
 ---
 
-So, as you dig into the [crew.ai tasks documentation](https://docs.crew.ai.com/concepts/tasks), it's worth taking some time to really absorb these features—**callbacks** are not just a neat trick, they're fundamental for enabling *dynamic workflows* where your system can evolve in response to the outcomes of each task. By attaching a callback function to a task, you gain the flexibility to kick off new tasks, branch logic, or even create loops based on output, all at runtime. This is what unlocks *true agentic engineering*.
+So, as you dig into the [crew.ai tasks documentation](https://docs.crewai.com/en/concepts/tasks), it's worth taking some time to really absorb these features—**callbacks** are not just a neat trick, they're fundamental for enabling *dynamic workflows* where your system can evolve in response to the outcomes of each task. By attaching a callback function to a task, you gain the flexibility to kick off new tasks, branch logic, or even create loops based on output, all at runtime. This is what unlocks *true agentic engineering*.
 
 And don't forget about **guardrails**. They are like mini QA checkpoints that let you validate, transform, or correct task outputs before passing them downstream. Unlike OpenAI's framework, where you often have to wedge these at the beginning or end, CrewAI lets you insert guardrails at *any* step in the chain. This is powerful, especially when your system grows complex and you want to ensure consistency and correctness at each stage.
 
