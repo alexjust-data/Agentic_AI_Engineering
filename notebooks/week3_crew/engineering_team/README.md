@@ -3,6 +3,14 @@
 
 In this project, we’re transforming our CODA into a **full engineering team**, composed of specialized agents: an engineering lead, a back-end engineer, a front-end engineer, and a test engineer. Each agent is given a **clear role and a specific task**, and they collaborate to create a complete Python module with a simple UI and unit tests.
 
+This is the final day of our Crew.AI journey — a bittersweet moment as we wrap up our project. For this last challenge, we build on our previous work by turning our CODA into a full engineering team, using Crew.AI’s agent framework. The goal? To collaboratively generate a fully functional Python module for account management in a trading simulation platform, including:
+
+* A well-structured back-end module
+* A simple front-end with Gradio
+* A full set of unit tests
+
+This project not only demonstrates agent coordination and autonomy, but also provides a foundation for agent-based trading systems, which we’ll explore later.
+
 ```sh
 (agents) ➜  my_agents git:(main) cd notebooks/week3_crew 
 (agents) ➜  week3_crew git:(main) crewai create crew engineering_team
@@ -159,3 +167,215 @@ context:
   - code_task
 output_file: output/test_{module_name}
 ```
+
+### Defined in `crew.py`
+
+Now that we've defined our agents and tasks in YAML, it's time to **assemble the Crew** using Python code. In this phase, we instantiate each agent with the proper capabilities (e.g., safe code execution), configure each task, and prepare the system for execution.
+
+We define our engineering crew by extending the `CrewBase` class from `crewai.project`. Here's how we do it:
+
+```python
+from crewai.project import CrewBase, agent, crew, task
+```
+
+We then define the `EngineeringTeam` class:
+
+```python
+@CrewBase
+class EngineeringTeam():
+    """EngineeringTeam crew"""
+
+    agents_config = 'config/agents.yaml'
+    tasks_config = 'config/tasks.yaml'
+```
+
+This tells Crew\.AI where to find the YAML configuration for agents and tasks.
+
+**Agents Setup**
+
+Each agent is decorated with `@agent`, allowing the framework to automatically register them. Let's look at each:
+
+1. Engineering Lead
+
+This agent does not need to run code — it just **produces the design document** in markdown.
+
+```python
+@agent
+def engineering_lead(self) -> Agent:
+    return Agent(
+        config=self.agents_config['engineering_lead'],
+        verbose=True,
+    )
+```
+
+
+2. Backend Engineer
+
+This agent writes the backend code and runs it in a **safe Docker container**, with retry and time limits.
+
+```python
+@agent
+def backend_engineer(self) -> Agent:
+    return Agent(
+        config=self.agents_config['backend_engineer'],
+        verbose=True,
+        allow_code_execution=True,
+        code_execution_mode="safe",  # Uses Docker
+        max_execution_time=500,
+        max_retry_limit=3
+    )
+```
+
+
+
+3. Frontend Engineer
+
+This agent **writes a Gradio UI**, but we avoid code execution here since launching a UI inside Docker is unnecessary.
+
+```python
+@agent
+def frontend_engineer(self) -> Agent:
+    return Agent(
+        config=self.agents_config['frontend_engineer'],
+        verbose=True,
+    )
+```
+
+4. Test Engineer
+
+The test engineer writes and **executes unit tests** for the backend module — execution is required here.
+
+```python
+@agent
+def test_engineer(self) -> Agent:
+    return Agent(
+        config=self.agents_config['test_engineer'],
+        verbose=True,
+        allow_code_execution=True,
+        code_execution_mode="safe",
+        max_execution_time=500,
+        max_retry_limit=3
+    )
+```
+
+
+**Tasks Setup**
+
+Each `@task` pulls its configuration from the `tasks.yaml`. Nothing complex here, just clean task registration:
+
+```python
+@task
+def design_task(self) -> Task:
+    return Task(config=self.tasks_config['design_task'])
+
+@task
+def code_task(self) -> Task:
+    return Task(config=self.tasks_config['code_task'])
+
+@task
+def frontend_task(self) -> Task:
+    return Task(config=self.tasks_config['frontend_task'])
+
+@task
+def test_task(self) -> Task:
+    return Task(config=self.tasks_config['test_task'])
+```
+
+**Assembling the Crew**
+
+Finally, we define the team with the `@crew` decorator:
+
+```python
+@crew
+def crew(self) -> Crew:
+    return Crew(
+        agents=self.agents,
+        tasks=self.tasks,
+        process=Process.sequential,
+        verbose=True,
+    )
+```
+
+The process is **sequential**, meaning each agent completes its task before passing the result to the next. This is ideal for a build pipeline like this.
+
+---
+
+### 🚀 The Run Script
+
+The final piece is our script that **runs everything**:
+
+```python
+#!/usr/bin/env python
+import os
+from engineering_team.crew import EngineeringTeam
+```
+
+We define a rich prompt (`requirements`) that will guide the entire system generation:
+
+```python
+requirements = """
+A simple account management system for a trading simulation platform.
+The system should allow users to create an account, deposit funds, and withdraw funds.
+The system should allow users to record that they have bought or sold shares, providing a quantity.
+The system should calculate the total value of the user's portfolio, and the profit or loss from the initial deposit.
+The system should be able to report the holdings of the user at any point in time.
+The system should be able to report the profit or loss of the user at any point in time.
+The system should be able to list the transactions that the user has made over time.
+The system should prevent the user from withdrawing funds that would leave them with a negative balance, or
+from buying more shares than they can afford, or selling shares that they don't have.
+The system has access to a function get_share_price(symbol) which returns the current price of a share,
+and includes a test implementation that returns fixed prices for AAPL, TSLA, GOOGL.
+"""
+```
+
+These requirements define a **trading simulation framework**, including functionality like deposits, trades, P\&L tracking, and transaction listing. This module will be essential for our future work in Week 6, when we'll build autonomous agent-traders.
+
+We then set the module and class names:
+
+```python
+module_name = "accounts.py"
+class_name = "Account"
+```
+
+And define the `run()` function:
+
+```python
+def run():
+    inputs = {
+        'requirements': requirements,
+        'module_name': module_name,
+        'class_name': class_name
+    }
+
+    result = EngineeringTeam().crew().kickoff(inputs=inputs)
+```
+
+This invokes our crew with the right inputs and kicks off the chain of tasks. The output will include:
+
+* A design document (`accounts.py_design.md`)
+* A backend Python module (`accounts.py`)
+* A frontend UI (`app.py`)
+* Unit tests (`test_accounts.py`)
+
+---
+
+### 🔍 Why This Challenge?
+
+We chose this challenge **strategically**. In Week 6, we’ll build autonomous agent-traders using tools like **OpenAI's Agent SDK** and **MCP**. But those agents need a **trading framework** to interact with: something lightweight and capable of managing portfolio state and simulating trades.
+
+There are existing libraries for this — but most are heavyweight, built for institutional-level backtesting. By building our own, using Crew, we create exactly what we need: clean, reusable code that integrates smoothly into our upcoming AI-driven trading agents.
+
+---
+
+### 🧠 Conclusion
+
+This part of the project transitions us from **defining the plan (YAML)** to **executing the plan (Python code)**. We’ve:
+
+* Configured our agents with appropriate capabilities
+* Mapped out and registered tasks
+* Orchestrated the crew's process
+* Supplied a rich, real-world prompt for the system to build
+
+The beauty of this structure is that it’s **modular, extensible, and testable**. Everything you need to scale future agent-based engineering teams is already in place.
+
+Let me know if you'd like this saved as a Markdown document (`README.md`) or exported as part of your project repo!
