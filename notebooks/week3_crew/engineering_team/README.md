@@ -298,9 +298,8 @@ def crew(self) -> Crew:
 
 The process is **sequential**, meaning each agent completes its task before passing the result to the next. This is ideal for a build pipeline like this.
 
----
 
-### 🚀 The Run Script
+### Defined in `main.py`
 
 The final piece is our script that **runs everything**:
 
@@ -357,25 +356,13 @@ This invokes our crew with the right inputs and kicks off the chain of tasks. Th
 * A frontend UI (`app.py`)
 * Unit tests (`test_accounts.py`)
 
----
 
-### 🔍 Why This Challenge?
+**Why This Challenge?**
 
 We chose this challenge **strategically**. In Week 6, we’ll build autonomous agent-traders using tools like **OpenAI's Agent SDK** and **MCP**. But those agents need a **trading framework** to interact with: something lightweight and capable of managing portfolio state and simulating trades.
 
 There are existing libraries for this — but most are heavyweight, built for institutional-level backtesting. By building our own, using Crew, we create exactly what we need: clean, reusable code that integrates smoothly into our upcoming AI-driven trading agents.
 
----
 
-### 🧠 Conclusion
 
-This part of the project transitions us from **defining the plan (YAML)** to **executing the plan (Python code)**. We’ve:
 
-* Configured our agents with appropriate capabilities
-* Mapped out and registered tasks
-* Orchestrated the crew's process
-* Supplied a rich, real-world prompt for the system to build
-
-The beauty of this structure is that it’s **modular, extensible, and testable**. Everything you need to scale future agent-based engineering teams is already in place.
-
-Let me know if you'd like this saved as a Markdown document (`README.md`) or exported as part of your project repo!
