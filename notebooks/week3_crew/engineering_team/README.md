@@ -558,7 +558,8 @@ What it does:
 **Important note:**
 This version mistakenly *redefines* the `Account` class inside the test file instead of importing it. This should be corrected to import the real implementation from `accounts.py`.
 
-
+---
+**Run the new app : `cd output`**
 
 ```sh
 (agents) ➜  engineering_team git:(main) ✗ cd output                                                          
