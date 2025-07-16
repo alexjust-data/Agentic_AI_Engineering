@@ -1141,3 +1141,54 @@ In this project, we’re transforming our CODA into a full engineering team, com
 >[Configure Crew AI for Collaborative Development](./engineering_team/README.md#building-ai-teams-configure-crew-ai-for-collaborative-development)
 >  
 ---
+
+![](../img/26.png)
+
+We are genuinely amazed by how smoothly everything came together and how quickly we reached the point where our crew of agents was able to build this product. The fact that the user interface just worked straight away—launching instantly and looking so good—was honestly impressive. And behind the scenes, the functionality held up: a real front end, a real back end, all working together exactly as intended. We hope you’re experiencing the same feeling of disbelief that we are, and that you’re seeing similar results on your end.
+
+For reference, we put that particular example into “Example Output New.” You’ll also find a couple of other examples there if you want to experiment with the outputs we generated. But we encourage you to try it yourself—play around with different models and see what happens. Experimentation shouldn’t stop there. This week, we have some truly important projects ahead of us. This is where the real learning happens: building things ourselves, taking examples like this, and breaking them down step by step. We add one piece at a time, gradually expanding the project.
+
+An easy way to extend it is by growing our team—essentially, we’re hiring new agents. For example, the “test engineer” in our example wasn’t a true test engineer, as it was simply generating test cases. We could introduce a real test engineer agent, responsible for developing and executing test plans. Or we might add a business analyst agent to flesh out requirements in greater detail. We could even enhance our user interface further. Honestly, the sky’s the limit. Our initial team had only four agents, but we can keep growing, trying different models, and seeing where that takes us.
+
+Of course, that’s the easier change. The real challenge this week goes deeper. So far, our system only generated a single Python module for the backend, plus corresponding frontend and test modules—everything was pretty much predetermined and fixed from the outset. It would be a big improvement if our team could instead build a full system, assembling it piece by piece: different classes, different modules, then bringing them together into a complete product.
+
+But that introduces a new challenge: we need a more interactive workflow, where different classes are created by different agents. There are a few ways we can approach this. One is to use structured outputs to clarify, from the engineering lead, which agent is responsible for what. Structured outputs can also help define which modules need to be created. Ultimately, though, we’ll probably need to call on our engineers dynamically, depending on how many modules the engineering lead decides to generate. Unlike before, we don’t know up front how many tasks we’ll need to run.
+
+The great news is that CRU makes this possible, and it’s actually quite straightforward. We can create task objects at runtime, as the workflow is progressing. Each task object can even include a callback—essentially, when a task completes, the agent can trigger another task to be created. Using this pattern, we can build a much more dynamic system, where completing one part automatically leads to the next step. We can assign tasks for each module that needs to be built.
+
+That is our challenge: introduce structured outputs, and implement dynamic task creation, so our crew can assemble an entire system from multiple modules. Once we have that, we can apply it to almost anything we want: building a website, creating an e-commerce platform, developing tools for managing medical records, or whatever project makes sense in our field. We encourage you to think about a challenge from your own work—something your CRU could tackle that involves assembling a dynamic, multi-module system.
+
+And as we take on these challenges, we should be sharing our progress. Posting regular updates—especially on LinkedIn, tagging our collaborators—will help us generate interest and visibility. These are meaningful projects that allow us to build real expertise and demonstrate it publicly.
+
+Actually, just to clarify: if we want to work with callbacks, there’s a specific approach to follow\...
+
+
+![](../img/27.png)
+
+Certainly! Here is a **continuation and summary** of the text, keeping the same reflective and slightly instructional tone, and making clear the final notes and key ideas as the segment closes out week three:
+
+---
+
+So, as you dig into the [crew.ai tasks documentation](https://docs.crew.ai.com/concepts/tasks), it's worth taking some time to really absorb these features—**callbacks** are not just a neat trick, they're fundamental for enabling *dynamic workflows* where your system can evolve in response to the outcomes of each task. By attaching a callback function to a task, you gain the flexibility to kick off new tasks, branch logic, or even create loops based on output, all at runtime. This is what unlocks *true agentic engineering*.
+
+And don't forget about **guardrails**. They are like mini QA checkpoints that let you validate, transform, or correct task outputs before passing them downstream. Unlike OpenAI's framework, where you often have to wedge these at the beginning or end, CrewAI lets you insert guardrails at *any* step in the chain. This is powerful, especially when your system grows complex and you want to ensure consistency and correctness at each stage.
+
+Structured outputs, Pydantic schemas, async execution, integrating tools, chaining context between tasks—all these building blocks are there for you to combine. The more you experiment, the more you’ll start seeing how these patterns mirror real-world software and project management:
+
+* **Callbacks** = event-driven workflows
+* **Guardrails** = automated QA
+* **Structured outputs** = API contracts
+* **Async** = concurrency for speed and efficiency
+
+As week three draws to a close, take a moment to appreciate how much you’ve accomplished. You’ve built multi-agent systems, composed tasks and tools, and experimented with dynamic creation of work. The **stock picker** agent wasn’t just a toy—it was a glimpse into how professional research can be automated. The **engineering team** module? Proof that codebases can be built by teams of AI agents, from requirements to UI.
+
+And if you’re ready for more, **week four** will raise the stakes: you’ll be exploring **LandGraph**—a framework designed for even more ambitious, large-scale AI agent orchestration. This is where ideas about scale, performance, and true automation become even more central.
+
+So:
+
+* **Keep exploring** the docs,
+* Try out callbacks and guardrails in your own projects,
+* Think about how you’d architect a “real” production agent system,
+* And most importantly, **share your results and learning**—that’s how you’ll stand out.
+
+Thanks for coming along for crew week. I’m genuinely excited to see what you create as you step up to even bigger challenges. See you next week!
