@@ -356,6 +356,27 @@ This invokes our crew with the right inputs and kicks off the chain of tasks. Th
 * A frontend UI (`app.py`)
 * Unit tests (`test_accounts.py`)
 
+Here is a detailed, clean explanation in English of the final part of your project — including insights about debugging, execution, validation of the AI-generated code, and the actual UI functionality. It's designed to keep the audience engaged while walking through the process, without losing technical depth or clarity:
+
+**Small Mistakes, Big Lessons**
+
+Before running the system, it’s crucial to ensure everything is correctly set up. Here’s what we needed to fix:
+
+1. **Missing Inputs**
+   We initially forgot to pass in two required variables:
+
+   ```python
+   module_name = "accounts.py"
+   class_name = "Account"
+   ```
+
+   These values are referenced inside the tasks and must be provided during execution.
+
+2. **YAML Formatting Issues**
+   Some stray tabs and inconsistent indentation in `tasks.yaml` caused errors when parsing the file. The error messages from the Crew\.AI runtime were cryptic — a long stack trace with no obvious explanation.
+
+   **Lesson**: Crew\.AI gives you powerful abstractions, but that comes with a trade-off — when things go wrong, debugging can be tough due to limited visibility into internal workings. YAML parsing errors or configuration issues may not be easy to trace unless you’ve encountered them before.
+
 
 **Why This Challenge?**
 
@@ -363,6 +384,189 @@ We chose this challenge **strategically**. In Week 6, we’ll build autonomous a
 
 There are existing libraries for this — but most are heavyweight, built for institutional-level backtesting. By building our own, using Crew, we create exactly what we need: clean, reusable code that integrates smoothly into our upcoming AI-driven trading agents.
 
+```sh
+(agents) ➜  engineering_team git:(main) ✗ pwd
+/Users/alex/Desktop/00_projects/AI_agents/my_agents/notebooks/week3_crew/engineering_team
+(agents) ➜  engineering_team git:(main) ✗ crewai run                              
+
+Running the Crew
+warning: `VIRTUAL_ENV=/Users/alex/Desktop/00_projects/AI_agents/my_agents/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────── Crew Execution Started ──────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                                                                                                                                                   │
+│  Crew Execution Started                                                                                                                                                                                                                           │
+│  Name: crew                                                                                                                                                                                                                                       │
+│  ID: 1e172469-4a3b-49d3-89f5-338a289a4eb9                                                                                                                                                                                                         │
+│  Tool Args:                                                                                                                                                                                                                                       │
+│                                                                                                                                                                                                                                                   │
+│                                                                                                                                                                                                                                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+🚀 Crew: crew
+└── 📋 Task: 4c9d0c6f-5df0-4970-9bad-cbbabbb5b988
+    Status: Executing Task...
+```
+
+It has created output files:
+
+```sh
+├── output
+│   ├── accounts.py
+│   ├── accounts.py_design.md
+│   ├── app.py
+│   └── test_accounts.py
+```
+
+```sh
+(agents) ➜  engineering_team git:(main) ✗ tree -L 2
+.
+├── README.md
+├── knowledge
+│   └── user_preference.txt
+├── output
+│   ├── accounts.py
+│   ├── accounts.py_design.md
+│   ├── app.py
+│   └── test_accounts.py
+├── pyproject.toml
+├── src
+│   └── engineering_team
+├── tests
+└── uv.lock
+```
+
+Sure. Here's a clear and complete explanation in English of what each output file does, based on the initial lines of code you printed and the configuration in your `agents.yaml` and `tasks.yaml`.
+
+**`accounts.py`**
+
+**Created by:** `backend_engineer`
+**Task:** Implement the detailed design provided by the `engineering_lead`.
+**Content:** A functional Python module defining the `Account` class.
+
+First lines:
+
+```python
+class Account:
+    def __init__(self, account_id: int, initial_deposit: float) -> None:
+        self.account_id = account_id
+        self.balance = initial_deposit
+        self.initial_deposit = initial_deposit
+        self.holdings = {}
+        self.transactions = []
+
+    def deposit(self, amount: float) -> bool:
+        if amount <= 0:
+```
+
+What it does:
+
+* Represents a user account in a trading simulation system.
+* Handles operations like:
+
+  * Depositing and withdrawing funds
+  * Buying and selling shares
+  * Tracking current balance and holdings
+  * Maintaining transaction history
+  * Preventing invalid actions like overdrafts or selling non-owned shares
+
+**`accounts.py_design.md`**
+
+**Created by:** `engineering_lead`
+**Task:** Generate a detailed software design for the backend developer.
+**Content:** A Markdown document that outlines the structure and purpose of the `Account` class.
+
+**First lines:**
+
+```markdown
+# Detailed Design for `accounts.py` Module
+
+## Class: Account
+This class represents a user account in a trading simulation platform...
+````
+
+What it does:
+
+* Provides documentation-style guidance for implementation.
+* Specifies the class name, attributes, and methods.
+* Ensures the engineer has a clear blueprint to follow.
+* Example attributes: `account_id`, `balance`, `initial_deposit`, `holdings`, `transactions`
+* Example methods: `deposit()`, `withdraw()`, `buy_shares()`, `sell_shares()`, `get_holdings()`, etc.
+
+
+**`app.py`**
+
+**Created by:** `frontend_engineer`
+**Task:** Build a simple user interface using Gradio to interact with the backend.
+**Content:** A Gradio app to create and manage accounts using the `Account` class.
+
+First lines:
+
+```python
+import gradio as gr
+from accounts import Account, get_share_price
+
+account = Account(account_id=1, initial_deposit=1000.0)
+
+def create_account(initial_deposit):
+    global account
+    account = Account(account_id=1, initial_deposit=initial_deposit)
+    return f"Account created with initial deposit of {initial_deposit}."
+```
+
+What it does:
+
+* Loads the `Account` class and initializes it with a default account.
+* Allows user interaction via Gradio UI.
+* Likely provides:
+
+  * Account creation
+  * Deposit/withdraw functionality
+  * Buying and selling shares
+  * Viewing reports (balance, holdings, transaction history)
+
+Note: The code appears to be written for an older Gradio API (`gr.inputs` and `gr.outputs`), which may require updates.
+
+
+**`test_accounts.py`**
+
+**Created by:** `test_engineer`
+**Task:** Write unit tests for the backend module `accounts.py`.
+**Content:** Python unit tests using the `unittest` module.
+
+**First lines:**
+
+```python
+import unittest
+
+class Account:
+    def __init__(self, account_id: int, initial_deposit: float) -> None:
+        self.account_id = account_id
+        self.balance = initial_deposit
+        self.initial_deposit = initial_deposit
+        self.holdings = {}
+        self.transactions = []
+```
+
+What it does:
+
+* Verifies that the `Account` class works as expected under different scenarios.
+* Should include tests for:
+
+  * Deposit and withdrawal behavior
+  * Share transactions
+  * Portfolio calculations
+
+**Important note:**
+This version mistakenly *redefines* the `Account` class inside the test file instead of importing it. This should be corrected to import the real implementation from `accounts.py`.
 
 
 
+```sh
+(agents) ➜  engineering_team git:(main) ✗ cd output                                                          
+(agents) ➜  output git:(main) ✗ uv run app.py  
+
+warning: `VIRTUAL_ENV=/Users/alex/Desktop/00_projects/AI_agents/my_agents/.venv` does not match the project environment path `/Users/alex/Desktop/00_projects/AI_agents/my_agents/notebooks/week3_crew/engineering_team/.venv` and will be ignored; use `--active` to target the active environment instead
+* Running on local URL:  http://127.0.0.1:7860
+* To create a public link, set `share=True` in `launch()`.
+```
+
+![](../../img/25.png)

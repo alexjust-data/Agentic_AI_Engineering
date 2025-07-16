@@ -24,18 +24,29 @@ code_task:
 
 frontend_task:
   description: >
-    Write a gradio UI in a module app.py that demonstrates the given backend class in {module_name}.
-    Assume there is only 1 user, and keep the UI very simple indeed - just a prototype or demo.
-    Here are the requirements: {requirements}
+    Create a functional and minimal Gradio UI for the backend class in {module_name}.
+    The UI must be split into three tabs:
+    - Account: for creating the account, depositing and withdrawing money.
+    - Trading: for buying/selling stocks using a fixed list of symbols (e.g., AAPL, TSLA, GOOGL).
+    - Reports: for viewing balance, holdings, and transaction history.
+    
+    DO NOT use deprecated APIs like gr.inputs or gr.outputs.
+    DO NOT use gr.JSON unless the function returns actual JSON (like a dictionary or list).
+    
+    Use `gr.Textbox`, `gr.Number`, `gr.Dataframe`, or `gr.Text` for outputs depending on the returned type.
+    
+    Import the backend class from {module_name}, instantiate it globally, and ensure all methods are called correctly.
+    The app should run immediately with `python app.py` or `uv run app.py`.
+
   expected_output: >
-    A gradio UI in module app.py that demonstrates the given backend class.
-    The file should be ready so that it can be run as-is, in the same directory as the backend module, and it should import the backend class from {module_name}.
-    IMPORTANT: Output ONLY the raw Python code without any markdown formatting, code block delimiters, or backticks.
-    The output should be valid Python code that can be directly saved to a file and executed.
+    A working gradio UI file named app.py that uses the backend class from {module_name}.
+    The file should be self-contained and ready to run as-is.
+    IMPORTANT: Output ONLY the raw Python code without markdown formatting, code block delimiters, or backticks.
   agent: frontend_engineer
   context:
     - code_task
   output_file: output/app.py
+
 
 test_task:
   description: >
