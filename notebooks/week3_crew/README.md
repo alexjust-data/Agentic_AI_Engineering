@@ -1287,6 +1287,8 @@ So that is how the different products line up. It is a bit confusing, because yo
 >
 >  * Start *lean*. Don’t overcomplicate. Favor transparency and direct code for clarity and control.
 >
+---
+
 
 **TL;DR: Takeaways for You**
 
