@@ -1261,7 +1261,7 @@ So that is how the different products line up. It is a bit confusing, because yo
 * **LangGraph Platform** is heavily promoted on their site because it’s their business model (hosted, paid, SaaS-style offering).
 * For **Week 4**, you’ll be focusing on *LangGraph the framework* (just like with CrewAI’s open framework).
 
-### **[Key Industry Perspective: Anthropic’s Blog Post](https://www.anthropic.com/engineering/building-effective-agents)**
+### **[Key Industry Perspective: Anthropic’s Blog Post](https://www.anthropic.com/engineering/building-effective-agents) :**
 
 **Anthropic’s View on Agentic Frameworks:**
 
