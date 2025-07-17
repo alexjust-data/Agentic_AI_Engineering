@@ -1265,26 +1265,26 @@ So that is how the different products line up. It is a bit confusing, because yo
 
 **Anthropic’s View on Agentic Frameworks:**
 
-* *Frameworks* like LangGraph, CrewAI, Autogen, and OpenAI Agents SDK make getting started easier (abstractions for tools, LLMs, memory, etc.).
-* But… **Abstractions = Less Transparency:**
-
-  * More abstraction means less direct control and visibility into LLM prompts/responses.
-  * Can make debugging/troubleshooting harder.
-  * Can encourage unnecessary complexity (“just because you can chain it, should you?”).
-* **Anthropic’s Suggestion:**
-
-  * *Start simple.* Use direct LLM API calls. Memory can be just JSON. Most design patterns need only a few lines of code.
-  * If you do use frameworks, make sure you understand what’s happening *under the hood*.
-
-**Why This Matters**
-
-* **LangGraph’s Philosophy:**
-
-  * Build *structure*, robustness, and monitoring into complex, real-world agentic systems via formalized graphs, nodes, checkpoints, etc.
-* **Anthropic’s Philosophy:**
-
-  * Start *lean*. Don’t overcomplicate. Favor transparency and direct code for clarity and control.
-
+>* *Frameworks* like LangGraph, CrewAI, Autogen, and OpenAI Agents SDK make getting started easier (abstractions for >tools, LLMs, memory, etc.).
+>* But… **Abstractions = Less Transparency:**
+>
+>  * More abstraction means less direct control and visibility into LLM prompts/responses.
+>  * Can make debugging/troubleshooting harder.
+>  * Can encourage unnecessary complexity (“just because you can chain it, should you?”).
+>* **Anthropic’s Suggestion:**
+>
+>  * *Start simple.* Use direct LLM API calls. Memory can be just JSON. Most design patterns need only a few lines >of code.
+>  * If you do use frameworks, make sure you understand what’s happening *under the hood*.
+>
+>**Why This Matters**
+>
+>* **LangGraph’s Philosophy:**
+>
+>  * Build *structure*, robustness, and monitoring into complex, real-world agentic systems via formalized graphs, >nodes, checkpoints, etc.
+>* **Anthropic’s Philosophy:**
+>
+>  * Start *lean*. Don’t overcomplicate. Favor transparency and direct code for clarity and control.
+>
 
 **TL;DR: Takeaways for You**
 
