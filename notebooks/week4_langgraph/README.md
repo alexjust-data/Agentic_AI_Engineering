@@ -1,3 +1,12 @@
+  - [LangGraph Explained](#langgraph-explained)
+    - [Graph-Based Architecture for Robust AI Agents](#graph-based-architecture-for-robust-ai-agents)
+    - [Core Components for Building Advanced Agent Systems](#core-components-for-building-advanced-agent-systems-)
+  - [LangGraph Deep Dive]()
+    - [Managing State in Graph-Based Agent Workflows]()
+  - [Mastering LangGraph]()
+    - [How to Define State Objects & Use Reducers]()
+    
+
 ## LangGraph Explained
 
 ### Graph-Based Architecture for Robust AI Agents

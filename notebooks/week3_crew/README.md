@@ -13,13 +13,6 @@
     - [Memory - more prespcriptive](#memory---more-prescriptive)
   - [Giving coding skills to an Agent](#giving-coding-skills-to-an-agent)
   - [Building AI Teams: Configure Crew AI for Collaborative Development](#building-ai-teams-configure-crew-ai-for-collaborative-development)
-  - [LangGraph Explained](#langgraph-explained)
-    - [Graph-Based Architecture for Robust AI Agents](#graph-based-architecture-for-robust-ai-agents)
-    - [Core Components for Building Advanced Agent Systems](#core-components-for-building-advanced-agent-systems-)
-  - [LangGraph Deep Dive]()
-    - [Managing State in Graph-Based Agent Workflows]()
-  - [Mastering LangGraph]()
-    - [How to Define State Objects & Use Reducers]()
 
 
 ## Crew AI
