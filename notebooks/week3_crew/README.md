@@ -15,6 +15,11 @@
   - [Building AI Teams: Configure Crew AI for Collaborative Development](#building-ai-teams-configure-crew-ai-for-collaborative-development)
   - [LangGraph Explained](#langgraph-explained)
     - [Graph-Based Architecture for Robust AI Agents](#graph-based-architecture-for-robust-ai-agents)
+    - [Core Components for Building Advanced Agent Systems](#core-components-for-building-advanced-agent-systems-)
+  - [LangGraph Deep Dive]
+    - [Managing State in Graph-Based Agent Workflows]()
+  - [Mastering LangGraph]()
+    - [How to Define State Objects & Use Reducers]()
 
 
 ## Crew AI
@@ -1307,3 +1312,8 @@ Would you like:
 * A diagram or table showing how these three “LangGraph” offerings relate to each other?
 * A quick visual of the “start simple, add abstraction carefully” advice from Anthropic?
 * Or a short hands-on LangGraph starter example?
+
+
+### Core Components for Building Advanced Agent Systems :
+
+
