@@ -206,20 +206,14 @@ This “pre-phase” runs *before* any actual agent is executed.
 
 **The Concept of Immutable State**
 
-![](../img/33.png)
-
 This part is **crucial**: State objects are **immutable**. That means:
 
 * You **never** modify the state object directly.
 * Instead, each node **returns a new state** object that reflects changes.
 
-🔁 For example, a node called `myCountingNode`:
+For example, a node called `myCountingNode`:
 
-```python
-def myCountingNode(old_state):
-    new_count = old_state.count + 1
-    return State(count=new_count)
-```
+![](../img/33.png)
 
 You take the `old_state`, read its `count`, increment it, and return a **brand-new** `State` with the new value. This avoids bugs, race conditions, and maintains clean historical snapshots.
 
