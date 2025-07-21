@@ -181,7 +181,7 @@ This introduces a pattern you might not be used to in Python programming. In Lan
 
 Now that you’ve had a moment to let the LineGraph concepts "marinate", it's time to **move from theory to practice**. But first, let’s revisit a few core ideas (repetition helps).
 
-**LineGraph = Graph-Based Agentic Systems**
+**LineGraph = Graph-Based Agentic Systems:**
 
 In LineGraph, your **agent workflow** is structured as a **graph** — essentially a tree of decision-making logic.
 
@@ -192,7 +192,7 @@ In LineGraph, your **agent workflow** is structured as a **graph** — essential
 
 * **State**: A state is a snapshot of the world at any one time, and is central to how everything flows.
 
-**The 5-Step Graph Building Process**
+**The 5-Step Graph Building Process:**
 
 Before your agents even start running, LineGraph goes through a **five-step graph-building phase**. It’s like setting up a blueprint before execution begins:
 
@@ -204,7 +204,7 @@ Before your agents even start running, LineGraph goes through a **five-step grap
 
 This “pre-phase” runs *before* any actual agent is executed.
 
-**The Concept of Immutable State**
+**The Concept of Immutable State:**
 
 This part is **crucial**: State objects are **immutable**. That means:
 
@@ -217,7 +217,7 @@ For example, a node called `myCountingNode`:
 
 You take the `old_state`, read its `count`, increment it, and return a **brand-new** `State` with the new value. This avoids bugs, race conditions, and maintains clean historical snapshots.
 
-**Why Reducers Matter**
+**Why Reducers Matter:**
 
 LineGraph lets you **add special functions to your state fields** called **reducers**.
 
@@ -225,7 +225,7 @@ LineGraph lets you **add special functions to your state fields** called **reduc
 * This becomes useful when **multiple nodes run concurrently** and each returns a different new state.
 * Instead of states conflicting or overwriting each other, LineGraph uses the reducer to **safely combine** the values.
 
-**Why not just handle that logic inside the node?**
+**Why not just handle that logic inside the node?:**
 
 Because **concurrency**. Imagine two nodes running in parallel. Without reducers, you'd have one node's output wipe out another’s. With reducers, LineGraph can **intelligently merge results** (e.g. summing counts or combining lists), keeping your graph safe and deterministic.
 
