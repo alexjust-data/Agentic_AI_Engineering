@@ -233,3 +233,8 @@ Because **concurrency**. Imagine two nodes running in parallel. Without reducers
 ## Mastering LangGraph
 
 ### How to Define State Objects & Use Reducers
+
+---
+> [1_lab1](./1_lab1.ipynb)
+---
+
