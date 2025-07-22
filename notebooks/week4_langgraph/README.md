@@ -4,7 +4,8 @@
   - [LangGraph Deep Dive](#langgraph-deep-dive)
     - [Managing State in Graph-Based Agent Workflows](#managing-state-in-graph-based-agent-workflows)
   - [Mastering LangGraph](#mastering-langgraph)
-    - [How to Define State Objects & Use Reducers](#how-to-define-state-objects--use-reducers∫)
+    - [How to Define State Objects & Use Reducers](#how-to-define-state-objects--use-reducers)
+    - [Super-Step & checkpoint explained](#super-step--checkpoint-explained)
     
 
 ## LangGraph Explained
@@ -237,4 +238,6 @@ Because **concurrency**. Imagine two nodes running in parallel. Without reducers
 
 > [1_lab1](./1_lab1.ipynb)
 ---
+
+### Super-Step & Checkpoint Explained
 
