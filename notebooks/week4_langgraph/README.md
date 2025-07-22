@@ -4,7 +4,7 @@
   - [LangGraph Deep Dive](#langgraph-deep-dive)
     - [Managing State in Graph-Based Agent Workflows](#managing-state-in-graph-based-agent-workflows)
   - [Mastering LangGraph](#mastering-langgraph)
-    - [How to Define State Objects & Use Reducers](#how-to-define-state-objects--use-reducers)
+    - [How to Define State Objects & Use Reducers : 1_lab1](#how-to-define-state-objects--use-reducers)
     - [Super-Step & checkpoint explained](#super-step--checkpoint-explained)
     
 
