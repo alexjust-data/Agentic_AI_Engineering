@@ -264,16 +264,7 @@ Well, a super step starts with a dox. The super step they define as a single ite
 
 To show that visually, next I want to draw you a diagram. So with this diagram, it's now all going to become crystal clear. I'm confident. It all begins with defining the graph. As I keep saying, this is the five things you've got to do, including defining the nodes, the edges, and compiling the graph. And then you're set. The next thing you do is perhaps the user has a question. And that question is what you then use to invoke the graph. There you go. And that is called a super step. And out pops some kind of an answer after the agents and tools have done their thing. And then the user says something, a follow up question. Like something else. And that would be another super step. And then that might happen again with another follow up or with another external activity. Each of these are super steps. Complete invocations of the graph. So just to make that really obvious, I'm putting a little picture of a graph by each one. The whole graph is invoked each time. And that is what it means to have a super step. And why am I going on about this? Because when it comes to memory, when it comes to preserving context between these different calls, we need to involve something called checkpointing. Which is something that LandGraph makes available to us to be able to keep track, to sort of freeze a record of the state after each super step. So we've got that tracked. And then next time we call a super step, it can recall the state exactly as it was checkpointed. And that is one of the things that we could be doing in the lab right now.
 
-
-### LangGraph Fundamentals: 
-* [Creating Nodes, Edges & Workflows Step-by-Step](./1_lab1.ipynb#Step-3:-Create-a-Node)
-* #### Building an OpenAI Chatbot with Graph Structures
-* #### Super Steps & Checkpointing Explained
-* #### Setting Up Langsmith & Creating Custom Tools for LangGraph Applications
-* #### LangGraph Tool Calling: Working with Conditional Edges & Tool Nodes
-* #### LangGraph Checkpointing: How to Maintain Memory Between Conversations
-* #### Building Persistent AI Memory with SQLite: LangGraph State Management
-
+---
 > [](./2_lab2.ipynb)
 ---
 
