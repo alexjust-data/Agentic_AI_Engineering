@@ -270,7 +270,7 @@ To show that visually, next I want to draw you a diagram. So with this diagram, 
 * Building Persistent AI Memory with SQLite: LangGraph State Management
 
 ---
-> [](./2_lab2.ipynb)
+> [2_lab2](./2_lab2.ipynb)
 ---
 
 ## Playwright Integration with LangGraph: Creating Web-Browsing AI Agents
