@@ -266,7 +266,7 @@ To show that visually, next I want to draw you a diagram. So with this diagram, 
 
 
 ### LangGraph Fundamentals: 
-* #### [Creating Nodes, Edges & Workflows Step-by-Step](1_lab1.ipynb#Step 3: Create a Node)
+* [Creating Nodes, Edges & Workflows Step-by-Step](./1_lab1.ipynb#Step-3:-Create-a-Node)
 * #### Building an OpenAI Chatbot with Graph Structures
 * #### Super Steps & Checkpointing Explained
 * #### Setting Up Langsmith & Creating Custom Tools for LangGraph Applications
