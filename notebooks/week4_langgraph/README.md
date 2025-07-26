@@ -275,3 +275,17 @@ To show that visually, next I want to draw you a diagram. So with this diagram, 
 
 ## Playwright Integration with LangGraph: Creating Web-Browsing AI Agents
 
+So look, I don't know if you're anything like me, but I'm having something of a change of heart. So, I started this week quite clearly with OpenAI, Agents SDK as my favorite, and obviously with Kuru as my second favorite, and being a little bit skeptical of Landgraf because you sign up for a lot. But I'm coming around. I'm having a really great time, and what I've got to show you today, I feel like you're going to be there right there with me. I'm actually becoming a serious fan of Landgraf, and there's some really cool stuff, so see what you think. I'm suddenly feeling treacherous against OpenAI, Agents SDK. So welcome to week 4, day 4, introducing a new project, Sidekick, and I can't wait to tell you about it. 
+
+![](../img/51.png)
+
+So what are we going to do today? How are we going to go deeper? You know, we always go a bit deeper with each of these. So first of all, I'm going to introduce, I'm going to unveil a new tool, which is going to be incredibly powerful, and which is going to allow us to do very different things. We're going to talk about structured outputs, something that's been a recurring theme we've done on each of these. We'll use it here, too. And we're also going to build a proper multi-agent workflow in Landgraf so that you see it really coming together, the equivalent of a handoff in OpenAI, Agents SDK, or having a crew of agents. So we will be doing that. 
+
+![](../img/37.png)
+
+And as a reminder on the diagram I did last time that brings it all together, remember the terminology, a super step is a complete invocation of the graph, and each super step represents like one user input coming in and then flowing through your graph of agents and tools, and then those blue diagrams are representing the graph that gets executed. The state is managed through that graph and reduces the calls to make sure that the state object, which is an immutable object, is maintained and managed through that. But between the super steps, you use checkpointing as your way of maintaining state, and checkpointing is very powerful and lets you do things like rewind the clock and put your state back to any prior point. So with that quick recap, let's go to the lab. All right, so we get started in week four, and we're going to go to lab number three, week four, day four, lab three, and it's, as I say, the start of an awesome project. I am super happy with this, I hope you will be too.
+
+---
+> [3_lab3](./3_lab3.ipynb)
+--- 
+
