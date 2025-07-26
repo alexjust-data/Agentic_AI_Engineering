@@ -7,6 +7,7 @@
     - [How to Define State Objects & Use Reducers : 1_lab1](#how-to-define-state-objects--use-reducers)
     - [Super-Step & checkpoint explained](#super-step--checkpoint-explained)
     - [Setting Up Langsmith & Creating Custom Tools for LangGraph Applications](#setting-up-langsmith--creating-custom-tools-for-langgraph-applications)
+  - [Playwright Integration with LangGraph: Creating Web-Browsing AI Agents](#playwright-integration-with-langgraph-creating-web-browsing-ai-agents)
     
 
 ## LangGraph Explained
