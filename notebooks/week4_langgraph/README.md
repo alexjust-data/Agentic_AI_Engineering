@@ -1110,6 +1110,7 @@ This is important:
 * This isn’t just a demo—it’s a real foundation for personal assistants, business research, and more.
 
 ```sh
+(agents_env) ➜  week4_langgraph git:(main) ✗ cat sandbox/dinner2.md 
 # Le Bernardin
 
 ## Contact Information
