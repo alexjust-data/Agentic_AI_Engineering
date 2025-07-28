@@ -328,13 +328,14 @@ Let’s get started. We’re now in Cursor, and it’s week 4 of the project. Th
 
 The Sidekiq application is structured into three main Python modules. I’ll give you a quick overview of each before we look more closely at them:
 
-First, there’s `sidekiq_tools.py`. This module is where all the different tools are defined. By collecting them in one place, we make it easy to manage and expand the toolkit that our agent has access to. This is really the foundation for enabling the agent to interact with the outside world—web searches, file system access, notifications, and more. Everything the agent might need, tool-wise, is organized here.
+First, there’s [sidekick_tools.py](../week4_langgraph/sidekick_tools.py) . This module is where all the different tools are defined. By collecting them in one place, we make it easy to manage and expand the toolkit that our agent has access to. This is really the foundation for enabling the agent to interact with the outside world—web searches, file system access, notifications, and more. Everything the agent might need, tool-wise, is organized here.
 
-Next, we have `sidekiq.py`. This module is a bit lengthy and, to be honest, could probably benefit from being split up. It contains the core class, `Sidekiq`, which is where the main logic resides. Here you’ll find the code that defines the worker agent, the evaluator, and the overall process for building and orchestrating the workflow graph. This is the “brain” of the application, tying everything together and managing how tasks are executed and evaluated.
+Next, we have [sidekick.py](../week4_langgraph/sidekick.py)  . This module is a bit lengthy and, to be honest, could probably benefit from being split up. It contains the core class, `Sidekiq`, which is where the main logic resides. Here you’ll find the code that defines the worker agent, the evaluator, and the overall process for building and orchestrating the workflow graph. This is the “brain” of the application, tying everything together and managing how tasks are executed and evaluated.
 
-Finally, there’s `app.py`. This is where the Gradio app is set up—the part that handles the user interface. This module connects everything for the user, providing a way to interact with the agent and see results in real time.
+Finally, there’s [app.py](../week4_langgraph/app.py) . This is where the Gradio app is set up—the part that handles the user interface. This module connects everything for the user, providing a way to interact with the agent and see results in real time.
 
 Now that you have an idea of the overall structure, let’s spend a few minutes diving into each part to see how they work and what makes them tick.
 
+---
 
 > [sidekick_tools.py](../week4_langgraph/sidekick_tools.py)
