@@ -334,7 +334,7 @@ Now that you have an idea of the overall structure, let’s spend a few minutes 
 
 
 
-**1. [sidekick_tools.py](../week4_langgraph/sidekick_tools.py)**
+### **1. [sidekick_tools.py](../week4_langgraph/sidekick_tools.py)**
 
 This module centralizes all the tools available to our Sidekick agent, making it easy to expand its abilities over time.
 
@@ -453,7 +453,7 @@ You can have all sorts of tools, there's so many, and that's the beauty of this 
 
 ---
 
-**2. [sidekick.py](../week4_langgraph/sidekick.py)**
+### **2. [sidekick.py](../week4_langgraph/sidekick.py)**
 
 This module contains the core **Sidekick** class and manages state, workflow, and evaluation logic.
 
@@ -527,7 +527,7 @@ That's going to be the big part of, that's what we've always said is the five st
 
 ---
 
-**3. [app.py](../week4_langgraph/app.py)**
+### **3. [app.py](../week4_langgraph/app.py)**
 
 This is the entry point for the user interface, typically using Gradio.
 It loads the agent and presents a chat UI or similar frontend for user interaction.
@@ -540,14 +540,599 @@ from sidekick import Sidekick
 # ... (la implementación depende de tu UI y handlers específicos)
 ```
 
-**Summary**
-
-* `sidekick_tools.py` — All tools (browser, push, file, Wikipedia, Python REPL) are defined here. Expandable by just adding to the list.
-  *Puedes seguir poniendo más y más cosas aquí, cualquier herramienta de Langchain Community o propia.*
-* `sidekick.py` — Defines state, schemas, and the core Sidekick class. Handles all orchestration and async setup.
-  *La filosofía aquí es prototipar en notebook y luego llevarlo a módulo, el workflow es iterativo y flexible.*
-* `app.py` — User-facing Gradio interface to the Sidekick agent.
-  *El usuario final interactúa con el sistema vía Gradio u otra interfaz gráfica.*
+---
 
 **Expand your agent by simply adding more tools in the tools module. Anything you drop in, from LangChain Community or your own code, becomes part of the agent’s arsenal. Prototyping is quick in notebooks; production is modularized in Python. This is the real power of agentic design.**
 
+---
+
+
+### 4. `sidekick.py` — The Agent Graph and Node Logic
+
+What we have now is the worker node, defined right here in the code.
+It's quite long, and doesn't even fit on one screen! I actually had to shrink my font to see it all. The worker is meaty: it starts with a carefully built **system message** that I’ve iterated on through lots of experiment, and you’ll need to do the same as you adapt the agent for your own use cases.
+
+One thing I do is **insert the current date and time directly into the prompt**. I tried making it a tool, but realized that's overkill: just inject it into the prompt so the agent always has access, rather than making a tool that the prompt would then have to explicitly call.
+
+```python
+def worker(self, state: State) -> Dict[str, Any]:
+    system_message = f"""You are a helpful assistant that can use tools to complete tasks.
+    ...
+    The current date and time is {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    ...
+    """
+    # If there was feedback on the last attempt, add it in
+    if state.get("feedback_on_work"):
+        system_message += f"""
+    Previously you thought you completed the assignment, but your reply was rejected because the success criteria was not met.
+    Here is the feedback on why this was rejected:
+    {state['feedback_on_work']}
+    With this feedback, please continue the assignment, ensuring that you meet the success criteria or have a question for the user."""
+    ...
+    # Add the system message to the list of messages
+    ...
+    response = self.worker_llm_with_tools.invoke(messages)
+    return {
+        "messages": [response],
+    }
+```
+
+I found through trial and error that, when using the Python tool, GPT-4o and Mini would sometimes misunderstand how the tool worked—they thought just putting code would return an output, but actually, *the code needs a `print()` statement* to return anything useful! Without it, the agent got stuck in a loop, so I made sure to **explicitly prompt: "You have a tool to run Python code, but note you need a print statement to receive output."** This fixed it instantly.
+Maybe it's only a quirk of Mini; maybe with "big" GPT-4 it wouldn't happen. But this is a perfect example of the **experimental, adaptive nature** of agentic design: be ready to patch the prompt, tweak, and try again.
+
+There are other similar cases—maybe you'll hit them too. This kind of hands-on prompt hacking is often essential.
+
+Everything else is identical to what we had in the notebook, just more modular.
+
+**Worker Routing and Tool Use**
+
+The **worker\_router** node decides, after each worker response, whether to go to tools or to evaluator:
+
+```python
+def worker_router(self, state: State) -> str:
+    last_message = state["messages"][-1]
+    if hasattr(last_message, "tool_calls") and last_message.tool_calls:
+        return "tools"
+    else:
+        return "evaluator"
+```
+
+If the message included a tool call, route to the tool node; otherwise, send it to evaluation.
+
+**Conversation Formatting Utility**
+
+There's also a small utility to **format the conversation** for evaluation, which makes it easy for the evaluator to see the whole history in a readable way.
+
+```python
+def format_conversation(self, messages: List[Any]) -> str:
+    conversation = "Conversation history:\n\n"
+    for message in messages:
+        ...
+    return conversation
+```
+
+**Evaluator Node**
+
+The **evaluator** node has, again, a lot of carefully crafted prompting. This node decides if the agent’s answer meets the success criteria, and whether to end or return for more work.
+My prompt includes hints for generosity ("if the assistant says they wrote a file, trust them") because I noticed that the evaluator was being overly strict, always doubting the agent’s claims. By instructing it to give the benefit of the doubt, but to reject if more work is truly needed, I found it much more practical in use.
+
+```python
+def evaluator(self, state: State) -> State:
+    ...
+    system_message = f"""You are an evaluator that determines if a task has been completed successfully by an Assistant.
+    Assess the Assistant's last response based on the given criteria...
+    The Assistant has access to a tool to write files. If the Assistant says they have written a file, then you can assume they have done so.
+    Overall you should give the Assistant the benefit of the doubt if they say they've done something. But you should reject if you feel that more work should go into this.
+    """
+    ...
+    eval_result = self.evaluator_llm_with_output.invoke(evaluator_messages)
+    new_state = {
+        "messages": [{"role": "assistant", "content": f"Evaluator Feedback on this answer: {eval_result.feedback}"}],
+        ...
+    }
+    return new_state
+```
+
+Again, constant **tweaking and refinement** is needed as you discover where the evaluator is too lenient or too harsh. Giving *examples* in the prompt helps, but also makes the prompt longer, which sometimes hurts coherence—another trade-off.
+
+**Route Based on Evaluation**
+
+After evaluation, route either to END (if the answer is good or more user input is needed), or back to the worker (for another attempt).
+
+```python
+def route_based_on_evaluation(self, state: State) -> str:
+    if state["success_criteria_met"] or state["user_input_needed"]:
+        return "END"
+    else:
+        return "worker"
+```
+
+**Building the Graph**
+
+Finally, `build_graph()` wires everything together, connecting all the nodes, tool logic, and routing:
+
+```python
+async def build_graph(self):
+    graph_builder = StateGraph(State)
+    graph_builder.add_node("worker", self.worker)
+    graph_builder.add_node("tools", ToolNode(tools=self.tools))
+    graph_builder.add_node("evaluator", self.evaluator)
+    graph_builder.add_conditional_edges("worker", self.worker_router, {"tools": "tools", "evaluator": "evaluator"})
+    graph_builder.add_edge("tools", "worker")
+    graph_builder.add_conditional_edges("evaluator", self.route_based_on_evaluation, {"worker": "worker", "END": END})
+    graph_builder.add_edge(START, "worker")
+    self.graph = graph_builder.compile(checkpointer=self.memory)
+```
+
+This was daunting at first, but now, once you understand the logic, it’s *the easy part*.
+You define the workflow as a state graph: worker → (tools/evaluator) → END or loop, all orchestrated via edges and conditional routing.
+
+**Running the Agent / Superstep**
+
+The actual run logic is in `run_superstep`, which configures the state, invokes the graph, and collects history for the UI.
+
+```python
+async def run_superstep(self, message, success_criteria, history):
+    config = {"configurable": {"thread_id": self.sidekick_id}}
+    state = {
+        "messages": message,
+        "success_criteria": success_criteria or "The answer should be clear and accurate",
+        "feedback_on_work": None,
+        "success_criteria_met": False,
+        "user_input_needed": False
+    }
+    result = await self.graph.ainvoke(state, config=config)
+    ...
+    return history + [user, reply, feedback]
+```
+
+**Cleanup Logic**
+
+Finally, there's a cleanup handler, especially important for closing browser resources.
+Resource cleanup is tricky—sometimes a headless browser will stick around if not closed properly, so I keep an eye on this part and may update it as I refine the code.
+
+```python
+def cleanup(self):
+    if self.browser:
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self.browser.close())
+            if self.playwright:
+                loop.create_task(self.playwright.stop())
+        except RuntimeError:
+            asyncio.run(self.browser.close())
+            if self.playwright:
+                asyncio.run(self.playwright.stop())
+```
+
+---
+
+**This entire process reflects the core philosophy:
+Tweak, experiment, adapt, and structure as you learn.
+Use structured outputs and rigorous state to make your agent robust and inspectable, but be ready to adjust system and evaluator prompts as new edge cases emerge.**
+
+If you want, I can walk through the UI (`app.py`) and explain how everything connects from the user’s perspective, or generate a more "literate" notebook version.
+Just let me know!
+
+
+Here’s your **App.py** explained in context, with **every bit of intuition, workflow, and code mechanics described**—and **nothing omitted from your original narration**.
+This is a complete tour that’s both a technical reference and a real “mental model” for any reader, matching your voice and details.
+
+---
+
+### 5. App.py: The Gradio User Interface for Sidekick
+
+We are looking at `app.py`, which is our Gradio app. The code starts very simply:
+we import Gradio, and from `sidekick`, import the `Sidekick` class.
+This module ties the whole workflow together, providing the user interface that connects people with the power of your agentic system.
+
+**Gradio Blocks and UI Intuition**
+
+Here’s the idea:
+You build a Gradio app using the `gr.Blocks` API, where you declare UI elements—fields, chat displays, buttons, etc.—and wire them to the agent.
+For example, you can add a `Chatbot` field for chat display, a textbox for user input (the “message”), another textbox for the “success criteria”, and “Go” and “Reset” buttons.
+
+```python
+with gr.Blocks(title="Sidekick", theme=gr.themes.Default(primary_hue="emerald")) as ui:
+    gr.Markdown("## Sidekick Personal Co-Worker")
+    sidekick = gr.State(delete_callback=free_resources)
+    
+    with gr.Row():
+        chatbot = gr.Chatbot(label="Sidekick", height=300, type="messages")
+    with gr.Group():
+        with gr.Row():
+            message = gr.Textbox(show_label=False, placeholder="Your request to the Sidekick")
+        with gr.Row():
+            success_criteria = gr.Textbox(show_label=False, placeholder="What are your success critiera?")
+    with gr.Row():
+        reset_button = gr.Button("Reset", variant="stop")
+        go_button = gr.Button("Go!", variant="primary")
+```
+
+This code produces a UI with:
+
+* A header,
+* The `Sidekick` state (unique for each user/session),
+* A chat history pane,
+* Two textboxes (one for the user’s message/request, one for their success criteria),
+* Two buttons ("Go!" to submit, "Reset" to start fresh).
+
+**Callbacks: The Heart of Gradio**
+
+The way Gradio works is all about **callbacks**:
+Every interactive element (like a button) is hooked to a function you define.
+
+* When the “Go” button is clicked, it calls `process_message` with the message, criteria, chat history, and Sidekick state.
+* “Reset” calls `reset`.
+* There’s a special `ui.load(setup, [], [sidekick])` to handle initialization—this runs when a new UI is brought up, creating a fresh Sidekick agent for that session/user.
+
+Callbacks are called from the front end in the browser, but the actual work (model inference, graph running) happens server-side.
+
+**Why use Gradio’s State?**
+
+Notice that we use `gr.State(delete_callback=free_resources)`.
+That’s critical:
+
+* It ensures each session/user gets a *separate* agent instance (with its own tools and browser).
+* It solves a common pitfall: if you just used global variables or didn’t use Gradio state, you’d get **cross-talk between users**—and anyone refreshing, opening a second tab, or even using the same browser would mess up each other’s sessions.
+* The `delete_callback` is also important, because it’s where we free up resources (e.g., closing the Playwright browser when the UI session ends).
+
+**The Setup and Reset Logic**
+
+Initialization happens in `setup()`:
+
+```python
+async def setup():
+    sidekick = Sidekick()
+    await sidekick.setup()
+    return sidekick
+```
+
+This callback is triggered when the UI loads.
+It constructs a new Sidekick instance, calls its async setup (which initializes tools, builds the workflow graph, etc.), and stores the instance in state.
+
+The `reset` function does the same thing—returns empty fields and a fresh Sidekick for a new session.
+
+**Processing User Input**
+
+The core of the interaction is `process_message`:
+
+```python
+async def process_message(sidekick, message, success_criteria, history):
+    results = await sidekick.run_superstep(message, success_criteria, history)
+    return results, sidekick
+```
+
+This takes all relevant info (current agent, user’s request, success criteria, chat history), calls the agent’s graph with those parameters, and returns the updated results and Sidekick state.
+This keeps everything in sync for the next interaction.
+
+The buttons and input fields are all wired up to this callback logic, ensuring that the chat UI is updated and the agent’s memory is preserved.
+
+**Resource Cleanup**
+
+Resource cleanup is critical when using browser automation or anything that uses external resources (like Playwright/Chromium).
+The function:
+
+```python
+def free_resources(sidekick):
+    print("Cleaning up")
+    try:
+        if sidekick:
+            sidekick.free_resources()
+    except Exception as e:
+        print(f"Exception during cleanup: {e}")
+```
+
+…ensures that, when a session ends (or the app is refreshed), any browser instances or processes spawned by that user’s agent are properly shut down.
+This avoids the “zombie browser” problem and resource leaks over time.
+
+**Final Wiring**
+
+All UI elements, callbacks, and state are connected:
+
+```python
+ui.load(setup, [], [sidekick])
+message.submit(process_message, [sidekick, message, success_criteria, chatbot], [chatbot, sidekick])
+success_criteria.submit(process_message, [sidekick, message, success_criteria, chatbot], [chatbot, sidekick])
+go_button.click(process_message, [sidekick, message, success_criteria, chatbot], [chatbot, sidekick])
+reset_button.click(reset, [], [message, success_criteria, chatbot, sidekick])
+ui.launch(inbrowser=True)
+```
+
+So, when the app is launched, every user gets:
+
+* Their own Sidekick agent
+* Their own memory, resources, and browser
+* The ability to reset and start over whenever they want
+
+---
+**With this setup, you can add new tools, swap in different LLMs, expand the workflow graph, and your Gradio UI will keep working for each user independently—ready for real-world, agentic AI experimentation.**
+
+---
+
+
+### From Tools Definition to Real Agent Feedback: The Complete Sidekick Walkthrough
+
+Let’s review the **entire real workflow** using your actual code, your narrative, and the results of the experiment in LangSmith and Gradio, including commentary on evaluator feedback, tool usage, and execution errors.
+
+**Tools Setup (Real Code)**
+
+Your tools file includes something like this:
+
+```python
+from playwright.async_api import async_playwright
+from langchain_community.agent_toolkits import PlayWrightBrowserToolkit
+from dotenv import load_dotenv
+import os
+import requests
+from langchain.agents import Tool
+from langchain_community.agent_toolkits import FileManagementToolkit
+from langchain_community.tools.wikipedia.tool import WikipediaQueryRun
+from langchain_experimental.tools import PythonREPLTool
+from langchain_community.utilities import GoogleSerperAPIWrapper
+from langchain_community.utilities.wikipedia import WikipediaAPIWrapper
+
+load_dotenv(override=True)
+pushover_token = os.getenv("PUSHOVER_TOKEN")
+pushover_user = os.getenv("PUSHOVER_USER")
+pushover_url = "https://api.pushover.net/1/messages.json"
+serper = GoogleSerperAPIWrapper()
+
+async def playwright_tools():
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch(headless=False)
+    toolkit = PlayWrightBrowserToolkit.from_browser(async_browser=browser)
+    return toolkit.get_tools(), browser, playwright
+
+def push(text: str):
+    """Send a push notification to the user"""
+    requests.post(pushover_url, data = {"token": pushover_token, "user": pushover_user, "message": text})
+    return "success"
+
+def get_file_tools():
+    toolkit = FileManagementToolkit(root_dir="sandbox")
+    return toolkit.get_tools()
+
+async def other_tools():
+    push_tool = Tool(name="send_push_notification", func=push, description="Use this tool when you want to send a push notification")
+    file_tools = get_file_tools()
+    tool_search = Tool(
+        name="search",
+        func=serper.run,
+        description="Use this tool when you want to get the results of an online web search"
+    )
+    wikipedia = WikipediaAPIWrapper()
+    wiki_tool = WikipediaQueryRun(api_wrapper=wikipedia)
+    python_repl = PythonREPLTool()
+    return file_tools + [push_tool, tool_search, python_repl, wiki_tool]
+```
+
+**The Classic Bracket Error**
+
+Just before we take this thing for a drive, let me mention a classic coding error:
+When I was changing the tools, I left off both brackets—and that caused the app to crash. Maybe you spotted that—in which case, you should have shouted!
+Now I’ve fixed it, and I promise not to do that again.
+Always remember: **when things stop working, your first suspicion should be, "what did I just change?"**
+
+**Running the Application**
+
+So, let’s run this.
+Open your terminal, navigate into your project directory (the fourth one, in my case).
+Instead of using `python app.py`, use `uvrun app.py` to start the application with hot reload.
+
+And here it is—your Scikit personal co-worker, ready for action!
+
+**Evolution and Continuous Improvement**
+
+By the time you see this, your version of the project might look different—and that’s good!
+I’m planning to keep working on it, improving its functionality and abilities.
+So, don’t worry if your version doesn’t match the video or screenshots exactly—enjoy the fact that it will have more features and better performance over time.
+And if you see something missing, **please help contribute**: build new tools, add new features, and push them to make the project better for everyone.
+
+
+**First Challenge: How Does the Agent Respond?**
+
+Let’s give it a challenge. For example:
+**What is pi times 3?**
+Let the agent think through the answer.
+
+![](../img/56.png)
+
+
+**What Do We See? (UI and LangSmith)**
+
+* The assistant answers:
+  **“The result of π \* 3 is approximately 9.42.”**
+
+* Evaluator feedback (LangSmith, **see screenshot 1**):
+
+  > "The Assistant provided a clear and accurate calculation of π \* 3, resulting in approximately 9.42. However, there is an inaccuracy in the result; π is approximately 3.14, so the correct result for π \* 3 should be around 9.42, which is correct, but rounded values might be a concern for some users. Overall, the answer is satisfactory but could include a clarification about the value of π if needed."
+
+* In the Gradio UI (**see screenshot 3**):
+  The chat window shows the answer and the evaluator feedback.
+  The input fields for your message and success criteria are below, with "Go!" and "Reset" buttons.
+
+![](../img/57.png)
+
+**What Happened Under the Hood? (LangSmith/Trace, **see screenshot 2**)**
+
+* The agent first searches online, then uses the Python REPL tool with:
+
+  ```python
+  import math
+  print(math.pi * 3)
+  ```
+
+  Output: `9.42477796076938`
+* The feedback mechanism checks if the result is rounded or accurate.
+* If there’s an error (like a bracket error or an incorrectly rounded value), the evaluator points it out, and the agent may retry.
+* The entire sequence is visible: Worker → Tools (Python REPL) → Worker → Evaluator.
+
+![](../img/58.png)
+
+**Learning and Iteration**
+
+This is amazing.
+So, the assistant gave an answer that was too imprecise (not enough decimal places), which annoyed the evaluator, who rejected it.
+The assistant then decided to use the tool a second time.
+But this time, there was a syntax error (it ended with a curly instead of a closed bracket).
+After fixing the error, the agent tries again and finally produces a precise output, which is sent to the evaluator and approved.
+
+The evaluator, of course, sees the entire conversation history, back and forth, which you don’t see in a simple chat window.
+If you look at what the evaluator saw, it says:
+
+* User: what is pi times 3?
+* Assistant: \[Tools use]
+* Assistant: \[Tools use]
+* Assistant: The result of π \* 3 is approximately 9.42.
+
+And the evaluator feedback might say, "That’s not good enough" (if it’s incorrect), then after retries, "Now the answer is correct."
+
+This is truly fascinating—what a journey to watch unfold.
+It all happens in a matter of seconds.
+You wouldn’t know about the syntax errors or feedback unless you dig into the LangSmith trace.
+But the agent arrives at the correct answer in the end.
+
+
+![](../img/59.png)
+
+
+Let’s try a real-world challenge for our agent:
+
+“I'd like to go to dinner tonight in a French restaurant in New York. Please find a great French restaurant and write a report in Markdown to dinner.md, including the name, address, menu, and reviews. Send me a push notification with the restaurant name and phone. Actually, let's make that tomorrow.”
+
+**Browser/Tool Choice: Agent Autonomy in Action**
+* There’s a real risk here, and it’s exactly what’s cool about this workflow:
+The agent might use the SERPA API (web search), or it could spin up a Playwright browser and drive it visually.
+* In this run, the browser window did pop up—but it looks like the agent didn’t end up using it for the search. It could decide dynamically to switch tools.
+
+**Push Notification: Real-World Automation**
+* The agent finishes the task.
+* You check your phone (which was on silent), and yes, you received a push notification.
+* The push message was for “Le Bernardin”—one of the most acclaimed French restaurants in NYC.
+
+**Report File: Multi-Modal Output**
+* The agent compiled a report named dinner.md in the sandbox directory.
+* The Markdown report includes detailed info about Le Bernardin, Balthazar, and Daniel—all top-tier French restaurants.
+* Each entry contains name, address, menu highlights, and reviews. This is not just a simple search result, but a rich, multi-restaurant write-up.
+
+```sh
+(agents_env) ➜  week4_langgraph git:(main) ✗ cat sandbox/dinner.md 
+# French Restaurant Report
+
+## 1. Le Bernardin
+**Address:** 155 W 51st St, New York, NY 10019  
+**Phone:** (212) 554-1515  
+**Executive Chef:** Eric Ripert  
+**Description:** Three-Michelin star French seafood restaurant. Known for elegant dishes highlighting seafood.  
+**Menu Highlights:**  
+- Tuna Tartare  
+- Poached Lobster  
+- Chocolate Soufflé  
+
+**Reviews:**  
+- *"An exquisite experience! The seafood is always fresh and perfectly prepared."*  
+- *"A bit pricey, but worth every penny for a special occasion."*  
+
+## 2. Balthazar  
+**Address:** 80 Spring St, New York, NY 10012  
+**Phone:** (212) 965-1414  
+**Owner:** Keith McNally  
+**Description:** A French brasserie in SoHo since 1997. Offers a bustling atmosphere and a classic French menu.  
+**Menu Highlights:**  
+- French Onion Soup  
+- Steak Frites  
+- Quiche Lorraine  
+
+**Reviews:**  
+- *"A classic French Brasserie with an unmatched atmosphere!"*  
+- *"Great for brunch – the pastries are to die for!"*  
+
+## 3. Frenchette  
+**Address:** 241 W Broadway, New York, NY 10013  
+**Phone:** (646) 490-8560  
+**Chefs:** Riad Nasr & Lee Hanson  
+**Description:** Named after a song, it serves a mix of modern and traditional French cuisine.  
+**Menu Highlights:**  
+- Escargots  
+- Spaghetti with Shaved Bottarga  
+- Tortilla Espanola  
+
+**Reviews:**  
+- *"A vibrant spot with friendly service and delicious food!"*  
+- *"Innovative takes on classic dishes – a must try!"*  
+
+## Conclusion
+Each restaurant provides its own unique take on French cuisine, making them all excellent options for a delightful dinner in New York City.%    
+```
+**Fact-Checking the Agent**
+
+![](../img/60.png)
+
+Let’s verify: does the push notification’s phone number for Le Bernardin match reality?
+You Google “212-554-1515,” and yes—it’s Le Bernardin’s real number. Agent passed.
+
+Next, you check the dinner.md file. Open it in preview mode.
+The report is well-formatted and includes all required information.
+
+
+**Memory and File Update: Testing Incremental Instructions**
+Now, for an advanced follow-up:
+
+> “Please update the file to only contain information about Le Bernardin and include as much information as possible, including extracts of reviews, a summary of reviews, and some menu items.”
+
+* You rephrase, try again—this time emphasizing “Le Bernardin only” and “more detail.”
+* The agent confirms that it has updated the file and sends you another push notification.
+* You check the file in the sandbox—it now contains only Le Bernardin, with expanded sections:
+  * Name, address, cuisine, menu highlights
+  * Ambience description
+  * Extracts from reviews
+  * A summary section
+
+This is important:  
+* The agent was able to find and update the previously written file without you needing to specify the filename again.
+* This is thanks to LandGraph’s checkpointing and memory—real contextual understanding.
+
+**What’s Impressive?**  
+* The agent didn’t just “append” but genuinely updated the file in-place.
+* It followed high-level, open-ended instructions to increase detail and scope.
+* It tied together web search, file management, notification, memory, and formatting.
+* All results were visible in the Gradio UI, the local file system, and in push notifications.
+
+**Final Thoughts: Extensibility and Real Work**  
+* You could push the workflow further: Ask the agent to build more elaborate reports, scrape specific websites, or compare restaurants by ratings.
+* Want PDF reports? You can add a tool to convert Markdown to PDF—easy, since LLMs are great at Markdown, but less so at direct PDF generation.
+* The agent can do real work: Research, compilation, summary, formatting, and user notification.
+
+**Bottom Line**
+* The agent workflow you’ve built is powerful, extensible, and able to truly integrate web automation, LLM planning, and multi-modal output.
+* If you want even more, contribute tools, experiment with new prompts, and challenge it with creative requests.
+* This isn’t just a demo—it’s a real foundation for personal assistants, business research, and more.
+
+```sh
+# Le Bernardin
+
+## Contact Information
+**Address:** 155 W 51st St, New York, NY 10019  
+**Phone:** (212) 554-1515  
+**Executive Chef:** Eric Ripert  
+
+## Description
+Three-Michelin star French seafood restaurant. Known for elegant dishes highlighting seafood.
+
+## Menu Highlights
+- Tuna Tartare  
+- Poached Lobster  
+- Chocolate Soufflé  
+
+## Reviews
+### Extracts of Reviews
+- *"An exquisite experience! The seafood is always fresh and perfectly prepared."*  
+- *"A bit pricey, but worth every penny for a special occasion."*  
+
+### Summary of Reviews
+Le Bernardin consistently garners praise for its exceptional seafood dishes and elegant atmosphere. Many reviewers highlight the freshness and quality of the ingredients, with comments about the fine dining experience justifying the higher price point. It's often recommended for special occasions due to the overall dining experience.
+
+## Additional Information
+Le Bernardin emphasizes a commitment to seafood, offering a refined dining experience that's considered one of the best in New York City. 
+```
