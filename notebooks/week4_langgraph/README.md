@@ -321,9 +321,9 @@ So, let’s get started. Here we are in Cursor, looking at week four. We're movi
 Let’s get started. We’re now in Cursor, and it’s week 4 of the project. This time, we’re going to focus on Python modules. I know some of you will appreciate digging into Python, but for now, I’m not going to be writing code live. Instead, I’ll just walk through the code, taking time to explain how everything fits together.
 
 ---
-> [sidekick_tools.py](../week4_langgraph/sidekick_tools.py)
-> [sidekick.py](../week4_langgraph/sidekick.py)
-> [app.py](../week4_langgraph/app.py)
+> [sidekick_tools.py](../week4_langgraph/sidekick_tools.py)  
+> [sidekick.py](../week4_langgraph/sidekick.py)  
+> [app.py](../week4_langgraph/app.py)  
 --- 
 
 The Sidekiq application is structured into three main Python modules. I’ll give you a quick overview of each before we look more closely at them:
