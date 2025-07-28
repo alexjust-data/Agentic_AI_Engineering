@@ -50,7 +50,6 @@ Like the others, **Autogen** is a collection of different components all bundled
 ![](../img/63.png)
 
 * **AutoGen Core** is the foundation.
-
   * It is *agnostic* to which agents or LLMs you use.
   * Think of it as a **general framework for building scalable, multi-agent systems**.
   * It manages messaging between agents, even if they’re distributed in different places.
@@ -59,19 +58,15 @@ Like the others, **Autogen** is a collection of different components all bundled
   * In essence, **AutoGen Core is an agent runtime.**
 
 * On top of Core is **AutoGen AgentChat**.
-
   * The name is a bit of a mouthful!
   * This layer will be very familiar to you—it’s much like OpenAI Agents SDK and Crew.
   * It provides a **lightweight, simple abstraction for combining LLMs in an agent construct**, so they can use tools and interact with each other.
   * **AgentChat** is built directly on Core, making it the main way to construct conversational, multi-agent applications.
 
 * Built on top of AgentChat are:
-
   * **Studio**:
-
     * A low-code/no-code visual app builder for constructing agent workflows.
   * **Magentic One CLI**:
-
     * A product you use from the command line—a ready-to-use application that can run an agent framework out-of-the-box.
 
 ![](../img/64.png)
@@ -89,24 +84,19 @@ So, what are the core concepts in the Autogen framework—especially in AgentCha
 ![](../img/65.png)
 
 * **Models**
-
   * In Autogen, “models” correspond to language models (LLMs), exactly as we’ve seen in other platforms.
 
 * **Messages**
-
   * A key concept in Autogen. Messages can represent:
-
     * Communication between agents,
     * Events that happen inside an agent (like calling a tool),
     * Results from a model.
   * Whether it’s an agent-to-agent communication, an internal action, or an interaction with a model—these are all considered “messages”.
 
 * **Agents**
-
   * Just as we’re used to: an agent is something with a model behind it, able to carry out tasks on behalf of a user or another agent.
 
 * **Teams**
-
   * This is like a “crew” in Crew: a group of agents collaborating to achieve a goal.
 
 There are other advanced concepts, but these are the most important to introduce right now. For today, we’ll be focusing on the first three—**models, messages, and agents**—as we quickly set up an example. And to make it even more practical, we’ll include some SQL in the example, since I know that’s valuable for many.
