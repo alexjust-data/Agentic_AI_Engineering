@@ -98,7 +98,7 @@ So, what are the core concepts in the Autogen framework—especially in AgentCha
 
 * **Teams**
   * This is like a “crew” in Crew: a group of agents collaborating to achieve a goal.
-
+  
 There are other advanced concepts, but these are the most important to introduce right now. For today, we’ll be focusing on the first three—**models, messages, and agents**—as we quickly set up an example. And to make it even more practical, we’ll include some SQL in the example, since I know that’s valuable for many.
 
 Let’s jump in!
