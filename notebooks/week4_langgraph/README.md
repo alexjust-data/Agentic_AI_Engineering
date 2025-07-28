@@ -15,6 +15,7 @@
 - [4. `sidekick.py` — The Agent Graph and Node Logic](#4-sidekickpy--the-agent-graph-and-node-logic)
 - [5. App.py: The Gradio User Interface for Sidekick](#5-apppy-the-gradio-user-interface-for-sidekick)
 - [From Tools Definition to Real Agent Feedback: The Complete Sidekick Walkthrough](#from-tools-definition-to-real-agent-feedback-the-complete-sidekick-walkthrough)
+- [Final](#final)
     
 
 ## LangGraph Explained
