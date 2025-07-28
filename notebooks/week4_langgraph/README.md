@@ -320,13 +320,7 @@ So, let’s get started. Here we are in Cursor, looking at week four. We're movi
 
 Let’s get started. We’re now in Cursor, and it’s week 4 of the project. This time, we’re going to focus on Python modules. I know some of you will appreciate digging into Python, but for now, I’m not going to be writing code live. Instead, I’ll just walk through the code, taking time to explain how everything fits together.
 
----
-> [sidekick_tools.py](../week4_langgraph/sidekick_tools.py)  
-> [sidekick.py](../week4_langgraph/sidekick.py)  
-> [app.py](../week4_langgraph/app.py)  
---- 
-
-The Sidekiq application is structured into three main Python modules. I’ll give you a quick overview of each before we look more closely at them:
+The `Sidekiq application` is structured into three main Python modules. I’ll give you a quick overview of each before we look more closely at them:
 
 First, there’s [sidekick_tools.py](../week4_langgraph/sidekick_tools.py) . This module is where all the different tools are defined. By collecting them in one place, we make it easy to manage and expand the toolkit that our agent has access to. This is really the foundation for enabling the agent to interact with the outside world—web searches, file system access, notifications, and more. Everything the agent might need, tool-wise, is organized here.
 
@@ -338,4 +332,222 @@ Now that you have an idea of the overall structure, let’s spend a few minutes 
 
 ---
 
-> [sidekick_tools.py](../week4_langgraph/sidekick_tools.py)
+
+
+**1. [sidekick_tools.py](../week4_langgraph/sidekick_tools.py)**
+
+This module centralizes all the tools available to our Sidekick agent, making it easy to expand its abilities over time.
+
+**Commentary (with code structure):**
+
+The tools module loads in everything we’ve worked with in the past.
+It starts with loading in the `.env` file because we’ll need the API keys.
+We set up a few constants for pushover.
+
+```python
+from dotenv import load_dotenv
+import os
+import requests
+
+load_dotenv()
+PUSHOVER_TOKEN = os.getenv("PUSHOVER_TOKEN")
+PUSHOVER_USER = os.getenv("PUSHOVER_USER")
+PUSHOVER_URL = "https://api.pushover.net/1/messages.json"
+```
+
+We create the Google server API wrapper so that we can use that API.
+And then we have the Playwright tools.
+This is the tools for navigating, for driving the browser, taken exactly from the notebook we were looking at before.
+We use the async code to start the playwright instance, and we launch playwright's Chromium.
+And then we get the toolkit, and then we return the tools from the toolkit.
+We also return this browser and the playwright object itself. And we do that because we need to clean them up at the end of it when it's finished with resources.
+
+```python
+from langchain_community.agent_toolkits import PlayWrightBrowserToolkit
+from langchain_community.tools.playwright.utils import create_async_playwright_browser
+
+async def playwright_tools():
+    browser = await create_async_playwright_browser()
+    toolkit = PlayWrightBrowserToolkit.from_browser(browser=browser)
+    tools = toolkit.get_tools()
+    return tools, browser
+```
+
+And this is something that I'm not sure. It remains to be seen whether this is properly cleaning up resources.
+I'm checking to see. Sometimes I see that the playwright, the Chromium browser hangs around for longer than I was expecting.
+But I think it does close it down properly. But yeah, we'll see if it ever causes a leak of browser windows being left open.
+
+All right, and then this you should recognize because this is the push notification that we've used many times.
+It's just a simple function that sends a push notification using requests, using the pushover URL.
+
+```python
+def push(text: str):
+    requests.post(PUSHOVER_URL, data={"token": PUSHOVER_TOKEN, "user": PUSHOVER_USER, "message": text})
+```
+
+And then there's also one here that's new.
+This is get file tools. And this is using the file management toolkit, which is from right here, from Langchain Community.
+And this is an example, again, of one of the things that is so amazing about the Langchain ecosystem.
+It's so popular. So many people have used it that there are tons and tons of tools that you can tap into.
+
+```python
+from langchain_community.tools.file_management.toolkit import FileManagementToolkit
+
+def get_file_tools():
+    toolkit = FileManagementToolkit(root_dir="sandbox")
+    return toolkit.get_tools()
+```
+
+Now, in week six, we're going to get very excited about MCP, which, of course, has taken the world by storm.
+And MCP is so amazing because it's sort of unleashed the ability to connect together with different tools all over the place.
+But already, people who are part of the Langchain ecosystem have had the advantage of a lot of tools that conform to Langchain's tools format, which in itself, it's like a sort of a mini MCP, but just for people in Langchain.
+And so we can take advantage of this now. We'll have more in week six.
+But for now, we have access to all of the ones that come in the Langchain toolkit, which includes this file management one, which will give tools for our LLM to be able to mess around in a directory that I'm setting, Sandbox.
+And it will be forced to stay in that root directory. So that's good.
+
+And then, so I'm going to put together these different tools into this collection of tools here.
+So we're going to take a push tool. We're going to define a tool around that push notification.
+So this is like a homegrown tool to do that.
+There's file tools that we've just talked about.
+There's a tool to run the SERPA search. So this is, again, us manually creating a tool around the search.
+There's something called the Wikipedia tool. So we create a Wikipedia API wrapper.
+We create that, and that needed me to install Wikipedia Python package in our environment, which I did.
+And then this tool is able to call and collect Wikipedia pages using Wikipedia's API, which is freely available to everybody.
+And so that gives our LLM expertise about stuff through Wikipedia.
+
+```python
+import wikipedia
+def wikipedia_tool(query: str):
+    return wikipedia.summary(query)
+```
+
+And then I also create here a Python replica tool. Maybe it would be nice to just show that separately. Python replica.
+So this means, this is slightly nicer, this means that we are giving our LLM the ability to run Python code much as if you just typed Python at the command line in one of these kinds of interfaces where it can put in some code and get back the answer.
+So we're giving it that power.
+And this is something which isn't sandboxed. So it's unlike when we did this with CRU, where we ran Python code within a Docker container. So it was somewhat insulated from the world.
+This is not insulated. And so this should be used with caution.
+If you're not comfortable with it, then you should comment this out. Or just remove it from here.
+I mean, remove it from these tools if you're not happy with your LLM being able to run Python code on your computer.
+
+```python
+def python_repl_tool(code: str):
+    try:
+        exec_globals = {}
+        exec(code, exec_globals)
+        return exec_globals
+    except Exception as e:
+        return str(e)
+```
+
+But for me, especially as I'm using GBC 4.0 Mini, I'm quite comfortable that it's going to be sensible. And besides, I'll monitor it and be careful with it.
+So as long as you're careful, as long as you show caution, it should be completely fine.
+But do be aware of what we're doing there.
+And if you're not comfortable, if you have any doubts at all, then remove that tool from the list you have enrolled.
+And you can also, of course, just remove the playwright tools if you don't like it.
+Just have it return something empty there instead of returning those tools.
+
+Okay, so that is our set of tools, all the tools that we want to arm our coworker, our sidekick with, and you can just add more tools to this other tools list, anything you put in there will just automatically get used by our sidekick.
+You can just keep putting more and more and more things in there, and you can Google or ask ChatGPT about some of the tools that are in the Langchain tools and the community folders like community utilities and experimental tools and tools.
+You can look at these or you can just look on Langchain's documentation, there's a lot to choose from, and you can just put them all in here, you can have a tool look in your Google calendar and attach it to Google so that it can schedule things for you.
+You can have all sorts of tools, there's so many, and that's the beauty of this project that you can just keep giving more and more capabilities to your LLM, now to your agent. That's the idea.
+
+---
+
+**2. [sidekick.py](../week4_langgraph/sidekick.py)**
+
+This module contains the core **Sidekick** class and manages state, workflow, and evaluation logic.
+
+**Commentary (with code structure):**
+
+All right, next up we're going to go to the big class, which is sidekick.
+So now I've gone to the sidekick module, here it is, so the good news is this should all be familiar to you because it's just the same code we had in the lab, just moved into a Python module, which shows how, again, if I can do another pitch for using these notebooks, you can iterate on something in a notebook, you can prototype, iterate, perfect your prompts, and then move to a module.
+And people from an engineering background will say, well, that's not the way that we write software, we have things like TDD, we have a very different kind of process.
+The thing about this kind of work is that it is much more experimental by nature.
+The mindset of an AI engineer is more about crafting prompts, trying different ideas, seeing how they work.
+And so by its very nature, it is a bit more trial and error, and it means that it lends itself very well to a notebook interface initially, until you've got things bedded down, and then you move to sort of productionizing something in Python code like this.
+
+So anyways, this is the module.
+We define the state, the typed dict, that is our state.
+It has the messages field, which is the annotated field that is a list that will use this reducer and messages.
+We have success criteria, feedback, success criteria met, and user input needed. These are the things that we get back from our assessment.
+
+```python
+from typing import Annotated, List, Optional, Any
+from typing_extensions import TypedDict
+from langgraph.graph.message import add_messages
+
+class State(TypedDict):
+    messages: Annotated[List[Any], add_messages]
+    success_criteria: str
+    feedback_on_work: Optional[str]
+    success_criteria_met: bool
+    user_input_needed: bool
+```
+
+And talking about our assessment, our evaluation, here is the structured outputs schema, the schema for the output that we get from our LLM.
+We want feedback, whether or not the success criteria is met, and whether or not user input is needed.
+That's what we want back, and these descriptions are what will be provided to the LLM so that it populates the structured output well.
+
+```python
+from pydantic import BaseModel, Field
+
+class EvaluatorOutput(BaseModel):
+    feedback: str = Field(description="Feedback on the assistant's response")
+    success_criteria_met: bool = Field(description="Whether the success criteria have been met")
+    user_input_needed: bool = Field(description="Whether user input is needed")
+```
+
+Okay, and now we have a class called Sidekick, and it's quite a big one, and maybe this could warrant some refactoring, but it's basically everything we had in the notebook.
+There's one fussy thing about working with async code, which is that the init method, when we create this, we don't want that to be async, but we need to be able to do some initialization that will be async, like setting up our graph.
+And so we have to have a separate async, I couldn't say async method, but a code that is going to be handling that part of it, and we're going to need to make sure when we initialize a Sidekick that we can first instantiate it and then call this setup asynchronously.
+
+```python
+class Sidekick:
+    def __init__(self):
+        self.tools = None
+        self.browser = None
+        self.worker_llm = None
+        self.evaluator_llm = None
+        # ...otros atributos
+
+    async def setup(self):
+        # Inicialización async: cargar tools, browser, playwright, etc.
+        self.tools, self.browser = await playwright_tools()
+        # Añadir otras herramientas: push, file, wikipedia, repl...
+        # Instanciar LLMs
+        # Construir el grafo
+        pass
+```
+
+So first, the first thing I do in this setup is I call that PlayWriteTools function, coroutine, that we saw in the Sidekick tools, and then I populate my tools, my browser, and PlayWrite.
+And then I add into tools the other tools that we also put together in the other module.
+Okay, and then I create my worker LLM, which is, in this case, gpt4many, but feel free to switch it up, and bind it to tools, and store that as an instance variable.
+And then an evaluator LLM, and I also store that as an instance variable, and then I call build graph.
+That's going to be the big part of, that's what we've always said is the five steps that need to happen before you can actually run your graph and do your super steps.
+
+---
+
+**3. [app.py](../week4_langgraph/app.py)**
+
+This is the entry point for the user interface, typically using Gradio.
+It loads the agent and presents a chat UI or similar frontend for user interaction.
+
+```python
+import gradio as gr
+from sidekick import Sidekick
+
+# Set up Gradio interface to interact with Sidekick agent
+# ... (la implementación depende de tu UI y handlers específicos)
+```
+
+**Summary**
+
+* `sidekick_tools.py` — All tools (browser, push, file, Wikipedia, Python REPL) are defined here. Expandable by just adding to the list.
+  *Puedes seguir poniendo más y más cosas aquí, cualquier herramienta de Langchain Community o propia.*
+* `sidekick.py` — Defines state, schemas, and the core Sidekick class. Handles all orchestration and async setup.
+  *La filosofía aquí es prototipar en notebook y luego llevarlo a módulo, el workflow es iterativo y flexible.*
+* `app.py` — User-facing Gradio interface to the Sidekick agent.
+  *El usuario final interactúa con el sistema vía Gradio u otra interfaz gráfica.*
+
+**Expand your agent by simply adding more tools in the tools module. Anything you drop in, from LangChain Community or your own code, becomes part of the agent’s arsenal. Prototyping is quick in notebooks; production is modularized in Python. This is the real power of agentic design.**
+
