@@ -8,6 +8,8 @@
     - [Super-Step & checkpoint explained](#super-step--checkpoint-explained)
     - [Setting Up Langsmith & Creating Custom Tools for LangGraph Applications](#setting-up-langsmith--creating-custom-tools-for-langgraph-applications)
   - [Playwright Integration with LangGraph: Creating Web-Browsing AI Agents](#playwright-integration-with-langgraph-creating-web-browsing-ai-agents)
+
+  - [Agentic AI: Add Web Search, File System & Python REPL to Your Assistant](#agentic-ai-add-web-search-file-system--python-repl-to-your-assistant)
     
 
 ## LangGraph Explained
@@ -289,4 +291,50 @@ And as a reminder on the diagram I did last time that brings it all together, re
 ---
 > [3_lab3](./3_lab3.ipynb)
 --- 
+> [4_lab4](./4_lab4.ipynb)
+--- 
 
+### Agentic AI: Add Web Search, File System & Python REPL to Your Assistant
+
+![](../img/55)
+
+Today, we're going to focus on tools—lots of them. We'll be building in the same tools we already know and love for searching the web, though this time we’re not navigating a browser directly. Instead, we'll use the SERPA API for web searches, just as we have before. Sending push notifications? Absolutely—since we already know how.
+
+But that's just the beginning. We're also adding a tool for interacting with the file system. Our operator agent—essentially our co-worker, our sidekick—will be able to read and write files, giving it the capability to access and update information locally. On top of that, we’ll let it consult Wikipedia, so it can look things up as needed. And to push things even further, we’re going to grant it the ability to run Python code directly. This time, however, it won’t be sandboxed in a Docker container like before; it will just have the ability to execute Python natively.
+
+![](../img/54)
+
+What this means is that we’re giving the agent broad, almost unrestricted, access to do things on our machine while we watch and supervise. And that leads to an important point: **the sidekick app we’re about to build is experimental.** It's meant for you to explore, monitor, and use for your own purposes—possibly even for commercial applications to help you get more done with an AI agent at your side.
+
+However, there are no guardrails. This agent is essentially "open to the wild," and needs to be treated with caution. Use the sidekick app at your own risk. If you’re not comfortable, or if you’re unsure about any of the technologies behind it, I recommend you remove the Python REPL tool that we’ll be adding—or even remove the online navigation tools—until you feel confident in what's happening and can watch its actions closely. Remember, this is an agent we are allowing to roam freely.
+
+Of course, when it uses the browser, it does so through Chromium, the open-source version of Chrome. It does not have access to your cookies, your password manager, or your credit card information. The file manager is restricted to a certain directory, so it can’t roam your entire computer. The Python REPL, on the other hand, is quite open and can run any Python code—which could potentially do damage. If this concerns you, remove the Python REPL until you’re comfortable. The risk is extremely small, but you must be aware and take responsibility for your own setup.
+
+The other thing I want to emphasize is that this sidekick app is just a starting point—think of it as a **canvas.** I’ve built something up with some prompts and tools, and I’ve found it can accomplish real, even commercial, work. For example, it produced a report for me that I actually needed and used. So it works—it genuinely delivers value, and can act as your own sidekick (or be customized for others).
+
+But you should approach it as something to shape and mold for yourself. Select the tools you want to include, and adjust the prompts to match your needs. In my experience, sometimes the agent veers off track, and I need to refine my prompts or tweak the configuration to keep it productive. It’s not a hands-off product—it requires experimentation, adjustment, and some ongoing attention. But if you invest the time and effort, the payoff can be substantial.
+
+In short, this unleashes the power of agentic AI, but you’re building your own version—like the "Manus" agent from the Chinese startup that could hunt for rental apartments and build websites. With this, you can create something similarly powerful, but the results depend on the care and thought you put in. It’s a canvas, not a finished product—but the potential is enormous.
+
+So, let’s get started. Here we are in Cursor, looking at week four. We're moving into Python modules, which I know some of you will appreciate. But don’t worry—I won’t be typing endlessly.
+
+Let’s get started. We’re now in Cursor, and it’s week 4 of the project. This time, we’re going to focus on Python modules. I know some of you will appreciate digging into Python, but for now, I’m not going to be writing code live. Instead, I’ll just walk through the code, taking time to explain how everything fits together.
+
+---
+> [sidekick_tools.py](../week4_langgraph/sidekick_tools.py)
+> [sidekick.py](../week4_langgraph/sidekick.py)
+> [app.py](../week4_langgraph/app.py)
+--- 
+
+The Sidekiq application is structured into three main Python modules. I’ll give you a quick overview of each before we look more closely at them:
+
+First, there’s `sidekiq_tools.py`. This module is where all the different tools are defined. By collecting them in one place, we make it easy to manage and expand the toolkit that our agent has access to. This is really the foundation for enabling the agent to interact with the outside world—web searches, file system access, notifications, and more. Everything the agent might need, tool-wise, is organized here.
+
+Next, we have `sidekiq.py`. This module is a bit lengthy and, to be honest, could probably benefit from being split up. It contains the core class, `Sidekiq`, which is where the main logic resides. Here you’ll find the code that defines the worker agent, the evaluator, and the overall process for building and orchestrating the workflow graph. This is the “brain” of the application, tying everything together and managing how tasks are executed and evaluated.
+
+Finally, there’s `app.py`. This is where the Gradio app is set up—the part that handles the user interface. This module connects everything for the user, providing a way to interact with the agent and see results in real time.
+
+Now that you have an idea of the overall structure, let’s spend a few minutes diving into each part to see how they work and what makes them tick.
+
+
+> [sidekick_tools.py](../week4_langgraph/sidekick_tools.py)

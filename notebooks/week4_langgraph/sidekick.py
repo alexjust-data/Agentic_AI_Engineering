@@ -207,3 +207,47 @@ class Sidekick:
                 asyncio.run(self.browser.close())
                 if self.playwright:
                     asyncio.run(self.playwright.stop())
+
+
+if __name__ == "__main__":
+    import gradio as gr
+
+    def make_thread_id():
+        import uuid
+        return str(uuid.uuid4())
+
+    # Global instance of Sidekick
+    sidekick = Sidekick()
+
+    # Async Gradio callback
+    async def process_message(message, success_criteria, chat_history, thread_id):
+        if not message:
+            return chat_history
+        await sidekick.setup()  # Ensures tools/graph/LLMs are initialized
+        updated_history = await sidekick.run_superstep(message, success_criteria, chat_history)
+        return updated_history
+
+    def reset():
+        return "", "", []
+
+    with gr.Blocks(theme=gr.themes.Default(primary_hue="emerald")) as demo:
+        gr.Markdown("## 🤖 Sidekick Personal Co-worker")
+        thread = gr.State(make_thread_id())
+
+        with gr.Row():
+            chatbot = gr.Chatbot(label="Sidekick", height=300, type="messages")
+        with gr.Group():
+            with gr.Row():
+                message = gr.Textbox(show_label=False, placeholder="Your request to your sidekick")
+            with gr.Row():
+                success_criteria = gr.Textbox(show_label=False, placeholder="What are your success criteria?")
+        with gr.Row():
+            reset_button = gr.Button("Reset", variant="stop")
+            go_button = gr.Button("Go!", variant="primary")
+
+        message.submit(process_message, [message, success_criteria, chatbot, thread], [chatbot])
+        success_criteria.submit(process_message, [message, success_criteria, chatbot, thread], [chatbot])
+        go_button.click(process_message, [message, success_criteria, chatbot, thread], [chatbot])
+        reset_button.click(reset, [], [message, success_criteria, chatbot, thread])
+
+        demo.launch()
