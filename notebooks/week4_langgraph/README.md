@@ -552,7 +552,7 @@ from sidekick import Sidekick
 ---
 
 
-### 4. `sidekick.py` — The Agent Graph and Node Logic
+### 4. sidekick.py — The Agent Graph and Node Logic
 
 What we have now is the worker node, defined right here in the code.
 It's quite long, and doesn't even fit on one screen! I actually had to shrink my font to see it all. The worker is meaty: it starts with a carefully built **system message** that I’ve iterated on through lots of experiment, and you’ll need to do the same as you adapt the agent for your own use cases.
