@@ -1,15 +1,20 @@
-  - [LangGraph Explained](#langgraph-explained)
-    - [Graph-Based Architecture for Robust AI Agents](#graph-based-architecture-for-robust-ai-agents)
-    - [Core Components for Building Advanced Agent Systems](#core-components-for-building-advanced-agent-systems-)
-  - [LangGraph Deep Dive](#langgraph-deep-dive)
-    - [Managing State in Graph-Based Agent Workflows](#managing-state-in-graph-based-agent-workflows)
-  - [Mastering LangGraph](#mastering-langgraph)
-    - [How to Define State Objects & Use Reducers : 1_lab1](#how-to-define-state-objects--use-reducers)
-    - [Super-Step & checkpoint explained](#super-step--checkpoint-explained)
-    - [Setting Up Langsmith & Creating Custom Tools for LangGraph Applications](#setting-up-langsmith--creating-custom-tools-for-langgraph-applications)
-  - [Playwright Integration with LangGraph: Creating Web-Browsing AI Agents](#playwright-integration-with-langgraph-creating-web-browsing-ai-agents)
-
-  - [Agentic AI: Add Web Search, File System & Python REPL to Your Assistant](#agentic-ai-add-web-search-file-system--python-repl-to-your-assistant)
+- [LangGraph Explained](#langgraph-explained)
+  - [Graph-Based Architecture for Robust AI Agents](#graph-based-architecture-for-robust-ai-agents)
+  - [Core Components for Building Advanced Agent Systems](#core-components-for-building-advanced-agent-systems-)
+- [LangGraph Deep Dive](#langgraph-deep-dive)
+  - [Managing State in Graph-Based Agent Workflows](#managing-state-in-graph-based-agent-workflows)
+- [Mastering LangGraph](#mastering-langgraph)
+  - [How to Define State Objects & Use Reducers : 1_lab1](#how-to-define-state-objects--use-reducers)
+  - [Super-Step & checkpoint explained](#super-step--checkpoint-explained)
+  - [Setting Up Langsmith & Creating Custom Tools for LangGraph Applications](#setting-up-langsmith--creating-custom-tools-for-langgraph-applications)
+- [Playwright Integration with LangGraph: Creating Web-Browsing AI Agents](#playwright-integration-with-langgraph-creating-web-browsing-ai-agents)
+- [Agentic AI: Add Web Search, File System & Python REPL to Your Assistant](#agentic-ai-add-web-search-file-system--python-repl-to-your-assistant)
+- [1. sidekick tools](#1-sidekick_toolspy)
+- [2. sidekick.py](#2-sidekickpy)
+- [3. app](#3-apppy)
+- [4. `sidekick.py` — The Agent Graph and Node Logic](#4-sidekickpy--the-agent-graph-and-node-logic)
+- [5. App.py: The Gradio User Interface for Sidekick](#5-apppy-the-gradio-user-interface-for-sidekick)
+- [From Tools Definition to Real Agent Feedback: The Complete Sidekick Walkthrough](#from-tools-definition-to-real-agent-feedback-the-complete-sidekick-walkthrough)
     
 
 ## LangGraph Explained
@@ -453,7 +458,7 @@ You can have all sorts of tools, there's so many, and that's the beauty of this 
 
 ---
 
-### **2. [sidekick.py](../week4_langgraph/sidekick.py)**
+### 2. [sidekick.py](../week4_langgraph/sidekick.py)
 
 This module contains the core **Sidekick** class and manages state, workflow, and evaluation logic.
 
@@ -527,7 +532,7 @@ That's going to be the big part of, that's what we've always said is the five st
 
 ---
 
-### **3. [app.py](../week4_langgraph/app.py)**
+### 3. [app.py](../week4_langgraph/app.py)
 
 This is the entry point for the user interface, typically using Gradio.
 It loads the agent and presents a chat UI or similar frontend for user interaction.
