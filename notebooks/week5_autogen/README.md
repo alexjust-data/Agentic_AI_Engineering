@@ -1,3 +1,12 @@
+
+- [Microsoft Autogen 0.5.1: AI Agent Framework Explained for Beginners](#microsoft-autogen-051-ai-agent-framework-explained-for-beginners)
+- [AutoGen vs Other Agent Frameworks: Features & Components Compared](#autogen-vs-other-agent-frameworks-features--components-compared)
+- [What is Autogen](#what-is-autogen)
+- [The Building Blocks of Autogen](#the-building-blocks-of-autogen)
+-[AutoGen Agent Chat Tutorial: Creating Tools and Database Integration](#autogen-agent-chat-tutorial-creating-tools-and-database-integration)
+- [Essential AI Components: Models, Messages & Agents Explained](#essential-ai-components-models-messages--agents-explained)
+- [Advanced Autogen Agent Chat: Multimodal Features & Structured Outputs](#)
+
 ## Microsoft Autogen 0.5.1: AI Agent Framework Explained for Beginners
 
 Now, I know exactly what you’re thinking. “Another framework? Another week, another reset, another new thing to learn. I just want to get to MCP—that’s what all the hype is about! That’s week six. Why are we doing another framework now?”
@@ -98,10 +107,35 @@ So, what are the core concepts in the Autogen framework—especially in AgentCha
 
 * **Teams**
   * This is like a “crew” in Crew: a group of agents collaborating to achieve a goal.
-  
+
 There are other advanced concepts, but these are the most important to introduce right now. For today, we’ll be focusing on the first three—**models, messages, and agents**—as we quickly set up an example. And to make it even more practical, we’ll include some SQL in the example, since I know that’s valuable for many.
 
 Let’s jump in!
+
+###  AutoGen Agent Chat Tutorial: Creating Tools and Database Integration
+
+---
+> [1_autogen_agent_Chat](../week5_autogen/1_lab1_autogen_agentchat.ipynb)
+--- 
+
+
+## Essential AI Components: Models, Messages & Agents Explained
+
+And so with that, we've covered models, messages, and agents, and we'll do teams another time. And that wraps up the first day of Week 5. And next time, we'll get a bit deeper into AgentChat. See you then. And welcome to Week 5, Day 2, when we get deeper into AutoML.
+
+### Advanced Autogen Agent Chat: Multimodal Features & Structured Outputs
+And welcome to week 5, day 2, when we get deeper into Autogen, Agent, Chat. So, as a reminder, I'd like to show you these things a couple of times. Autogen, which is multiple different things. There's Autogen Core, which is the kind of infrastructure for agents interacting. There is Autogen Agent Chat, which is the thing that's quite like CRU and OpenAI Agents SDK. And built on top of that are things we will not be looking at, the no-code, low-code platform studio, and that particular tool, Magentic One. 
+
+![](../img/64.png)
+
+But we are going to be talking about Autogen, and today it's more on Autogen Agent Chat. And you remember we talked about the core concepts of models, messages, and agents, and we got to see them all, and we didn't actually talk about teams. Today, we're going to take it a little bit deeper. I always like to take it one more step deeper, but most of this is going to be concepts pretty familiar to you. We're going to talk about going multi-modal. That's, I guess, new. We haven't really done that before, so that's going to be a new one to try out. We're going to talk about structured outputs, which is an old chestnut that you know well. We're going to look at something interesting. We can actually wrap tools in langchain so that we can call langchain tools from Autogen, which is going to be super convenient, especially as we're quite experienced with langchain tools now, and because there's an enormous ecosystem of so many tools to choose from. So this is quite a luxury to have access to this. And then since we put teams up there, we better look at teams, so we're going to give that a quick whirl as well. And then there's a special guest entry as well. Something else just to put out there that I will show you that might entertain you. All right, that's enough. 
+
+![](../img/69.png)
+
+
+
+### 
+
 
 
 
