@@ -1079,6 +1079,8 @@ The report is well-formatted and includes all required information.
 **Memory and File Update: Testing Incremental Instructions**
 Now, for an advanced follow-up:
 
+![](../img/61.png)
+
 > “Please update the file to only contain information about Le Bernardin and include as much information as possible, including extracts of reviews, a summary of reviews, and some menu items.”
 
 * You rephrase, try again—this time emphasizing “Le Bernardin only” and “more detail.”
