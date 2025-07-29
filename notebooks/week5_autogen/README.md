@@ -124,7 +124,8 @@ Let’s jump in!
 And so with that, we've covered models, messages, and agents, and we'll do teams another time. And that wraps up the first day of Week 5. And next time, we'll get a bit deeper into AgentChat. See you then. And welcome to Week 5, Day 2, when we get deeper into AutoML.
 
 ### Advanced Autogen Agent Chat: Multimodal Features & Structured Outputs
-And welcome to week 5, day 2, when we get deeper into Autogen, Agent, Chat. So, as a reminder, I'd like to show you these things a couple of times. Autogen, which is multiple different things. There's Autogen Core, which is the kind of infrastructure for agents interacting. There is Autogen Agent Chat, which is the thing that's quite like CRU and OpenAI Agents SDK. And built on top of that are things we will not be looking at, the no-code, low-code platform studio, and that particular tool, Magentic One. 
+
+So, as a reminder, I'd like to show you these things a couple of times. Autogen, which is multiple different things. There's Autogen Core, which is the kind of infrastructure for agents interacting. There is Autogen Agent Chat, which is the thing that's quite like CRU and OpenAI Agents SDK. And built on top of that are things we will not be looking at, the no-code, low-code platform studio, and that particular tool, Magentic One. 
 
 ![](../img/64.png)
 
