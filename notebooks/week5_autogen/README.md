@@ -115,7 +115,7 @@ Let’s jump in!
 
 ###  AutoGen Agent Chat Tutorial: Creating Tools and Database Integration
 
----
+
 > [1_autogen_agent_Chat](../week5_autogen/1_lab1_autogen_agentchat.ipynb)
 --- 
 
@@ -139,9 +139,35 @@ But we are going to be talking about Autogen, and today it's more on Autogen Age
 --- 
 
 
-
-
-
 ### AutoGen Core: The Backbone of Distributed Agent Communications
 
+![](../img/70.png)
+
+So here’s the core idea behind AutoGenCore—and I’ve already alluded to this—it’s all about decoupling the logic of an agent from what it actually does. Welcome to our ongoing exploration of AutoGen as we move into day three of week five and dive into AutoGenCore.
+
+Just as a reminder, here’s where AutoGenCore fits in: it serves as the foundation, the underlying infrastructure for AutoGen AgentChat. It’s the base layer, the engine behind it all—which is exciting.
+
+One other thing to highlight while we’re on this topic: you might have heard of Microsoft’s Semantic Kernel and wondered where it fits in this landscape. Isn’t that also an agentic framework? How does it relate to all these others? The answer is that Semantic Kernel is actually quite different. It’s more akin to something like LangChain. Semantic Kernel is a relatively heavyweight layer of “glue code” that wraps LLM calls, manages memory, and provides its own framework for tool calling, plugins, structured outputs, and more. It even has its own prompt templating system for building and populating prompts. In that sense, it’s very analogous to LangChain.
+
+Of course, there is some overlap: you can use Semantic Kernel to manage tools and agent calls, and it does include some agent functionality. Microsoft is aware of this overlap, but they see Semantic Kernel as a distinct offering. AutoGen, by contrast, is much more focused on building autonomous agentic applications; everything about it is agent-centric. Semantic Kernel is about stitching together LLM calls, typically for business use cases. That’s why we’re not focusing on Semantic Kernel in this course—it’s more relevant if you’re looking at something like LangChain.
+
+So, what exactly is AutoGenCore? In short, it’s an agent interaction framework. That’s how it’s described, and that’s what it is. It’s agnostic: it doesn’t care about the platform, the products you use to code your agents, or the abstraction layers you use. You could be calling LLMs directly, or using another framework or layer of glue code. AutoGenCore is simply about enabling agents to interact.
+
+If you want to use the AgentChat framework as your agent abstraction, that works well—and that’s what we’ll do here. The two are clearly designed to work together, with AgentChat built directly on top of AutoGenCore. But it’s not a requirement, just as LangGraph doesn’t require LangChain (though they work well together, given their shared concepts). In some ways, AutoGenCore’s positioning is similar to LangGraph: both are about orchestrating interactions between agents or operations. LangGraph focuses on the graph of operations and dependencies—the node graph we now know well. AutoGenCore, meanwhile, is focused on the interactions between operations, independent of the agent implementation.
+
+That said, there are key differences. LangGraph is designed around robustness and repeatability, enabling you to replay and trace workflows. Everything about LangGraph is built for that purpose. In contrast, AutoGenCore’s driving force is to create an environment where agents can interact—regardless of where they are, how they’re written, or what abstractions they use. Agents could be distributed across different locations, written in different languages (one in JavaScript, another in Python), and they can all work together in the AutoGenCore world. AutoGenCore handles their creation, messaging, and coordination.
+
+That’s the thesis behind AutoGenCore: supporting robust, flexible interactions between diverse agents. LangGraph touches on similar themes, but with a different emphasis. For AutoGenCore, the core focus is on interaction and interoperability among agents.
+
+![](../img/71.png)
+
+Here's the core idea behind Autogencore. And I've already alluded to this idea. And it's that it's all about decoupling the logic of an agent, what it actually does, from how messages get delivered to it, from the interplay between them. The framework deals with creating and communicating. It deals with creating agents, the whole life cycle of an agent, and the messages, the communication between them. And the agents themselves, or us as the people coding the agents, we're responsible for the logic. It's not the mandate of Autogencore. It just deals with letting them play. 
+
+![](../img/72.png)
+
+And there's two ways that it lets them play. Two types of runtime. The runtime is the kind of Autogencore world in which agents interact. And the two types, one of them is called standalone, which basically essentially means it sort of runs on your box in a simple way. And the other, distributed, is that it runs in a way that could allow remote agents to interact with each other. So these are the two kinds, and you code them both a bit differently. We are going to look at the standalone one today, and we're going to go to the distributed one tomorrow. And look, I have to tell you, I'm only going to do this at a high level. We're going to breeze through this quite quickly, and the examples will be somewhat superficial. And there's a reason for this. I feel like we've done enough detail in lots of frameworks and actually building agents. I'm not sure how applicable this is going to be to your use case. I think it's good for you to get a feel for it, and to get a good sense of how this is positioned and where it might be useful. And that's my goal, give you a flavor, give you that kind of sense of where it fits in the ecosystem. And if it's relevant for you, if this is something that you do want to put into practice, then you should carry out more R&D and work on this a bit more yourself. And I'll give you plenty of starting points for that. But I'm not going to go so deep into this as some of the other frameworks, it's like Langroth last time. But in the unlocks, you get a feel for it. And then we move on, because I know you're anxious to get to MCP. All right, let's do all that. So here we are in good old cursor, going to the fifth.
+
+---
+> [3_lab3_autogen_core](../week5_autogen/3_lab3_autogen_core.ipynb)
+--- 
 
