@@ -115,7 +115,7 @@ Let’s jump in!
 
 ###  AutoGen Agent Chat Tutorial: Creating Tools and Database Integration
 
-
+---
 > [1_autogen_agent_Chat](../week5_autogen/1_lab1_autogen_agentchat.ipynb)
 --- 
 
