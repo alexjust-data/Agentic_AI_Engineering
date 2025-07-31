@@ -3,9 +3,10 @@
 - [AutoGen vs Other Agent Frameworks: Features & Components Compared](#autogen-vs-other-agent-frameworks-features--components-compared)
 - [What is Autogen](#what-is-autogen)
 - [The Building Blocks of Autogen](#the-building-blocks-of-autogen)
--[AutoGen Agent Chat Tutorial: Creating Tools and Database Integration](#autogen-agent-chat-tutorial-creating-tools-and-database-integration)
+- [AutoGen Agent Chat Tutorial: Creating Tools and Database Integration](#autogen-agent-chat-tutorial-creating-tools-and-database-integration)
 - [Essential AI Components: Models, Messages & Agents Explained](#essential-ai-components-models-messages--agents-explained)
-- [Advanced Autogen Agent Chat: Multimodal Features & Structured Outputs](#)
+- [Advanced Autogen Agent Chat: Multimodal Features & Structured Outputs](#advanced-autogen-agent-chat-multimodal-features--structured-outputs)
+- [AutoGen Core: The Backbone of Distributed Agent Communications](#autogen-core-the-backbone-of-distributed-agent-communications)
 
 ## Microsoft Autogen 0.5.1: AI Agent Framework Explained for Beginners
 
@@ -133,10 +134,14 @@ But we are going to be talking about Autogen, and today it's more on Autogen Age
 
 ![](../img/69.png)
 
+---
+> [2_lab2_autogen_agentchat](../week5_autogen/2_lab2_autogen_agentchat.ipynb)
+--- 
 
 
-### 
 
 
+
+### AutoGen Core: The Backbone of Distributed Agent Communications
 
 
