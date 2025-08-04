@@ -7,6 +7,7 @@
 - [Essential AI Components: Models, Messages & Agents Explained](#essential-ai-components-models-messages--agents-explained)
 - [Advanced Autogen Agent Chat: Multimodal Features & Structured Outputs](#advanced-autogen-agent-chat-multimodal-features--structured-outputs)
 - [AutoGen Core: The Backbone of Distributed Agent Communications](#autogen-core-the-backbone-of-distributed-agent-communications)
+- [Distributed Runtime](#distributed-runtime)
 
 ## Microsoft Autogen 0.5.1: AI Agent Framework Explained for Beginners
 
@@ -167,10 +168,27 @@ Here's the core idea behind Autogencore. And I've already alluded to this idea. 
 
 And there's two ways that it lets them play. Two types of runtime. The runtime is the kind of Autogencore world in which agents interact. And the two types, one of them is called standalone, which basically essentially means it sort of runs on your box in a simple way. And the other, distributed, is that it runs in a way that could allow remote agents to interact with each other. So these are the two kinds, and you code them both a bit differently. We are going to look at the standalone one today, and we're going to go to the distributed one tomorrow. And look, I have to tell you, I'm only going to do this at a high level. We're going to breeze through this quite quickly, and the examples will be somewhat superficial. And there's a reason for this. I feel like we've done enough detail in lots of frameworks and actually building agents. I'm not sure how applicable this is going to be to your use case. I think it's good for you to get a feel for it, and to get a good sense of how this is positioned and where it might be useful. And that's my goal, give you a flavor, give you that kind of sense of where it fits in the ecosystem. And if it's relevant for you, if this is something that you do want to put into practice, then you should carry out more R&D and work on this a bit more yourself. And I'll give you plenty of starting points for that. But I'm not going to go so deep into this as some of the other frameworks, it's like Langroth last time. But in the unlocks, you get a feel for it. And then we move on, because I know you're anxious to get to MCP. All right, let's do all that. So here we are in good old cursor, going to the fifth.
 
-![](../img/73.png)
-
 ---
 > [3_lab3_autogen_core](../week5_autogen/3_lab3_autogen_core%20copy.ipynb)  
 > [3_lab3_autogen_core : without notes](../week5_autogen/3_lab3_autogen_core.ipynb)
+--- 
+
+### Distributed Runtime
+
+Autogen core, It's responsible for worrying about how agents play together. It doesn't care about how the agents are implemented, although it works well with the agent chat. It's somewhat analogous to LandGraph, except rather than focusing on repeatable workflows, it's focused on the interactions between diverse agents. And, in particular, we talked about two different types of runtime: the standalone and the distributed. Last time, we talked about standalone; today, we're looking at distributed runtimes.
+
+It's going to be even higher level than last time, and it's just to give you that flavor. I should also point out that Microsoft says that the distributed runtime is still experimental, and the APIs are liable to change at any point, so it should be taken in that light. It's not actually ready for a production system yet; it's more of an architecture and idea—an exciting idea in terms of future possibilities.
+
+The distributed runtime itself, that we're going to look at right now, is described as something which handles processes and messaging across process boundaries. That's the idea. It's no longer a single-threaded thing running on our machine—it's something that can run across different processes that might not be Python processes; they could be anything.
+
+It consists of two different things—two different components to it. One of them is called the host service, and that is the sort of container that runs this. It connects to a worker runtime, or potentially many worker runtimes, and it handles the delivery. It handles sessions for direct messages—direct messages that are going to be handled by gRPC (if you're familiar with that technology, the remote procedure calls). It's going to handle the session management around that, all of the nuts and bolts of the infrastructure around the complicated business of sending a message remotely from one computer to another, from one process to another. That will be taken care of by the framework.
+
+And then, the other concept here is a worker runtime. That is the runtime that will be able to treat much as we treated the runtime in the single-threaded case. It will be able to manage different agents—it will have different agents that are registered with it. It will advertise the agents it's got to its host service, so the host service knows what it's got, and it will actually handle, of course, executing the code.
+
+The worker runtime has the agents, which themselves are delegates for something that does something, and that will be handled by the worker runtime. So, that's how it fits together—but it's going to be more concrete when I show it to you, which I'll do right now.
+
+---
+> ![4_lab4_autogen_distributed](/my_agents/notebooks/week5_autogen/4_lab4_autogen_distributed.ipynb)
+> ![4_lab4_autogen_distributed: without notes](/my_agents/notebooks/week5_autogen/4_lab4_autogen_distributed%20copy.ipynb)
 --- 
 
