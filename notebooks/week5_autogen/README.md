@@ -188,8 +188,8 @@ And then, the other concept here is a worker runtime. That is the runtime that w
 The worker runtime has the agents, which themselves are delegates for something that does something, and that will be handled by the worker runtime. So, that's how it fits together—but it's going to be more concrete when I show it to you, which I'll do right now.
 
 ---
-> ![4_lab4_autogen_distributed](/my_agents/notebooks/week5_autogen/4_lab4_autogen_distributed.ipynb)  
-> ![4_lab4_autogen_distributed: without notes](/my_agents/notebooks/week5_autogen/4_lab4_autogen_distributed%20copy.ipynb)  
+> [4_lab4_autogen_distributed](/my_agents/notebooks/week5_autogen/4_lab4_autogen_distributed.ipynb)  
+> [4_lab4_autogen_distributed: without notes](/my_agents/notebooks/week5_autogen/4_lab4_autogen_distributed%20copy.ipynb)  
 --- 
 
 
