@@ -195,7 +195,7 @@ The worker runtime has the agents, which themselves are delegates for something 
 
 ## Creating Autonomous Agents That Write & Deploy Other Agents in AutoGen
 
-![](../img/75.png)
+![](../img/76.png)
 
 
 **Educational**
@@ -227,7 +227,7 @@ And also, it's unsafe. So we are going to be building something that's going to 
 I may in time put this into a Docker container or something. But that would be quite a bore because you'd need to install autogen in the Docker container, so it wouldn't be easy. But as it is, take it for what it is. You can just watch me run it if you don't feel confident that you know what's going on and that you're comfortable taking the risk of letting an agent write Python code and then executing that Python code natively on your box, which, yeah, is not for the faint of heart. So eyes wide open. You don't need to execute any code if you don't want to. And please do take that to heart. Run the code yourself only if you're comfortable with it.
 
 
-![](../img/76.png)
+![](../img/75.png)
 
 **The idea**
 
