@@ -198,31 +198,25 @@ The worker runtime has the agents, which themselves are delegates for something 
 ![](../img/76.png)
 
 
-**Educational**
-
+**Educational**  
 Have I got a treat in store for you. So welcome to Day 5 of Week 5, the wrap-up project for AutoGen Week in the form of the Agent Creator. And, well, let me tell you about this project. It's going to be quite quick, but it's going to be fun.
 
 First of all, this is designed to be primarily educational. So this is here to teach some of the innards of what you can do with this kind of framework and use AutoGen in a different way. So something that's different, unlike anything else that we've done.
 
-**Entertaining**
-
+**Entertaining**  
 Secondly, it's entertaining. This is something that should be intellectually entertaining. This is quite, quite out there.
 
-**Edgy**
-
+**Edgy**  
 And on that front, it's an edgy idea and thing to try with. And it's very in vogue in terms of thinking about autonomy, agency, and so on.
 
-**Uncommercial (but a twist)**
-
+**Uncommercial (but a twist)**  
 But those are the three pluses. There are also three minuses.
 It's not particularly commercial, so I do like to focus this whole course on commercial benefits. There is a twist. There is something a bit commercial about it, as you'll see, but it's a bit of a side benefit of it.
 
-**Unreliable**
-
+**Unreliable**  
 It's unreliable. The project that we're about to do, by its very nature, is something that may sometimes fail.
 
-**Unsafe**
-
+**Unsafe**  
 And also, it's unsafe. So we are going to be building something that's going to be creating and running Python code. And it's going to be doing so in a generally without guardrails on, which means you have to run this at your own risk. Take whatever precautions you wish.
 I may in time put this into a Docker container or something. But that would be quite a bore because you'd need to install autogen in the Docker container, so it wouldn't be easy. But as it is, take it for what it is. You can just watch me run it if you don't feel confident that you know what's going on and that you're comfortable taking the risk of letting an agent write Python code and then executing that Python code natively on your box, which, yeah, is not for the faint of heart. So eyes wide open. You don't need to execute any code if you don't want to. And please do take that to heart. Run the code yourself only if you're comfortable with it.
 
