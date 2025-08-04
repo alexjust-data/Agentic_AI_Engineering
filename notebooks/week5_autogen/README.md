@@ -223,8 +223,6 @@ I may in time put this into a Docker container or something. But that would be q
 
 ![](../img/75.png)
 
-**The idea**
-
 **Explore the dynamic nature of autogen**  
 Okay, well, hopefully I've intrigued you somewhat. Let me tell you what this idea is.
 So we're going to explore the flexible dynamic aspect of autogen.
@@ -247,3 +245,10 @@ You can assign it some other task and let it think, but the idea is that you can
 **Make them collaborate to come up with a commercial business idea for Agents**  
 And as part of the educational aspect of this, we're going to be heavily using asynchronous Python. It would be quite a drag if this thing had to happen in a serial way, with each agent being created and then messaging the others one by one. That would take quite a long time, but no, we're going to use Asyncio, AsyncIO, to make sure that things fly.
 And so, with that introduction, let's get to the code.
+
+### Implementing Agent-to-Agent Messaging with Autogen Core & Templates
+
+---
+> [agent.py, creator.py, messages.py, world.py -> notes](../week5_autogen/5_lab5_notes.ipynb)
+--- 
+

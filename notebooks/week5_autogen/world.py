@@ -5,6 +5,10 @@ from autogen_ext.runtimes.grpc import GrpcWorkerAgentRuntime
 from autogen_core import AgentId
 import messages
 import asyncio
+# Load .env file
+from dotenv import load_dotenv
+import os
+load_dotenv(os.path.join(os.path.dirname(__file__), '../..', '.env'))
 
 HOW_MANY_AGENTS = 20
 
