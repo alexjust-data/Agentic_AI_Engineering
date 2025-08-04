@@ -8,6 +8,7 @@
 - [Advanced Autogen Agent Chat: Multimodal Features & Structured Outputs](#advanced-autogen-agent-chat-multimodal-features--structured-outputs)
 - [AutoGen Core: The Backbone of Distributed Agent Communications](#autogen-core-the-backbone-of-distributed-agent-communications)
 - [Distributed Runtime](#distributed-runtime)
+- [Creating Autonomous Agents That Write & Deploy Other Agents in AutoGen](#creating-autonomous-agents-that-write--deploy-other-agents-in-autogen)
 
 ## Microsoft Autogen 0.5.1: AI Agent Framework Explained for Beginners
 
@@ -192,5 +193,63 @@ The worker runtime has the agents, which themselves are delegates for something 
 > [4_lab4_autogen_distributed: without notes](../week5_autogen/4_lab4_autogen_distributed%20copy.ipynb)  
 --- 
 
+## Creating Autonomous Agents That Write & Deploy Other Agents in AutoGen
+
+![](../img/75.png)
 
 
+**Educational**
+
+Have I got a treat in store for you. So welcome to Day 5 of Week 5, the wrap-up project for AutoGen Week in the form of the Agent Creator. And, well, let me tell you about this project. It's going to be quite quick, but it's going to be fun.
+
+First of all, this is designed to be primarily educational. So this is here to teach some of the innards of what you can do with this kind of framework and use AutoGen in a different way. So something that's different, unlike anything else that we've done.
+
+**Entertaining**
+
+Secondly, it's entertaining. This is something that should be intellectually entertaining. This is quite, quite out there.
+
+**Edgy**
+
+And on that front, it's an edgy idea and thing to try with. And it's very in vogue in terms of thinking about autonomy, agency, and so on.
+
+**Uncommercial (but a twist)**
+
+But those are the three pluses. There are also three minuses.
+It's not particularly commercial, so I do like to focus this whole course on commercial benefits. There is a twist. There is something a bit commercial about it, as you'll see, but it's a bit of a side benefit of it.
+
+**Unreliable**
+
+It's unreliable. The project that we're about to do, by its very nature, is something that may sometimes fail.
+
+**Unsafe**
+
+And also, it's unsafe. So we are going to be building something that's going to be creating and running Python code. And it's going to be doing so in a generally without guardrails on, which means you have to run this at your own risk. Take whatever precautions you wish.
+I may in time put this into a Docker container or something. But that would be quite a bore because you'd need to install autogen in the Docker container, so it wouldn't be easy. But as it is, take it for what it is. You can just watch me run it if you don't feel confident that you know what's going on and that you're comfortable taking the risk of letting an agent write Python code and then executing that Python code natively on your box, which, yeah, is not for the faint of heart. So eyes wide open. You don't need to execute any code if you don't want to. And please do take that to heart. Run the code yourself only if you're comfortable with it.
+
+
+![](../img/76.png)
+
+**The idea**
+
+**Explore the dynamic nature of autogen**  
+Okay, well, hopefully I've intrigued you somewhat. Let me tell you what this idea is.
+So we're going to explore the flexible dynamic aspect of autogen.
+
+**Make a "Creator" agent that can write a python module**  
+We are going to make a creator agent, an agent, as I say, that can write a Python module. It will use an existing Python module as its kind of template.
+
+**The python module is... an Agent: An AutoGen AgentChat Agent in AutoGen Core**  
+And that Python module is going to be an agent. It's going to be an autogen, agent chat agent, that's running in autogen core. So we're going to build an agent that can write a Python module of an agent.
+It's going to create an agent, and it's going to change it so that the Python module it makes is something new, a different agent that doesn't exist.
+
+**Then have the Creator agent actually register its creation with a distributed runtime**  
+And then the creator agent is actually going to register its creation with the distributed runtime with autogen core. In other words, dare I say it, it's going to kind of give birth, it's going to instantiate this agent.
+It's going to instantiate this agent, it's going to instantiate the agent, it's going to be a running agent that was created by the creator agent, and it's then, it's also a part of writing this agent, based on the template that we'll use, its agents are going to be able to message each other, so it's going to be possible for agents to message each other and interact, these agents that are being created by the agent.
+
+**Have it make creations that can message each other by their names**  
+And overall, they're going to have an objective of coming up with business ideas, commercial ideas for putting agent AI, agentic AI, into practice to make money. So there is a commercial angle, but subtly, because the overall objective of our team of created agents is to try and make you money by coming up with ideas, and of course you can shift the overall objective, you can make it something different, or maybe not money with agentic AI, but how to make it quick, but in some other way.
+You can assign it some other task and let it think, but the idea is that you can spawn this army of agents that can think about something and interact with each other, and you can help plant the initial seed and then see what happens.
+
+**Make them collaborate to come up with a commercial business idea for Agents**  
+And as part of the educational aspect of this, we're going to be heavily using asynchronous Python. It would be quite a drag if this thing had to happen in a serial way, with each agent being created and then messaging the others one by one. That would take quite a long time, but no, we're going to use Asyncio, AsyncIO, to make sure that things fly.
+And so, with that introduction, let's get to the code.
