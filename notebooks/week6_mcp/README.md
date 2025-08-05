@@ -7,10 +7,6 @@
 
 ## MCP
 
-Absolutely. Here's your entire text fully corrected, converted into a smooth, continuous narrative style, with **bold section headings** (`**...**`) instead of `##`, and with all images placed in their corresponding location. Paragraph breaks are only used where structurally necessary, and no content has been removed or altered beyond formatting:
-
----
-
 **This is what it's all about**
 Welcome to the epic finale week of the Complete Agentic AI course. This is the week when we introduce MCP, the Model Context Protocol for Anthropic, and we build our flagship project, our capstone project, an equity trading floor. Let's get into it.
 
