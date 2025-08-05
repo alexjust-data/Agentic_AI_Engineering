@@ -66,17 +66,21 @@ Now let’s clarify how all this fits together with a diagram. Imagine a box rep
 There’s also an alternative architecture where you connect to a remote server. You can have an MCP server running on a remote machine and connect to it from your host via an MCP client. But this setup is rare. People often hear the word "MCP server" and assume it refers to something remote. That’s a common misconception. In practice, most MCP servers run locally, outside the host, but still on your own machine. You may have downloaded them from somewhere public, but once they’re installed, they run locally. For example, we got the Fetch MCP server from Anthropic’s repository, installed it on our machine, and connected to it from AutoGen, which served as our host. We wrote some code that acted as an MCP client, connecting to the local Fetch MCP server. Remote MCP servers are possible. It’s technically supported. Sometimes they’re referred to as "hosted" or "managed" MCP servers. But again, they’re rare. That’s an important clarification I want to make: in nearly all real-world cases, MCP servers are downloaded and executed locally. They run on your box, outside the host.
 
 **Remote APIs vs Remote Servers**
+
 There’s another configuration that’s worth mentioning. Your locally running MCP server might only handle purely local tasks—like writing to the file system. But many MCP servers use online functionality. The Fetch server does that: it opens a browser, visits web pages online. Others query APIs like weather services. These are MCP servers running on your machine that make internet requests. And this pattern—local server making remote calls—is the most common of all. Still, it’s important to distinguish that from the less common case of having an MCP client connecting to a remote server.
 
 ![](../img/82.png)
 
 **MCP Servers Run Locally**
+
 So let me repeat it clearly once again. If I haven’t stressed it enough already, MCP servers mostly run on your machine. You typically download them, install them, and run them locally. And I keep repeating this because people really do get confused. The terminology is misleading. But that’s how it works. When we look at MCP marketplaces, you’ll see thousands of MCP servers, and almost all of them run locally. It’s not easy to find one that you connect to remotely.
 
 **MCP Transport Mechanisms: STUDIO and SSE**
+
 Now let’s turn to the two different technical mechanisms that MCP servers can use. These are called "transport mechanisms" in the official Anthropic spec. The first, and by far the most common, is called STUDIO—spelled like that—which stands for Standard Input Output. Some people call it STDIO, but I prefer STUDIO. This is the simplest setup. When using STUDIO, the MCP client spawns a separate process on your computer and communicates with it through standard input and output—hence the name. This is the most widely used transport mechanism, and when we build our own MCP server later, we’ll use this one. The second method is called SSE—Server-Side Events. SSE uses an HTTPS connection and streams back results, much like how LLMs stream their responses. That’s also built on SSE. If you’re connecting to a remote MCP server, like a hosted or managed server, you must use SSE. STUDIO won’t work for remote connections—it has to be SSE. On the other hand, if you’re running local MCP servers, you can use either STUDIO or SSE, though STUDIO is by far the most common.
 
 **Conclusion and Transition to Lab**
+
 So take a moment to let that all sink in. The host, the MCP client, the MCP server—these are consistent across configurations. The key variation is the transport mechanism: STUDIO or SSE. And now, with all of that in mind, it’s time for our lab. Let’s go and make use of MCP servers in the fabulous OpenAI Agents SDK.
 
 
