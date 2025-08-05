@@ -7,100 +7,38 @@
 
 ## MCP
 
-**This is what it's all about**
+Absolutely. Here's your entire text fully corrected, converted into a smooth, continuous narrative style, with **bold section headings** (`**...**`) instead of `##`, and with all images placed in their corresponding location. Paragraph breaks are only used where structurally necessary, and no content has been removed or altered beyond formatting:
 
+---
+
+**This is what it's all about**
 Welcome to the epic finale week of the Complete Agentic AI course. This is the week when we introduce MCP, the Model Context Protocol for Anthropic, and we build our flagship project, our capstone project, an equity trading floor. Let's get into it.
 
 **Agentic AI Frameworks**
-
-So during this course, we've covered a number of different agent frameworks. We've covered, of course, my favorite OpenAI agents, SDK. We've covered Crew, LangGraph, and most recently, AutoGen. And this time, we're coming back to look at MCP, which is, of course, not really a framework at all. It's a protocol, as we will discuss. And this is where it comes together.
-
-At the end of the week, I'm also going to talk generally retrospectively about the different frameworks we've covered. I'll talk about some of the other frameworks we didn't directly cover, and we'll bring it all together there. But for now, let's get going with MCP.
+So during this course, we've covered a number of different agent frameworks. We've covered, of course, my favorite OpenAI Agents SDK. We've covered Crew, LangGraph, and most recently, AutoGen. And this time, we're coming back to look at MCP, which is, of course, not really a framework at all. It's a protocol, as we will discuss. And this is where it comes together. At the end of the week, I'm also going to talk generally retrospectively about the different frameworks we've covered. I'll talk about some of the other frameworks we didn't directly cover, and we'll bring it all together there. But for now, let's get going with MCP.
 
 **Before We Start**
+But wait, I see that there are some people here who perhaps don't belong here. There are some people here who have skipped straight to week six. You are busted. I found you. You've jumped to week six because you're excited about MCP, and you can't wait to hear about it and get into it. And look, of course, it's open for you. I'm not going to stop you from doing that. But I do just want to say, if you are just joining us, you've missed out on some really great stuff. And a lot of it prepares you to get here. And I know you're impatient for MCP. I know that's what you want. But there's good stuff, particularly in weeks one and two. And so if you have skipped straight to this, then I do just want to say, in week one, we cover natively understanding what it means to connect with different LLMs and to orchestrate them using tools. We look at different design patterns for agent models, and we understand what it means for a model to be autonomous. And then in week two, we introduce the OpenAI Agents SDK. And that is what we're going to be using to take advantage of MCP this week. And so it's really great foundational stuff. Now, look, you can just keep going with MCP if you really wish. But I would suggest that you at least take a quick peek at weeks one and two and see if you're willing to do that. And for those of you here that did go through the whole thing, then fabulous. We are in great shape.
 
-But wait, I see that there are some people here who perhaps don't belong here. There are some people here who have skipped straight to week six. You are busted. I found you. You've jumped to week six because you're excited about MCP, and you can't wait to hear about it and get into it.
-And look, it's, of course, it's open for you. I'm not going to stop you from doing that.
-
-But I do just want to say, if you are just joining us, you've missed out on some really great stuff. And a lot of it prepares you to get here. And I know you're impatient for MCP. I know that's what you want. But there's good stuff, particularly in weeks one and two.
-
-And so if you have skipped straight to this, then I do just want to say, in week one, we cover natively understanding what it means to connect with different LLMs and to orchestrate them using tools. We look at different design patterns for agent models, and we understand what it means for a model to be autonomous.
-
-And then in week two, we introduce the OpenAI Agents SDK. And that is what we're going to be using to take advantage of MCP this week. And so it's really great foundational stuff.
-
-Now, look, you can just keep going with MCP if you really wish.
-But I would suggest that you at least take a quick peek at weeks one and two and see if you're willing to do that.And for those of you here that did go through the whole thing, then fabulous. We are in great shape.
-
-### Intro to MCP: The USB-C of Agentic AI
-
-And so introducing then the model context protocol from Anthropic. First announced late last year, but it really took off in January, February, March, April of this year. And what is it? Well, Anthropic themselves describe it as the USB-C of agentic AI. And that term has taken off. And we'll explain what that means in a second.
-
-I should point out that I'm aware that this picture that I generated is in fact showing a USB-A, not a USB-C. And MCP is decidedly not the USB-A of agentic AI. It is the USB-C of agentic AI. And that is what we're going to discover right now.
+**Intro to MCP: The USB-C of Agentic AI**
+And so, introducing then the Model Context Protocol from Anthropic. First announced late last year, but it really took off in January, February, March, April of this year. And what is it? Well, Anthropic themselves describe it as the USB-C of agentic AI. And that term has taken off. And we'll explain what that means in a second. I should point out that I'm aware that this picture that I generated is in fact showing a USB-A, not a USB-C. And MCP is decidedly not the USB-A of agentic AI. It is the USB-C of agentic AI. And that is what we're going to discover right now.
 
 ![](../img/78.png)
 
-**What MCP is `not`**
+**What MCP is not**
+So there are a lot of misconceptions about MCP. And I'm going to start by just dispelling some of them. Let me tell you first what MCP is not. Obviously, it's not actually like an agent framework. It's not got anything to do with building agents. And it's also not some sort of fundamental change to anything. Anthropic didn't invent something completely new that changes the way we do stuff. It's also not a way to code agents either.
 
-So there are a lot of misconceptions about MCP. And I'm going to start by just dispelling some of them. Let me tell you first what MCP is not.
-
-Obviously, it's not actually like an agent framework. It's not got anything to do with building agents.
-And it's also not some sort of fundamental change to anything. Anthropic didn't invent something completely new that changes the way we do stuff.
-It's also not a way to code agents either.
-
-**What MCP `is`**
-
-So what is it? Well, it's a protocol. It's a standard. It's a way to do things consistently and simply.
-
-And what that is, is it's a simple way to integrate your agents with tools or resources or prompts that have been written by other people so that you can easily share things like tools.
-
-And I should say that, first and foremost, it's about tools. That's where the greatest excitement has taken off. The idea of being able to share resources, like be able to use RAG sources from other people, is also fairly popular. And then prompts, I don't think, is particularly taken off, the idea that you'd be able to share prompts. But it's available. But it's tools. That's what people are really excited about.
-
-It's a way to easily share tools so that one person can build a useful tool that can do something helpful, and then other people can easily take advantage of that tool in their products.
-
-And that's why it's known as a USB-C for AI applications, for agentic AI. It's about connectivity. It's about easily connecting your agent app with other people's tools.
-
+**What MCP is**
+So what is it? Well, it's a protocol. It's a standard. It's a way to do things consistently and simply. And what that is, is it's a simple way to integrate your agents with tools or resources or prompts that have been written by other people so that you can easily share things like tools. And I should say that, first and foremost, it's about tools. That's where the greatest excitement has taken off. The idea of being able to share resources, like being able to use RAG sources from other people, is also fairly popular. And then prompts, I don't think, have particularly taken off—the idea that you'd be able to share prompts. But it's available. But it's tools. That's what people are really excited about. It's a way to easily share tools so that one person can build a useful tool that can do something helpful, and then other people can easily take advantage of that tool in their products. And that's why it's known as a USB-C for AI applications, for agentic AI. It's about connectivity. It's about easily connecting your agent app with other people's tools.
 
 ![](../img/79.png)
 
 **Reasons not to be excited**
-
-So with this in mind, there's a few things that are reasons that one should be really quite excited about this technology.
-But first, there are a few things that aren't particularly exciting about it that's worth stressing.
-
-So first of all, MCP is just the standard.
-It's just the approach for being able to integrate with other people's tools.
-It's not the tools themselves.
-
-So MCP from Anthropic isn't particularly the tools, although they have built a few, but that's not what makes it exciting.
-
-LangChain, for example, as we discovered, already has a massive tools ecosystem.
-So with the LangChain community, you've already got access to lots and lots of tools that people have written.
-So it's not like that isn't available.
-
-And we've already discovered that it's easy to turn any function into a tool just with a decorator in OpenAI Agents SDK.
-So with a quick function tool decorator, any function you write can be a tool for your agent.
-So if you're writing your own tools, equipping your agent to take advantage of them is easy.
-
-And MCP doesn't help you with that.
-In fact, it makes that harder.
-It's all about being able to use other people's tools.
+So with this in mind, there are a few things that are reasons that one should be really quite excited about this technology. But first, there are a few things that aren't particularly exciting about it that are worth stressing. So first of all, MCP is just the standard. It's just the approach for being able to integrate with other people's tools. It's not the tools themselves. So MCP from Anthropic isn't particularly the tools, although they have built a few, but that's not what makes it exciting. LangChain, for example, as we discovered, already has a massive tools ecosystem. So with the LangChain community, you've already got access to lots and lots of tools that people have written. So it's not like that isn't available. And we've already discovered that it's easy to turn any function into a tool just with a decorator in OpenAI Agents SDK. So with a quick function tool decorator, any function you write can be a tool for your agent. So if you're writing your own tools, equipping your agent to take advantage of them is easy. And MCP doesn't help you with that. In fact, it makes that harder. It's all about being able to use other people's tools.
 
 **Reasons to be excited**
+And so that's the reason to be excited. It makes it frictionless to connect with someone else's tool and to immediately have a description of what the tool does, what the parameters need to be, and to be able to have it running. It's really about the ecosystem. So many people have gotten on board with MCP that there are thousands of these MCP-based tools available for you. So you can do a quick search and be quickly integrated with so many different capabilities, making your agent more powerful. And, you know, maybe this is a silly point, but standards can be really exciting if they get adopted. It's all about the adoption. And obviously, the Internet, the World Wide Web was successful because people coalesced around HTML. It became such a standard protocol. And so I'm just making the point that this is exciting because of the adoption. That's what's driven this ecosystem of tools and what's allowed you so easily to equip your agents with more functionality.
 
-And so that's the reason to be excited.
-It makes it frictionless to connect with someone else's tool and to immediately have a description of what the tool does, what the parameters need to be, and to be able to have it running.
-It's really about the ecosystem.
-
-So many people have gotten on board with MCP that there are thousands of these MCP-based tools available for you.
-So you can do a quick search and be quickly integrated with so many different capabilities and making your agent more powerful.
-
-And, you know, maybe this is a silly point, but standards can be really exciting if they get adopted.
-It's all about the adoption.
-And obviously, the Internet, the World Wide Web was because people coalesced around HTML.
-It became such a standard protocol.
-
-And so I'm just making the point that this is exciting because of the adoption.
-That's what's driven this ecosystem of tools and what's allowed you so easily to equip your agents with more functionality.
 
 
 ### Understanding MCP Hosts, Clients, and Servers
