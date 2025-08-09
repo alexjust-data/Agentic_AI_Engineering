@@ -82,3 +82,13 @@ So take a moment to let that all sink in. The host, the MCP client, the MCP serv
 
 
 ### Using MCP Servers with OpenAI Agents SDK
+
+I'm going to open up Week 6, and you'll see there's quite a lot going on here. We've got a lot of work to do this week, and we're going to start with the first lab: Lab 1. 
+
+---
+> [1_lab1](../week6_mcp/1_lab1.ipynb)  
+> [1_lab1 : without notes](../week6_mcp/1_lab1.ipynb)
+--- 
+
+
+
