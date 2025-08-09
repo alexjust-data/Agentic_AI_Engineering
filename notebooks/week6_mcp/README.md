@@ -92,3 +92,5 @@ I'm going to open up Week 6, and you'll see there's quite a lot going on here. W
 
 
 
+## Building your own MCP Server
+
