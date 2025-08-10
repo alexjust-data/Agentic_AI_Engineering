@@ -117,5 +117,6 @@ Now, you probably realize the reason I'm belaboring this point is because I want
 
 ---
 > [2_lab2](../week6_mcp/2_lab2.ipynb)
+> [2_lab2: without notes](../week6_mcp/2_lab2%20copy.ipynb)
 --- 
 
