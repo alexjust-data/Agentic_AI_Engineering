@@ -94,3 +94,25 @@ I'm going to open up Week 6, and you'll see there's quite a lot going on here. W
 
 ## Building your own MCP Server
 
+
+And welcome to Day 2 of Week 6 as we get more into MCP. And this is the time we build our own MCP client and MCP server. Remember, today we're making our own. We're not making a USB-A of HNTG-AI. We're making a USB-C of HNTG-AI.
+
+**Core MCP Concepts**
+A reminder of these core concepts that probably now you're getting this. The host is the overall application, like Cloud Desktop or our agent architecture. The client lives inside the host and has a one-on-one connection, like over input-output, to an MCP server, which is a separate process, running outside and providing the tools, the context, and the prompts to your MCP client, to your host. And most of the time we're talking about tools, although briefly we'll use context as well in our journey. And that's the example of Fetch that we've used before.
+
+![](../img/83.png)
+
+**MCP Architecture Reminder**
+And a reminder of the architecture, again, on the bottom left is the idea that you can have an MCP server that connects to an MCP server running on your computer and it does everything locally, like the file writer that we had when we wrote BanoffeePi. The second one along is an MCP client that connects to an MCP server running on your box that then calls out to some sort of remote internet service. And I guess the PlayWrite and Fetch are both examples of that. And then less common, that third one, sometimes known as a hosted MCP server or a managed MCP server, is when you have an MCP client that connects remotely to the MCP server running on another machine. And that would need to be using the SSE transport mechanism, whereas ones running locally could be either STDIO or SSE, and they're usually STDIO. And maybe it's also worth mentioning on this diagram that these MCP servers can be written in Python or JavaScript, in which case typically the parameters that describe them have ubx as the command to run or mpx. They can actually also just be creating a Docker container. There's various other ways, but ubx and mpx are by far the most common.
+
+![](../img/84.png)
+
+**Why Build an MCP Server?**
+So with that, we're going to go and create our own MCP server. But just before we do, I want to quickly take a moment to ask, why do we want to make an MCP server? What's the advantage of doing it? Well, the number one advantage is you make an MCP server if you want to share it. You build something which you want other people to be able to use with their agents, because you're going to be describing it in a way, you're going to be working on the prompts and the information around your tool, and people will be able to integrate it with their agents so simply. That's the number one reason. And also if it has resources, which is a bit like a RAG context, and then prompt templates too, although that's not used so often. Also, I suppose there is a small benefit. If we're building an agent system and we're using a bunch of MCP servers, it might be nice for us to treat our own tools consistently so that everything is packaged as MCP servers. This is a bit tenuous, but it's one reason we're going to do it this way, because we only want to use MCP servers. And it's also useful, if you're doing it, just so you can understand the plumbing, just so you can really build the nuts and bolts and do it yourself.
+
+![](../img/85)
+
+**When Not to Build an MCP Server**
+Now, you probably realize the reason I'm belaboring this point is because I want to say, why don't you want to make an MCP server? What are the reasons against? And there's one really important one, and it's this. If you're only building a tool for you to use yourself, if we're writing a function and we want to equip our LLM with that function, then there's no point in building an MCP server. That's wasting time. You can simply decorate that function tool and then equip your LLM just by putting in tools. You can just immediately provide it through the OpenAI Agents SDK or using the JSON approach from week one. And then that function will be called in your current Python process. It will just be called as a tool, and that's easy. Building an MCP server, which means that it gets spawned and runs as a separate process and communicates over standard input output and is provided as an MCP server, that's a whole lot of extra plumbing and scaffolding that's not needed if it's just to call your own tool. So it's important to have that clarity that MCP doesn't help with building your own tools. That's already easy, and you should just do it. MCP is about sharing tools. That's the benefit.
+
+
