@@ -115,4 +115,7 @@ So with that, we're going to go and create our own MCP server. But just before w
 **When Not to Build an MCP Server**
 Now, you probably realize the reason I'm belaboring this point is because I want to say, why don't you want to make an MCP server? What are the reasons against? And there's one really important one, and it's this. If you're only building a tool for you to use yourself, if we're writing a function and we want to equip our LLM with that function, then there's no point in building an MCP server. That's wasting time. You can simply decorate that function tool and then equip your LLM just by putting in tools. You can just immediately provide it through the OpenAI Agents SDK or using the JSON approach from week one. And then that function will be called in your current Python process. It will just be called as a tool, and that's easy. Building an MCP server, which means that it gets spawned and runs as a separate process and communicates over standard input output and is provided as an MCP server, that's a whole lot of extra plumbing and scaffolding that's not needed if it's just to call your own tool. So it's important to have that clarity that MCP doesn't help with building your own tools. That's already easy, and you should just do it. MCP is about sharing tools. That's the benefit.
 
+---
+> [2_lab2](../week6_mcp/2_lab2.ipynb)
+--- 
 
