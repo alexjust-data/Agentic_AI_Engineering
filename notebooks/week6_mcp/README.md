@@ -119,4 +119,17 @@ Now, you probably realize the reason I'm belaboring this point is because I want
 > [2_lab2](../week6_mcp/2_lab2.ipynb)
 > [2_lab2: without notes](../week6_mcp/2_lab2%20copy.ipynb)
 --- 
+**Wrap-Up: Capabilities of Your Custom MCP Server**
+
+Well, I hope you enjoyed our adventure into the plumbings and internals of MCP servers and clients. Next time, we are going to now do what MCP is famous for. We are going to explore tons of MCP servers out there and just have fun equipping our agents with these new capabilities. I will see you then.
+
+
+## Exploring Types of MCP Servers and Agent Memory
+
+And welcome to week 683, and I've been looking forward to today for a long time because this is the day where I'm going to be exploring what MCP has to offer. First, as usual, a quick recap of the core concepts behind MCP, looking at the architecture diagram that we've got here. We're going to be looking at the three different configurations of MCP servers. First of all, and the simplest of all, is when you use an MCP server that simply is created, runs on your local computer, only uses stuff on your computer, and is something that you're using right there. Just like the accounts MCP server that we just used, which is actually one that we hand-wrote ourselves, and also one like the local file system. Okay, and then secondly, and this is perhaps the most common of all, we're going to look at MCP servers that run locally on a computer, but make remote calls to APIs that take advantage of stuff that can be available online. And that's number two on this diagram, and that is, of course, super common. And then thirdly, and we're not going to do this too much, we're just going to have a look at what it means to have a managed MCP server, or a hosted MCP server, which is running remotely. As I say, not a common architecture, but we'll just look at it and see some examples and understand it. And it's worth pointing out that even numbers one and two, while it's possible to write your own, most of the time when we're talking about MCP, these are MCP servers that have been made available online, and that through commands like uvx, you are downloading it from an online public place, and you are then running it locally on your box. So it's running on your box, but it's still something that's been shared online, made available for everyone to use. All right, that's enough intro. Let's go for that. Here we are back in Cursor, and we're going into the week six.
+
+---
+> [3_lab3](../week6_mcp/3_lab3.ipynb)
+> [3_lab3: without notes](../week6_mcp/3_lab3%20copy.ipynb)
+--- 
 
