@@ -116,7 +116,7 @@ So with that, we're going to go and create our own MCP server. But just before w
 Now, you probably realize the reason I'm belaboring this point is because I want to say, why don't you want to make an MCP server? What are the reasons against? And there's one really important one, and it's this. If you're only building a tool for you to use yourself, if we're writing a function and we want to equip our LLM with that function, then there's no point in building an MCP server. That's wasting time. You can simply decorate that function tool and then equip your LLM just by putting in tools. You can just immediately provide it through the OpenAI Agents SDK or using the JSON approach from week one. And then that function will be called in your current Python process. It will just be called as a tool, and that's easy. Building an MCP server, which means that it gets spawned and runs as a separate process and communicates over standard input output and is provided as an MCP server, that's a whole lot of extra plumbing and scaffolding that's not needed if it's just to call your own tool. So it's important to have that clarity that MCP doesn't help with building your own tools. That's already easy, and you should just do it. MCP is about sharing tools. That's the benefit.
 
 ---
-> [2_lab2](../week6_mcp/2_lab2.ipynb)
+> [2_lab2](../week6_mcp/2_lab2.ipynb)  
 > [2_lab2: without notes](../week6_mcp/2_lab2%20copy.ipynb)
 --- 
 **Wrap-Up: Capabilities of Your Custom MCP Server**
@@ -126,10 +126,45 @@ Well, I hope you enjoyed our adventure into the plumbings and internals of MCP s
 
 ## Exploring Types of MCP Servers and Agent Memory
 
-And welcome to week 683, and I've been looking forward to today for a long time because this is the day where I'm going to be exploring what MCP has to offer. First, as usual, a quick recap of the core concepts behind MCP, looking at the architecture diagram that we've got here. We're going to be looking at the three different configurations of MCP servers. First of all, and the simplest of all, is when you use an MCP server that simply is created, runs on your local computer, only uses stuff on your computer, and is something that you're using right there. Just like the accounts MCP server that we just used, which is actually one that we hand-wrote ourselves, and also one like the local file system. Okay, and then secondly, and this is perhaps the most common of all, we're going to look at MCP servers that run locally on a computer, but make remote calls to APIs that take advantage of stuff that can be available online. And that's number two on this diagram, and that is, of course, super common. And then thirdly, and we're not going to do this too much, we're just going to have a look at what it means to have a managed MCP server, or a hosted MCP server, which is running remotely. As I say, not a common architecture, but we'll just look at it and see some examples and understand it. And it's worth pointing out that even numbers one and two, while it's possible to write your own, most of the time when we're talking about MCP, these are MCP servers that have been made available online, and that through commands like uvx, you are downloading it from an online public place, and you are then running it locally on your box. So it's running on your box, but it's still something that's been shared online, made available for everyone to use. All right, that's enough intro. Let's go for that. Here we are back in Cursor, and we're going into the week six.
+![](../img/87.png)
+
+I'm going to be exploring what MCP has to offer. First, as usual, a quick recap of the core concepts behind MCP, looking at the architecture diagram that we've got here. We're going to be looking at the three different configurations of MCP servers. First of all, and the simplest of all, is when you use an MCP server that simply is created, runs on your local computer, only uses stuff on your computer, and is something that you're using right there. Just like the accounts MCP server that we just used, which is actually one that we hand-wrote ourselves, and also one like the local file system. Okay, and then secondly, and this is perhaps the most common of all, we're going to look at MCP servers that run locally on a computer, but make remote calls to APIs that take advantage of stuff that can be available online. And that's number two on this diagram, and that is, of course, super common. And then thirdly, and we're not going to do this too much, we're just going to have a look at what it means to have a managed MCP server, or a hosted MCP server, which is running remotely. As I say, not a common architecture, but we'll just look at it and see some examples and understand it. And it's worth pointing out that even numbers one and two, while it's possible to write your own, most of the time when we're talking about MCP, these are MCP servers that have been made available online, and that through commands like uvx, you are downloading it from an online public place, and you are then running it locally on your box. So it's running on your box, but it's still something that's been shared online, made available for everyone to use. All right, that's enough intro. Let's go for that. Here we are back in Cursor, and we're going into the week six.
 
 ---
-> [3_lab3](../week6_mcp/3_lab3.ipynb)
+> [3_lab3](../week6_mcp/3_lab3.ipynb)   
 > [3_lab3: without notes](../week6_mcp/3_lab3%20copy.ipynb)
 --- 
+
+
+## Launching Our Agent Trading Floor
+
+![](../img/89.png)
+
+**Introduction and Context**
+It feels like just a second ago that we were starting this thing, and somehow we're already on week 6, day 4. We are heading into the final, final section with the Capstone Project, and let's make sure that we end this thing in style. This is going to be a great project. Welcome. Welcome to the Capstone Project. Welcome to Autonomous Trading.
+
+**Project Goal**
+We are going to build agents that can make their own decisions about analyzing financial markets, and that can make trades in a synthetic account that we have created ourselves in week 3 with our other team of agents.
+
+**Commercial Focus**
+Let me tell you a few things about the project that I have in store for you. First of all, it's something that is commercial. One of the things that I've noticed about a lot of the modern agentic AI projects is that they're quite technical in nature. Because they're so open to possibilities, one tends to build things like teams of coders and stuff like that. I really wanted our Capstone Project to be something that showed how you could apply it to a true commercial problem like analyzing and understanding financial markets, and that's where I've gone in that direction.
+
+**Resources and Agent Autonomy**
+It's going to involve having five different MCP servers with tools and resources, and we will count them up — and there's going to be a lot of them. Look forward to it. There's going to be interactions between agents, and there's also going to be autonomy in this. We're going to allow our agents to choose their own adventure. They're going to be given the freedom to make various decisions themselves.
+
+**Important Disclaimer**
+Most importantly — and this is something that I may say once or twice — please don't use this for actual trading decisions. This is something which, yes, I don't want to get in trouble if you go and put all of your life savings into this. This is, of course, an experimental project and nothing more than that. Having said that, of course, if you make a massive fortune on this and you're off sailing in New York, then I do expect an invitation. No — do not, do not, do not use it. Do not get your yacht this way. Get your yacht by building autonomous agentic solutions for people, not by having your traders run amok with financial markets.
+
+**Next Steps**
+Anyway, with that introduction, we're going to spend most of our time sleeves rolled up in code. And let's get started now. OK, here we go. Back in Cursor, we're going into the folder for six and we're going into...
+
+>
+> [4_lab4](../week6_mcp/4_lab4.ipynb)  
+> [4_lab4 : without notes](../week6_mcp/4_lab4%20copy.ipynb)  
+>  
+
+
+
+
+
 
