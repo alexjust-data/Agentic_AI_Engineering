@@ -160,7 +160,7 @@ Anyway, with that introduction, we're going to spend most of our time sleeves ro
 
 >
 > [4_lab4](../week6_mcp/4_lab4.ipynb)  
-> [4_lab4 : without notes](../week6_mcp/4_lab4%20copy.ipynb)  
+> [4_lab4 : without notes](../week6_mcp/4_lab4_fixed.ipynb)  
 >  
 
 
