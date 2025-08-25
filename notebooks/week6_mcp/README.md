@@ -163,7 +163,11 @@ Anyway, with that introduction, we're going to spend most of our time sleeves ro
 > [4_lab4 : without notes](../week6_mcp/4_lab4_fixed.ipynb)  
 >  
 
+---
+
 ## Which Agent Framework Should You Pick?
+
+![](../img/92.png)
 
 Welcome to the grand finale, the conclusion of our capstone project, and also the time when we wrap up and answer the question of, okay, so which agent framework should I use for my project? But first, the capstone project, autonomous trading. We have some ingredients to add to the mix. We're going to turn it into a trading floor of four traders. We're going to give the traders autonomy to evolve their strategy. We're going to expand the number of models. You've already seen a little teaser of this, and we're going to build a user interface, which is going to have a surprise extra component, which is a super important piece of functionality extensibility that we can get through OpenAI Agents SDK. So without further ado, let's go back to the lab for the final time.
 
