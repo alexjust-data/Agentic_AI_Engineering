@@ -7,6 +7,9 @@ load_dotenv(override=True)
 
 DB = "accounts.db"
 
+def _canon(name: str) -> str:
+    return (name or "").strip().lower()
+
 
 with sqlite3.connect(DB) as conn:
     cursor = conn.cursor()
@@ -35,6 +38,7 @@ def write_account(name, account_dict):
         conn.commit()
 
 def read_account(name):
+    name = _canon(name)
     with sqlite3.connect(DB) as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT account FROM accounts WHERE name = ?', (name.lower(),))
@@ -50,6 +54,7 @@ def write_log(name: str, type: str, message: str):
         type (str): The type of log entry
         message (str): The log message
     """
+    name = _canon(name)
     now = datetime.now().isoformat()
     
     with sqlite3.connect(DB) as conn:
@@ -71,6 +76,7 @@ def read_log(name: str, last_n=10):
     Returns:
         list: A list of tuples containing (datetime, type, message)
     """
+    name = _canon(name)
     with sqlite3.connect(DB) as conn:
         cursor = conn.cursor()
         cursor.execute('''

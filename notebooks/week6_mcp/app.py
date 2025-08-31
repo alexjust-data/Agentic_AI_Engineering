@@ -19,12 +19,13 @@ mapper = {
 class Trader:
     def __init__(self, name: str, lastname: str, model_name: str):
         self.name = name
+        self.dbname = name.lower()        # <- clave canónica para BD
         self.lastname = lastname
         self.model_name = model_name
         self.account = Account.get(name)
 
     def reload(self):
-        self.account = Account.get(self.name)
+        self.account = Account.get(self.dbname)
 
     def get_title(self) -> str:
         return f"<div style='text-align: center;font-size:34px;'>{self.name}<span style='color:#ccc;font-size:24px;'> ({self.model_name}) - {self.lastname}</span></div>"
@@ -81,7 +82,7 @@ class Trader:
         return f"<div style='text-align: center;background-color:{color};'><span style='font-size:32px'>${portfolio_value:,.0f}</span><span style='font-size:24px'>&nbsp;&nbsp;&nbsp;{emoji}&nbsp;${pnl:,.0f}</span></div>"
 
     def get_logs(self, previous=None) -> str:
-        logs = read_log(self.name, last_n=13)
+        logs = read_log(self.dbname, last_n=13)  
         response = ""
         for log in logs:
             timestamp, type, message = log

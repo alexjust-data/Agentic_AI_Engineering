@@ -3,7 +3,7 @@ import json
 from dotenv import load_dotenv
 from datetime import datetime
 from market import get_share_price
-from database import write_account, read_account, write_log
+from database import write_account, read_account, write_log, _canon
 
 load_dotenv(override=True)
 
@@ -35,6 +35,7 @@ class Account(BaseModel):
 
     @classmethod
     def get(cls, name: str):
+        name = _canon(name)
         fields = read_account(name.lower())
         if not fields:
             fields = {

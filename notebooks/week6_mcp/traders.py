@@ -1,10 +1,9 @@
+from openai import AsyncOpenAI
 from contextlib import AsyncExitStack
 from accounts_client import read_accounts_resource, read_strategy_resource
 from tracers import make_trace_id
 from agents import Agent, Tool, Runner, OpenAIChatCompletionsModel, trace
-from openai import AsyncOpenAI
 from dotenv import load_dotenv
-import os
 import json
 from agents.mcp import MCPServerStdio
 from templates import (
@@ -18,45 +17,25 @@ from mcp_params import trader_mcp_server_params, researcher_mcp_server_params
 
 load_dotenv(override=True)
 
-deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-google_api_key = os.getenv("GOOGLE_API_KEY")
-grok_api_key = os.getenv("GROK_API_KEY")
-openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-
-DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
-GROK_BASE_URL = "https://api.x.ai/v1"
-GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-
 MAX_TURNS = 30
 
-openrouter_client = AsyncOpenAI(base_url=OPENROUTER_BASE_URL, api_key=openrouter_api_key)
-deepseek_client = AsyncOpenAI(base_url=DEEPSEEK_BASE_URL, api_key=deepseek_api_key)
-grok_client = AsyncOpenAI(base_url=GROK_BASE_URL, api_key=grok_api_key)
-gemini_client = AsyncOpenAI(base_url=GEMINI_BASE_URL, api_key=google_api_key)
 
-
+# ---------- OpenAI-only (fixed) ----------
 def get_model(model_name: str):
-    if "/" in model_name:
-        return OpenAIChatCompletionsModel(model=model_name, openai_client=openrouter_client)
-    elif "deepseek" in model_name:
-        return OpenAIChatCompletionsModel(model=model_name, openai_client=deepseek_client)
-    elif "grok" in model_name:
-        return OpenAIChatCompletionsModel(model=model_name, openai_client=grok_client)
-    elif "gemini" in model_name:
-        return OpenAIChatCompletionsModel(model=model_name, openai_client=gemini_client)
-    else:
-        return model_name
+    # Create a client that uses your OPENAI_API_KEY from the environment
+    client = AsyncOpenAI()  # default base_url, reads OPENAI_API_KEY
+    return OpenAIChatCompletionsModel(model=model_name, openai_client=client)
+# ----------------------------------------
+
 
 
 async def get_researcher(mcp_servers, model_name) -> Agent:
-    researcher = Agent(
+    return Agent(
         name="Researcher",
         instructions=researcher_instructions(),
         model=get_model(model_name),
         mcp_servers=mcp_servers,
     )
-    return researcher
 
 
 async def get_researcher_tool(mcp_servers, model_name) -> Tool:
@@ -119,7 +98,7 @@ class Trader:
 
     async def run_with_trace(self):
         trace_name = f"{self.name}-trading" if self.do_trade else f"{self.name}-rebalancing"
-        trace_id = make_trace_id(f"{self.name.lower()}")
+        trace_id = make_trace_id(self.name.lower())
         with trace(trace_name, trace_id=trace_id):
             await self.run_with_mcp_servers()
 
@@ -129,3 +108,34 @@ class Trader:
         except Exception as e:
             print(f"Error running trader {self.name}: {e}")
         self.do_trade = not self.do_trade
+
+
+# ===== CLI runner =====
+if __name__ == "__main__":
+    import asyncio, argparse
+    try:
+        from trading_floor import names
+    except Exception:
+        names = ["Warren", "George", "Ray", "Cathie"]
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--loop", action="store_true", help="Run continuous ticks")
+    parser.add_argument("--sleep", type=float, default=20.0, help="Seconds between ticks")
+    args = parser.parse_args()
+
+    async def tick_once():
+        for n in names:
+            t = Trader(name=n)
+            await t.run()
+
+    async def main():
+        if args.loop:
+            while True:
+                await tick_once()
+                await asyncio.sleep(args.sleep)
+        else:
+            await tick_once()
+
+    asyncio.run(main())
+# ===== end runner =====
+

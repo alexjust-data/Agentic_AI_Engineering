@@ -12,6 +12,10 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 ACCOUNTS_SERVER = os.path.join(THIS_DIR, "accounts_server.py")
 PUSH_SERVER     = os.path.join(THIS_DIR, "push_server.py")
 MARKET_SERVER   = os.path.join(THIS_DIR, "market_server.py")  # wrapper free
+MEMORY_DIR      = os.path.join(THIS_DIR, "memory")
+
+# Asegurar carpeta memory existe
+os.makedirs(MEMORY_DIR, exist_ok=True)
 
 # Usa el MISMO Python que está ejecutando el notebook / script
 PY = os.environ.get("PYTHON", sys.executable)
@@ -43,14 +47,20 @@ trader_mcp_server_params = [
     market_mcp,
 ]
 
-# --- RESEARCHER SERVERS (sin fetch para evitar timeouts) ---
+# --- RESEARCHER SERVERS (con memory robusto) ---
 def researcher_mcp_server_params(name: str):
+    db_path = os.path.join(MEMORY_DIR, f"{name.lower()}.db")
+
     params = [
-        # MEMORY (Node, libsql)
         {
             "command": "npx",
             "args": ["-y", "mcp-memory-libsql"],
-            "env": {"LIBSQL_URL": f"file:./memory/{name}.db"},
+            "env": {
+                "LIBSQL_URL": f"file:{db_path}",
+                "MEMORY_VECTOR_SIZE": "4",        # fuerza dimensión 4
+                "SQLITE_BUSY_TIMEOUT_MS": "5000", # evita locks cortos
+                "SQLITE_JOURNAL_MODE": "WAL",     # concurrencia mejorada
+            },
         },
     ]
 
@@ -72,3 +82,4 @@ def warn_if_missing_keys():
         print("⚠️  Falta POLYGON_API_KEY pero has activado paid/realtime; usaré el wrapper local (market_server.py).")
     if not BRAVE_API_KEY:
         print("ℹ️  BRAVE_API_KEY no encontrada: el servidor Brave NO se incluirá en researcher.")
+
